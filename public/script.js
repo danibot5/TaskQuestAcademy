@@ -177,11 +177,37 @@ function addMessageToUI(text, sender) {
             if (codeMatch && codeMatch[1]) {
                 const cleanCode = codeMatch[1].trim();
                 const runCodeBtn = document.createElement('button');
-                runCodeBtn.innerText = "⚡ Сложи в редактора";
+
+                // НОВО: Слагаме SVG икона вътре в бутона
+                runCodeBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                    </svg>
+                    Прехвърли в редактора
+                `;
+
                 runCodeBtn.className = "code-btn";
+
                 runCodeBtn.onclick = function () {
                     document.getElementById('code-editor').value = cleanCode;
+
+                    // Ефект за потвърждение (за 2 секунди)
+                    const originalHTML = runCodeBtn.innerHTML;
+                    runCodeBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Готово!
+                    `;
+                    runCodeBtn.style.border = "1px solid #28a745";
+
+                    setTimeout(() => {
+                        runCodeBtn.innerHTML = originalHTML;
+                        runCodeBtn.style.border = "1px solid #3e4451";
+                    }, 4500);
                 };
+
                 textDiv.appendChild(runCodeBtn);
             }
         }
