@@ -54,15 +54,14 @@ body {
 }
 
 .avatar {
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
+    margin-top: 2px;
     border-radius: 50%;
-    background: #e1f5fe;
-    /* Лек син фон зад робота */
-    padding: 2px;
+    flex-shrink: 0;
+    background: transparent;
 }
 
-/* БОТ: Просто текст, без фон */
 .bot-row {
     align-items: flex-start;
 }
@@ -70,22 +69,18 @@ body {
 .bot-text {
     color: #1f1f1f;
     padding-top: 5px;
-    /* За да се изравни с иконката */
     max-width: 90%;
 }
 
-/* ПОТРЕБИТЕЛ: Сиво балонче, вдясно */
 .user-row {
     justify-content: flex-end;
 }
 
 .user-bubble {
-    background-color: #f0f4f9;
-    /* Светло сиво-синьо (Google стил) */
+    background-color: #e8f2ff;
     color: #1f1f1f;
-    padding: 10px 20px;
-    border-radius: 20px;
-    /* Силно заоблено */
+    padding: 8px 18px;
+    border-radius: 18px 0 18px 18px;
     max-width: 80%;
 }
 
@@ -106,7 +101,7 @@ body {
 .input-container {
     width: 100%;
     max-width: 800px;
-    background: #e4f7ff;
+    background: #e8f2ff;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -306,6 +301,15 @@ body {
     stroke: #61dafb;
 }
 
+.bot-text {
+    background-color: #e8f2ff;
+    padding: 14px 18px;
+    margin-left: 5px;
+    border-radius: 0 18px 18px 18px;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
 .bot-text strong {
     font-weight: 650;
     color: #000;
@@ -333,11 +337,11 @@ body {
 }
 
 .bot-text code {
-    background-color: #f0f0f0;
+    background-color: #cde1ff;
     padding: 2px 5px;
     border-radius: 4px;
     font-family: monospace;
-    color: #d63384;
+    color: #353535;
     font-size: 0.9em;
 }
 
