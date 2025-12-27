@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScriptSensei - Твоят JS Учител</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-content-wrapper">
+
+            <div class="sidebar-header">
+                <span>История</span>
+                <button id="close-sidebar" style="color:white;">✕</button>
+            </div>
+
+            <div class="chat-list">
+                <div class="chat-item active">Текущ разговор</div>
+                <div class="chat-item">Как се прави цикъл?</div>
+                <div class="chat-item">Защо JS е странен?</div>
+            </div>
+
+            <button id="new-chat-btn">+ Нов чат</button>
+
+        </div>
+    </div>
+
+    <div class="chat-panel">
+
+        <div class="top-bar">
+            <button id="menu-btn" title="Отвори/Затвори историята">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+            </button>
+            <span class="brand-name">ScriptSensei</span>
+        </div>
+
+        <div id="chat-history">
+            <div class="message-row bot-row">
+                <img src="https://robohash.org/scriptsensei?set=set1&bgset=bg1&size=100x100" class="avatar">
+                <div class="message-content bot-text">
+                    Здравей! Аз съм твоят JavaScript ментор. Готов ли си да пишем код?
+                </div>
+            </div>
+        </div>
+
+        <div class="input-wrapper">
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Питай ме нещо за кода..." autocomplete="off">
+                <button id="send-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="19" x2="12" y2="5"></line>
+                        <polyline points="5 12 12 5 19 12"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div class="disclaimer">ScriptSensei може да греши. Проверявай кода.</div>
+        </div>
+    </div>
+
+    <div class="code-panel">
+        <div class="editor-header">
+            <span>JavaScript Editor</span>
+            <span class="status-dot"></span>
+        </div>
+
+        <textarea id="code-editor" spellcheck="false">// Твоят код ще се появи тук...</textarea>
+
+        <div class="controls">
+            <button id="run-btn" class="run-btn">▶ Изпълни кода</button>
+        </div>
+
+        <div id="console-output" class="console">
+            <div class="console-label">Console Output:</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
