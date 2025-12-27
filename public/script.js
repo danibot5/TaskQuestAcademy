@@ -266,26 +266,40 @@ sendBtn.addEventListener('click', async function () {
     const text = userInput.value;
     if (text.trim() === "") return;
 
-    // 1. Показваме твоето съобщение
+    // 1. Показваме твоето съобщение в чата (чисто)
     addMessageToUI(text, 'user');
     saveMessage(text, 'user');
     userInput.value = '';
 
-    // --- ПОДГОТОВКА НА ИСТОРИЯТА ---
+    // --- ПОДГОТОВКА НА КОНТЕКСТА (MAGIC) ---
     const currentChat = allChats.find(c => c.id === currentChatId);
     let messagesPayload = [];
 
+    // Взимаме историята до момента
     if (currentChat) {
         const recentMessages = currentChat.messages.slice(-10);
         messagesPayload = recentMessages.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.text
         }));
-    } else {
-        messagesPayload.push({ role: 'user', content: text });
     }
 
-    // 2. ПОКАЗВАМЕ ЧЕ МИСЛИМ (НОВО!)
+    // Взимаме кода и конзолата
+    const editorCode = document.getElementById('code-editor').value;
+    const consoleOutput = document.getElementById('console-output').innerText;
+
+    // Сглобяваме "Тайното съобщение" за AI
+    let messageToSendToAI = text;
+
+    // Ако има код в редактора, го прикачваме към въпроса ти
+    if (editorCode.trim().length > 0) {
+        messageToSendToAI += `\n\n--- [SYSTEM CONTEXT] ---\nПотребителят има следния код в редактора:\n\`\`\`javascript\n${editorCode}\n\`\`\`\n\nТова е резултатът от конзолата:\n${consoleOutput}\n------------------------`;
+    }
+
+    // Добавяме това обогатено съобщение към масива за сървъра
+    messagesPayload.push({ role: 'user', content: messageToSendToAI });
+
+    // 2. ПОКАЗВАМЕ ЧЕ МИСЛИМ
     showLoading();
 
     try {
@@ -297,7 +311,7 @@ sendBtn.addEventListener('click', async function () {
 
         const data = await response.json();
 
-        // 3. МАХАМЕ ТОЧКИТЕ ВЕДНАГА ЩОМ ДОЙДЕ ОТГОВОРЪТ (НОВО!)
+        // 3. МАХАМЕ ТОЧКИТЕ
         removeLoading();
 
         if (data.reply) {
@@ -308,7 +322,7 @@ sendBtn.addEventListener('click', async function () {
         }
 
     } catch (error) {
-        removeLoading(); // Махаме точките дори при грешка
+        removeLoading();
         addMessageToUI("Грешка: Сървърът не отговаря.", 'bot');
         console.error(error);
     }
@@ -421,17 +435,17 @@ fileInput.addEventListener('change', (event) => {
     if (!file) return;
 
     const reader = new FileReader();
-    
-    reader.onload = function(e) {
+
+    reader.onload = function (e) {
         const content = e.target.result;
-        
+
         userInput.value = `Ето съдържанието на файла "${file.name}":\n\n${content}\n\nМоля, обясни кода.`;
-        
+
         userInput.focus();
     };
 
     reader.readAsText(file);
-    
+
     fileInput.value = '';
 });
 
