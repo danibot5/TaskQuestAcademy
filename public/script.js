@@ -366,8 +366,78 @@ userInput.addEventListener('keypress', function (event) {
     }
 });
 
+
 // ==========================================
-// 5. STARTUP (ПРИ ЗАРЕЖДАНЕ)
+// 5. НОВИ ФУНКЦИИ (ГЛАС И ФАЙЛОВЕ)
+// ==========================================
+
+const micBtn = document.getElementById('mic-btn');
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'bg-BG';
+    recognition.continuous = false;
+
+    micBtn.addEventListener('click', () => {
+        if (micBtn.classList.contains('recording')) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+
+    recognition.onstart = () => {
+        micBtn.classList.add('recording');
+        userInput.placeholder = "Говорете сега...";
+    };
+
+    recognition.onend = () => {
+        micBtn.classList.remove('recording');
+        userInput.placeholder = "Питай ме нещо...";
+        userInput.focus();
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value += (userInput.value ? ' ' : '') + transcript;
+    };
+
+} else {
+    micBtn.style.display = 'none';
+    console.warn("Този браузър не поддържа гласово разпознаване.");
+}
+
+const attachBtn = document.getElementById('attach-btn');
+const fileInput = document.getElementById('file-input');
+
+attachBtn.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const content = e.target.result;
+        
+        userInput.value = `Ето съдържанието на файла "${file.name}":\n\n${content}\n\nМоля, обясни кода.`;
+        
+        userInput.focus();
+    };
+
+    reader.readAsText(file);
+    
+    fileInput.value = '';
+});
+
+
+// ==========================================
+// 6. STARTUP (ПРИ ЗАРЕЖДАНЕ)
 // ==========================================
 renderSidebar(); // Рисуваме менюто
 startNewChat();  // Започваме нов празен чат
