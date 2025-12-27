@@ -4,7 +4,7 @@
 **ScriptSensei** is the evolution of the TaskQuestAcademy project. Instead of static tasks, we now utilize **Large Language Models (LLM)** to provide personalized, interactive coding education.
 
 ## 🚀 Why the change?
-We pivoted from a standard task-list app to an **AI-driven platform** to solve a bigger problem: students need real-time feedback and context, not just static exercises.
+I pivoted from a standard task-list app to an **AI-driven platform** to solve a bigger problem: students need real-time feedback and context, not just static exercises.
 
 ## 🛠️ Tech Stack (The Real Deal)
 * **Frontend:** HTML5, CSS3 (Modern UI), JavaScript (Vanilla)
