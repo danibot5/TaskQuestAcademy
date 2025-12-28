@@ -159,7 +159,7 @@ function addMessageToUI(text, sender) {
         rowDiv.classList.add('bot-row');
 
         const avatarImg = document.createElement('img');
-        avatarImg.src = 'https://robohash.org/scriptsensei?set=set1&bgset=bg1&size=100x100';
+        avatarImg.src = 'bot-avatar.png';
         avatarImg.classList.add('avatar');
 
         const textDiv = document.createElement('div');
@@ -226,7 +226,7 @@ function showLoading() {
     rowDiv.id = 'loading-indicator'; // Слагаме ID, за да го намерим и изтрием после
 
     const avatarImg = document.createElement('img');
-    avatarImg.src = 'https://robohash.org/scriptsensei?set=set1&bgset=bg1&size=100x100';
+    avatarImg.src = 'bot-avatar.png';
     avatarImg.classList.add('avatar');
 
     const bubble = document.createElement('div');
@@ -453,5 +453,5 @@ fileInput.addEventListener('change', (event) => {
 // ==========================================
 // 6. STARTUP (ПРИ ЗАРЕЖДАНЕ)
 // ==========================================
-renderSidebar(); // Рисуваме менюто
-startNewChat();  // Започваме нов празен чат
+renderSidebar();
+startNewChat();
