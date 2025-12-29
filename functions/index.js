@@ -1,6 +1,11 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { OpenAI } = require("openai");
-require("dotenv").config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Зареждаме ключа
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
+// Избираме модела (gemini-1.5-flash е бърз и безплатен, gemini-1.5-pro е по-умен)
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei - най-добрият виртуален ментор по JavaScript за ученици.
 
@@ -14,32 +19,45 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei - най-добрият вирту
 Ако те питат кой те е създал, кажи гордо: "Аз съм създаден от Дани, като част от неговия проект за олимпиадата по ИТ!"
 `;
 
-exports.chat = onRequest({ cors: true }, async function (req, res) {
+exports.chat = onRequest({ cors: true }, async (req, res) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("Липсва API ключ в .env файла!");
-    }
+    const messages = req.body.messages || [];
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: "https://api.groq.com/openai/v1"
-    });
+    // Google иска историята в малко по-различен формат
+    // Превръщаме формата на OpenAI (user/assistant) във формата на Google (user/model)
+    const history = messages.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
+    }));
 
-    // ТУК Е ПРОМЯНАТА: Вече очакваме цяла история (масив), а не просто текст
-    const conversationHistory = req.body.messages || [];
+    // Взимаме последното съобщение (това, което питаш сега)
+    const lastMessage = history.pop();
+    const prompt = lastMessage.parts[0].text;
 
-    const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...conversationHistory // Разпакетираме цялата история тук
+    // Стартираме чат сесия с история и системни инструкции
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Разбрано! Готов съм да помагам на Дани с JavaScript! 🚀" }]
+        },
+        ...history
       ],
     });
 
-    res.json({ reply: completion.choices[0].message.content });
+    // Пращаме въпроса
+    const result = await chat.sendMessage(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ reply: text });
 
   } catch (error) {
-    console.error("Грешка:", error);
-    res.json({ error: "Грешка: " + error.message });
+    console.error("Error with Gemini:", error);
+    res.status(500).json({ error: "Грешка в AI модула: " + error.message });
   }
 });
