@@ -934,3 +934,12 @@ body.dark-mode .close-modal {
 body.dark-mode .close-modal:hover {
     color: #fff;
 }
+
+body.dark-mode a {
+    color: #4da3ff !important;
+    text-decoration: underline;
+}
+
+body.dark-mode a:hover {
+    color: #92caff !important;
+}
