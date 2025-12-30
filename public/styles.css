@@ -319,9 +319,17 @@ body {
 #menu-btn {
     background: none;
     border: none;
+    border-radius: 25%;
     cursor: pointer;
+    margin-right: 5px;
     padding: 5px;
     color: #555;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+}
+
+#menu-btn:hover {
+    background: #e1e1e1;
 }
 
 .sidebar {
@@ -366,6 +374,12 @@ body {
     color: #aaa;
     cursor: pointer;
     font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+#close-sidebar:hover {
+    filter: drop-shadow(0 0 2px #ffffff);
+    transform: scale(1.08);
 }
 
 .chat-list {
@@ -375,17 +389,18 @@ body {
 
 .chat-item {
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 15px;
     cursor: pointer;
     margin-bottom: 5px;
     color: #ececf1;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.3s ease;
 }
 
 .chat-item:hover {
-    background-color: #2A2B32;
+    background-color: #2a2b32;
 }
 
 .chat-item.active {
@@ -420,7 +435,7 @@ body {
     border: 1px solid #444;
     color: white;
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 15px;
     cursor: pointer;
     margin-top: auto;
     font-weight: bold;
@@ -444,7 +459,7 @@ body {
     color: white;
     border: none;
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
     display: flex;
@@ -465,7 +480,7 @@ body {
     gap: 10px;
     background: #2A2B32;
     padding: 8px;
-    border-radius: 8px;
+    border-radius: 15px;
 }
 
 .user-avatar-img {
