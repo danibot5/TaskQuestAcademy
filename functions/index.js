@@ -43,7 +43,7 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
         },
         {
           role: "model",
-          parts: [{ text: "Разбрано! Готов съм да помагам на Дани с JavaScript! 🚀" }]
+          parts: [{ text: "Разбрано! Готов съм да помагам на ученика с JavaScript! 🚀" }]
         },
         ...history
       ],

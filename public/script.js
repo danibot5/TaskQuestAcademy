@@ -73,12 +73,12 @@ onAuthStateChanged(auth, (user) => {
         userAvatar.src = user.photoURL || 'bot-avatar.png';
 
         // 1. Подготвяме името
-        let nameHTML = `<div id="user-name" style="font-weight:bold; font-size:0.9rem;">${user.displayName || 'User'}</div>`;
+        let nameHTML = `<div id="user-name" style="font-weight: bold; font-size: 0.9rem;">${user.displayName || 'User'}</div>`;
 
         // Ако е потвърден, добавяме тикчето към името
         if (user.emailVerified) {
-            nameHTML = `<div id="user-name" style="font-weight:bold; font-size:0.9rem;">
-                ${user.displayName || 'User'} <span title="Потвърден" style="color:#4caf50;">✔</span>
+            nameHTML = `<div id="user-name" style="font-weight: bold; font-size: 0.9rem;">
+                ${user.displayName || 'User'} <span title="Потвърден" style="color: #4caf50;">✔</span>
              </div>`;
         }
 
@@ -482,7 +482,7 @@ function addMessageToUI(text, sender) {
     }
 
     chatHistory.appendChild(rowDiv);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+    rowDiv.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
 function showLoading() {
@@ -500,7 +500,7 @@ function showLoading() {
     rowDiv.appendChild(avatarImg);
     rowDiv.appendChild(bubble);
     chatHistory.appendChild(rowDiv);
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+    rowDiv.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
 function removeLoading() {
