@@ -75,7 +75,7 @@ body {
 
 /* БАЛОНЧЕ ЗА БОТА + FIX ЗА КОДА */
 .bot-text {
-    background-color: #e8f2ff;
+    background-color: #ededed;
     padding: 0 18px;
     padding-bottom: 10px;
     margin-left: 5px;
@@ -122,7 +122,7 @@ body {
 .input-container {
     width: 100%;
     max-width: 800px;
-    background: #e8f2ff;
+    background: #ededed;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -868,7 +868,7 @@ body.dark-mode .input-container {
 }
 
 body.dark-mode .input-container:focus-within {
-    background-color: #333;
+    background-color: #1e1e1e;
     border-color: #1a73e8;
 }
 
