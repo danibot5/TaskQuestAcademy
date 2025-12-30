@@ -1,6 +1,6 @@
 // Импортираме Firebase функциите
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, orderBy, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ==========================================================
@@ -59,26 +59,79 @@ const API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/chat';
 
 // Слушаме дали някой влиза или излиза
 onAuthStateChanged(auth, (user) => {
+    const userDetailsDiv = document.querySelector('.user-details');
+
     if (user) {
-        // User Logged In
+        // --- ПОТРЕБИТЕЛЯТ Е ВЛЯЗЪЛ ---
         currentUser = user;
+
+        // Скриваме/Показваме основните контейнери
         guestButtons.style.display = 'none';
         userInfoDiv.style.display = 'flex';
 
-        // Ако няма аватар (напр. имейл регистрация), слагаме иконка по подразбиране
+        // Слагаме аватара
         userAvatar.src = user.photoURL || 'bot-avatar.png';
-        userName.innerText = user.displayName || user.email.split('@')[0];
 
-        // Затваряме всички модали, ако са отворени
+        // 1. Подготвяме името
+        let nameHTML = `<div id="user-name" style="font-weight:bold; font-size:0.9rem;">${user.displayName || 'User'}</div>`;
+
+        // Ако е потвърден, добавяме тикчето към името
+        if (user.emailVerified) {
+            nameHTML = `<div id="user-name" style="font-weight:bold; font-size:0.9rem;">
+                ${user.displayName || 'User'} <span title="Потвърден" style="color:#4caf50;">✔</span>
+             </div>`;
+        }
+
+        // 2. Подготвяме имейла
+        const emailHTML = `<div class="user-email-text">${user.email}</div>`;
+
+        // 3. Подготвяме бутоните
+        let actionButtonsHTML = '';
+
+        // АКО НЕ Е ПОТВЪРДЕН -> Слагаме бутон за верификация
+        if (!user.emailVerified) {
+            actionButtonsHTML += `<button id="resend-verify-btn" class="verify-link">Потвърди имейл</button>`;
+        }
+
+        // Винаги слагаме бутон за изход
+        actionButtonsHTML += `<button id="logout-btn" class="logout-link">Изход</button>`;
+
+        // 4. Сглобяваме всичко и го слагаме в HTML-а
+        userDetailsDiv.innerHTML = nameHTML + emailHTML + actionButtonsHTML;
+
+        // 5. ЗАКАЧАМЕ EVENT LISTENERS (Защото пренаписахме HTML-а, старите връзки изчезнаха)
+
+        // Логика за бутона "Изход"
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // Логика за бутона "Потвърди имейл" (ако съществува)
+        const verifyBtn = document.getElementById('resend-verify-btn');
+        if (verifyBtn) {
+            verifyBtn.addEventListener('click', async () => {
+                try {
+                    await sendEmailVerification(user);
+                    alert(`✅ Изпратихме нов линк на ${user.email}!\nПровери пощата си (и папка Спам).`);
+                } catch (error) {
+                    console.error(error);
+                    alert("Грешка при изпращане (може би твърде скоро си поискал линк?). Изчакай малко.");
+                }
+            });
+        }
+
+        // Затваряме модалите и зареждаме чатовете
         regModal.style.display = 'none';
         loginModal.style.display = 'none';
-
         loadChatsFromFirestore();
+
     } else {
-        // Guest Mode
+        // --- GUEST MODE ---
         currentUser = null;
         guestButtons.style.display = 'flex';
         userInfoDiv.style.display = 'none';
+
+        // Изчистваме userDetails, за да не стават грешки
+        userDetailsDiv.innerHTML = '';
+
         loadChatsFromLocalStorage();
     }
 });
@@ -115,14 +168,21 @@ document.getElementById('perform-register-btn').addEventListener('click', async 
     }
 
     try {
+        // 1. Създаваме потребителя
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Запазваме името на потребителя
+        // 2. Запазваме името му
         await updateProfile(user, { displayName: name });
 
-        // Презареждаме страницата, за да се види името веднага
+        // 3. НОВО: Пращаме имейл за потвърждение! 📧
+        await sendEmailVerification(user);
+
+        alert(`Успешна регистрация! 🚀\nИзпратихме линк за потвърждение на ${email}.\nМоля, провери си пощата!`);
+
+        // Презареждаме, за да влезе в системата
         window.location.reload();
+
     } catch (error) {
         console.error(error);
         if (error.code === 'auth/email-already-in-use') errorBox.innerText = "Този имейл вече е регистриран.";

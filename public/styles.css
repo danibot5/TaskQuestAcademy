@@ -797,7 +797,36 @@ body {
     color: #d19a66 !important;
 }
 
+.user-email-text {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 5px;
+    word-break: break-all; /* Ако имейлът е дълъг, да мине на нов ред */
+}
+
+.verify-link {
+    background: none;
+    border: none;
+    color: #ff9800; /* Оранжево за внимание */
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    margin-bottom: 5px;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.verify-link:hover {
+    color: #ffb74d;
+    text-decoration: underline;
+}
+
 /* --- DARK MODE --- */
+body.dark-mode .user-email-text {
+    color: #888;
+}
+
 body.dark-mode {
     background-color: #1e1e1e;
 }
