@@ -409,7 +409,7 @@ function addMessageToUI(text, sender) {
                 runCodeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg> Прехвърли в редактора`;
                 runCodeBtn.className = "code-btn";
                 runCodeBtn.onclick = function () {
-                    document.getElementById('code-editor').value = cleanCode;
+                    editor.setValue(cleanCode);
                     runCodeBtn.innerHTML = "✅ Готово!";
                     setTimeout(() => runCodeBtn.innerHTML = "Прехвърли пак", 2000);
                 };
@@ -475,7 +475,7 @@ async function sendMessage() {
         }));
     }
 
-    const editorCode = document.getElementById('code-editor').value;
+    const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
     let messageToSendToAI = text;
 
@@ -517,15 +517,36 @@ if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', () => sidebar.cla
 if (newChatBtn) newChatBtn.addEventListener('click', () => { startNewChat(); sidebar.classList.remove('open'); });
 
 // Code Runner
+const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+    mode: "javascript",       // Разбира JS
+    theme: "dracula",         // Тъмна тема (като на снимката ти)
+    lineNumbers: true,        // Номера на редовете
+    autoCloseBrackets: true,  // Автоматично затваря скоби () {}
+    lineWrapping: true,       // Пренася дългите редове
+    readOnly: false,        // <--- ГАРАНТИРАМЕ, ЧЕ МОЖЕ ДА СЕ ПИШЕ
+    cursorBlinkRate: 530,
+});
+
+// --- ОБНОВЕН БУТОН ЗА ИЗПЪЛНЕНИЕ ---
 document.getElementById('run-btn').addEventListener('click', () => {
-    const userCode = document.getElementById('code-editor').value;
+    // ВАЖНО: Взимаме кода от editor, а не от textarea
+    const userCode = editor.getValue();
+
     const outputBox = document.getElementById('console-output');
     outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
 
     try {
         const originalLog = console.log;
-        console.log = (msg) => { outputBox.innerHTML += `<div>> ${msg}</div>`; originalLog(msg); };
+        console.log = (msg) => {
+            // Ако е обект, го правим на текст, за да се чете
+            if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+            outputBox.innerHTML += `<div>> ${msg}</div>`;
+            originalLog(msg);
+        };
+
+        // Изпълняваме кода
         new Function(userCode)();
+
         console.log = originalLog;
     } catch (e) {
         outputBox.innerHTML += `<div style="color:#ff4444;">🚨 ${e.message}</div>`;

@@ -6,9 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScriptSensei - Твоят JS Учител</title>
     <link rel="icon" type="image/png" href="bot-avatar.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
@@ -24,10 +28,10 @@
             <div id="user-section" class="user-section">
                 <div id="guest-buttons">
                     <button id="open-register-btn" class="auth-btn secondary-btn">
-                        📝 Регистрация
+                        Регистрация
                     </button>
                     <button id="open-login-btn" class="auth-btn google-btn">
-                        🔐 Вход
+                        Вход
                     </button>
                 </div>
 
@@ -121,7 +125,7 @@
     <div id="register-modal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal">&times;</span>
-            <h2>Създай акаунт 🚀</h2>
+            <h2>Създай акаунт</h2>
             <p>Стани част от ScriptSensei</p>
 
             <div class="input-group">
@@ -142,7 +146,7 @@
     <div id="login-modal" class="modal-overlay">
         <div class="modal-box">
             <span class="close-modal">&times;</span>
-            <h2>Вход в системата 🔐</h2>
+            <h2>Вход в системата</h2>
 
             <button id="google-login-btn" class="google-auth-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24">
