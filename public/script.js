@@ -614,5 +614,32 @@ if (attachBtn && fileInput) {
     });
 }
 
+// ==========================================
+// 8. DARK MODE
+// ==========================================
+const themeToggleBtn = document.getElementById('theme-toggle');
+const body = document.body;
+
+// Проверка: Имали ли сме запазена тема преди?
+const savedTheme = localStorage.getItem('scriptsensei_theme');
+if (savedTheme === 'dark') {
+    body.classList.add('dark-mode');
+    themeToggleBtn.innerText = '☀️'; // Сменяме иконката на слънце
+}
+
+themeToggleBtn.addEventListener('click', () => {
+    // Превключваме класа
+    body.classList.toggle('dark-mode');
+
+    // Проверяваме дали сме в тъмен режим и запазваме избора
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('scriptsensei_theme', 'dark');
+        themeToggleBtn.innerText = '☀️';
+    } else {
+        localStorage.setItem('scriptsensei_theme', 'light');
+        themeToggleBtn.innerText = '🌙';
+    }
+});
+
 // Start
 startNewChat();

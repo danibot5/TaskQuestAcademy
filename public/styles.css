@@ -677,6 +677,7 @@ body {
     color: #888;
     font-size: 0.8rem;
     margin: 15px 0;
+    cursor: default;
 }
 
 .divider::before,
@@ -788,7 +789,119 @@ body {
     color: #e5c07b !important;
 }
 
-.cm-s-dracula span.cm-def,
-.cm-s-dracula span.cm-variable {
+.cm-s-dracula span.cm-def {
     color: #c8c8c8 !important;
+}
+
+.cm-s-dracula span.cm-variable {
+    color: #d19a66 !important;
+}
+
+/* --- DARK MODE --- */
+body.dark-mode {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .chat-panel {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .top-bar {
+    color: #fff;
+}
+
+body.dark-mode #menu-btn {
+    color: #ededed;
+}
+
+body.dark-mode #menu-btn:hover {
+    background: #444;
+}
+
+body.dark-mode .bot-text {
+    background-color: #2b2d31;
+    color: #e1e1e1;
+}
+
+body.dark-mode .user-bubble {
+    background-color: #3e4451;
+    color: #fff;
+}
+
+body.dark-mode .input-wrapper {
+    background: linear-gradient(to top, #1e1e1e 80%, rgba(30, 30, 30, 0));
+}
+
+body.dark-mode .input-container {
+    background-color: #2b2d31;
+    border-color: #444;
+    color: #fff;
+}
+
+body.dark-mode .input-container:focus-within {
+    background-color: #333;
+    border-color: #1a73e8;
+}
+
+body.dark-mode #user-input {
+    color: #fff;
+}
+
+body.dark-mode .icon-btn {
+    color: #aaa;
+}
+
+body.dark-mode .icon-btn:hover {
+    background-color: #444;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+body.dark-mode .modal-box {
+    background-color: #252526;
+    color: #e1e1e1;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .modal-box h2 {
+    color: #fff;
+}
+
+body.dark-mode .modal-box p {
+    color: #aaa;
+}
+
+body.dark-mode .modal-box input {
+    background-color: #333;
+    border-color: #444;
+    color: #fff;
+}
+
+body.dark-mode .modal-box input:focus {
+    border-color: #1a73e8;
+    background-color: #3a3a3a;
+}
+
+body.dark-mode .google-auth-btn {
+    background-color: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode .google-auth-btn:hover {
+    background-color: #444;
+}
+
+body.dark-mode .close-modal {
+    color: #aaa;
+}
+
+body.dark-mode .close-modal:hover {
+    color: #fff;
 }
