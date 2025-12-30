@@ -1,12 +1,11 @@
-// Импортираме Firebase функциите от Интернет (без инсталация)
+// Импортираме Firebase функциите
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, orderBy, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ==========================================================
-// --- 1. FIREBASE CONFIG (СЛОЖИ ТВОИТЕ ДАННИ ТУК) ---
+// --- 1. FIREBASE CONFIG ---
 // ==========================================================
-// Копирай config обекта от Firebase конзолата и го сложи тук:
 const firebaseConfig = {
     apiKey: "AIzaSyBBHjUB1-WbBPW9d8TBj4w_DjUAwDZ4Dlc",
     authDomain: "scriptsensei-4e8fe.firebaseapp.com",
@@ -16,20 +15,18 @@ const firebaseConfig = {
     appId: "1:1043964924444:web:1606274b5d28087d4b05d9"
 };
 
-// Инициализираме Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
 
 // ==========================================
 // 2. ГЛОБАЛНИ ПРОМЕНЛИВИ
 // ==========================================
-let currentUser = null; // Тук ще пазим кой е влязъл
+let currentUser = null;
 let currentChatId = null;
 let allChats = [];
 
-// DOM Елементи
 const chatHistory = document.getElementById('chat-history');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
@@ -39,12 +36,19 @@ const closeSidebarBtn = document.getElementById('close-sidebar');
 const newChatBtn = document.getElementById('new-chat-btn');
 const chatList = document.querySelector('.chat-list');
 
-// Login Елементи
-const loginBtn = document.getElementById('login-btn');
+// Auth DOM Elements
+const guestButtons = document.getElementById('guest-buttons');
 const userInfoDiv = document.getElementById('user-info');
 const userAvatar = document.getElementById('user-avatar');
 const userName = document.getElementById('user-name');
 const logoutBtn = document.getElementById('logout-btn');
+
+// Modal Elements
+const openRegBtn = document.getElementById('open-register-btn');
+const openLoginBtn = document.getElementById('open-login-btn');
+const regModal = document.getElementById('register-modal');
+const loginModal = document.getElementById('login-modal');
+const closeModals = document.querySelectorAll('.close-modal');
 
 // Линк към Backend (Смени го, ако не е локален)
 const API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/chat';
@@ -56,44 +60,103 @@ const API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/chat';
 // Слушаме дали някой влиза или излиза
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Влязъл е потребител
+        // User Logged In
         currentUser = user;
-        console.log("User Logged In:", user.displayName);
-
-        // Сменяме бутоните
-        loginBtn.style.display = 'none';
+        guestButtons.style.display = 'none';
         userInfoDiv.style.display = 'flex';
-        userAvatar.src = user.photoURL;
-        userName.innerText = user.displayName;
 
-        // Зареждаме историята от CLOUD (Firestore)
+        // Ако няма аватар (напр. имейл регистрация), слагаме иконка по подразбиране
+        userAvatar.src = user.photoURL || 'bot-avatar.png';
+        userName.innerText = user.displayName || user.email.split('@')[0];
+
+        // Затваряме всички модали, ако са отворени
+        regModal.style.display = 'none';
+        loginModal.style.display = 'none';
+
         loadChatsFromFirestore();
     } else {
-        // Никой не е влязъл (Guest Mode)
+        // Guest Mode
         currentUser = null;
-        console.log("Guest Mode");
-
-        // Сменяме бутоните
-        loginBtn.style.display = 'flex';
+        guestButtons.style.display = 'flex';
         userInfoDiv.style.display = 'none';
-
-        // Зареждаме историята от LocalStorage (Браузъра)
         loadChatsFromLocalStorage();
     }
 });
 
-// Бутон за вход
-loginBtn.addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch((error) => {
-        console.error("Login Failed:", error);
-        alert("Грешка при вход: " + error.message);
+// --- MODAL CONTROLS ---
+openRegBtn.addEventListener('click', () => { regModal.style.display = 'flex'; });
+openLoginBtn.addEventListener('click', () => { loginModal.style.display = 'flex'; });
+
+closeModals.forEach(btn => {
+    btn.addEventListener('click', () => {
+        regModal.style.display = 'none';
+        loginModal.style.display = 'none';
     });
 });
 
-// Бутон за изход
-logoutBtn.addEventListener('click', () => {
-    signOut(auth);
+// Затваряне при клик извън кутията
+window.addEventListener('click', (e) => {
+    if (e.target == regModal) regModal.style.display = 'none';
+    if (e.target == loginModal) loginModal.style.display = 'none';
 });
+
+// --- ЛОГИКА ЗА РЕГИСТРАЦИЯ (EMAIL) ---
+document.getElementById('perform-register-btn').addEventListener('click', async () => {
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const errorBox = document.getElementById('reg-error');
+
+    errorBox.innerText = ""; // Чистим стари грешки
+
+    if (!name || !email || !password) {
+        errorBox.innerText = "Моля, попълнете всички полета.";
+        return;
+    }
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Запазваме името на потребителя
+        await updateProfile(user, { displayName: name });
+
+        // Презареждаме страницата, за да се види името веднага
+        window.location.reload();
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'auth/email-already-in-use') errorBox.innerText = "Този имейл вече е регистриран.";
+        else if (error.code === 'auth/weak-password') errorBox.innerText = "Паролата е твърде слаба (мин. 6 символа).";
+        else errorBox.innerText = "Грешка: " + error.message;
+    }
+});
+
+// --- ЛОГИКА ЗА ВХОД (EMAIL) ---
+document.getElementById('perform-login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const errorBox = document.getElementById('login-error');
+
+    errorBox.innerText = "";
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // Успех! onAuthStateChanged ще свърши останалото
+    } catch (error) {
+        console.error(error);
+        errorBox.innerText = "Грешен имейл или парола.";
+    }
+});
+
+// --- ЛОГИКА ЗА ВХОД (GOOGLE) - ВЪТРЕ В МОДАЛА ---
+document.getElementById('google-login-btn').addEventListener('click', () => {
+    signInWithPopup(auth, googleProvider).catch((error) => {
+        document.getElementById('login-error').innerText = error.message;
+    });
+});
+
+// Logout си е същият
+logoutBtn.addEventListener('click', () => signOut(auth));
 
 
 // ==========================================

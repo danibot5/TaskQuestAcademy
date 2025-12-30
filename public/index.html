@@ -22,14 +22,14 @@
             </div>
 
             <div id="user-section" class="user-section">
-                <button id="login-btn" class="auth-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                    Вход с Google
-                </button>
+                <div id="guest-buttons">
+                    <button id="open-register-btn" class="auth-btn secondary-btn">
+                        📝 Регистрация
+                    </button>
+                    <button id="open-login-btn" class="auth-btn google-btn">
+                        🔐 Вход
+                    </button>
+                </div>
 
                 <div id="user-info" class="user-info" style="display: none;">
                     <img id="user-avatar" src="" alt="User" class="user-avatar-img">
@@ -115,6 +115,54 @@
 
         <div id="console-output" class="console">
             <div class="console-label">Console Output:</div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal">&times;</span>
+            <h2>Създай акаунт 🚀</h2>
+            <p>Стани част от ScriptSensei</p>
+
+            <div class="input-group">
+                <input type="text" id="reg-name" placeholder="Твоето Име">
+            </div>
+            <div class="input-group">
+                <input type="email" id="reg-email" placeholder="Email адрес">
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-password" placeholder="Парола (мин. 6 символа)">
+            </div>
+
+            <button id="perform-register-btn" class="modal-btn">Регистрирай ме</button>
+            <div id="reg-error" class="error-msg"></div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal">&times;</span>
+            <h2>Вход в системата 🔐</h2>
+
+            <button id="google-login-btn" class="google-auth-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12.5S6.42 23 12.1 23c5.83 0 8.84-4.15 8.84-8.83c0-.46-.03-.91-.08-1.37z" />
+                </svg>
+                Вход с Google
+            </button>
+
+            <div class="divider">или с имейл</div>
+
+            <div class="input-group">
+                <input type="email" id="login-email" placeholder="Email адрес">
+            </div>
+            <div class="input-group">
+                <input type="password" id="login-password" placeholder="Парола">
+            </div>
+
+            <button id="perform-login-btn" class="modal-btn secondary">Влез</button>
+            <div id="login-error" class="error-msg"></div>
         </div>
     </div>
 
