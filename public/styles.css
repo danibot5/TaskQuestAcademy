@@ -5,15 +5,12 @@ body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     height: 100vh;
-    /* Цял екран */
     background-color: #ffffff;
-    /* Чисто бяло */
     color: #1f1f1f;
     overflow: hidden;
-    /* Без скрол на цялата страница */
 }
 
-/* --- ЛЯВА ЧАСТ (ЧАТ) - 40% --- */
+/* --- ЛЯВА ЧАСТ (ЧАТ) --- */
 .chat-panel {
     flex: 4;
     min-width: 300px;
@@ -24,7 +21,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Горна лента */
 .top-bar {
     padding: 5px 25px;
     font-weight: 600;
@@ -34,7 +30,6 @@ body {
     align-items: center;
 }
 
-/* История на чата */
 #chat-history {
     flex: 1;
     overflow-y: auto;
@@ -45,7 +40,7 @@ body {
     scroll-behavior: smooth;
 }
 
-/* --- СЪОБЩЕНИЯ (СТИЛ GEMINI/GPT) --- */
+/* --- СЪОБЩЕНИЯ --- */
 .message-row {
     display: flex;
     gap: 15px;
@@ -59,22 +54,17 @@ body {
     margin-top: 2px;
     border-radius: 50%;
     flex-shrink: 0;
-    background: transparent;
 }
 
 .bot-row {
     align-items: flex-start;
 }
 
-.bot-text {
-    color: #1f1f1f;
-    max-width: 90%;
-}
-
 .user-row {
     justify-content: flex-end;
 }
 
+/* БАЛОНЧЕ ЗА ПОТРЕБИТЕЛЯ */
 .user-bubble {
     background-color: #e8f2ff;
     color: #1f1f1f;
@@ -83,7 +73,45 @@ body {
     max-width: 80%;
 }
 
-/* --- ЗОНА ЗА ПИСАНЕ (Floating Input) --- */
+/* БАЛОНЧЕ ЗА БОТА + FIX ЗА КОДА */
+.bot-text {
+    background-color: #f0f2f5;
+    padding: 14px 18px;
+    margin-left: 5px;
+    border-radius: 0 18px 18px 18px;
+    line-height: 1.6;
+
+    /* ВАЖНО ЗА КОДА: */
+    max-width: 90%;
+    min-width: 0;
+    /* Защита за flex items */
+    overflow: hidden;
+    /* Скрива излишното */
+    word-wrap: break-word;
+}
+
+/* КОД БЛОКОВЕ (Тъмната кутия) */
+.bot-text pre {
+    background-color: #282c34 !important;
+    /* Тъмен фон */
+    color: #abb2bf;
+    padding: 15px;
+    border-radius: 8px;
+
+    /* Скрол, ако е дълго */
+    overflow-x: auto;
+    max-width: 100%;
+    margin-top: 10px;
+    border: 1px solid #3e4451;
+}
+
+.bot-text code {
+    background-color: transparent !important;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+/* --- ЗОНА ЗА ПИСАНЕ --- */
 .input-wrapper {
     position: absolute;
     bottom: 0;
@@ -106,14 +134,13 @@ body {
     align-items: center;
     padding: 8px 12px;
     border: 1px solid rgb(214, 214, 214);
-    transition: all 0.2s;
     gap: 8px;
 }
 
 .input-container:focus-within {
     background: #fff;
     border-color: #1a73e8;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 #user-input {
@@ -123,26 +150,28 @@ body {
     padding: 10px;
     font-size: 1rem;
     outline: none;
-    color: #1f1f1f;
+}
+
+.icon-btn,
+#send-btn {
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
 .icon-btn {
     background: transparent;
     color: #555;
-    border: none;
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s;
 }
 
 .icon-btn:hover {
     background: #e2e2e2;
-    color: #000;
 }
 
 .icon-btn.recording {
@@ -151,25 +180,12 @@ body {
     animation: pulse 1.5s infinite;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
-}
-
 #send-btn {
     background: #1a73e8;
     color: white;
-    border: none;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 5px;
-    transition: all 0.2s;
 }
 
 #send-btn:hover {
@@ -182,14 +198,30 @@ body {
     margin-top: 10px;
 }
 
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+    }
+
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+    }
+}
+
+/* --- ДЕСЕН ПАНЕЛ (EDITOR) --- */
 .code-panel {
     flex: 6;
     background-color: #1e1e1e;
     display: flex;
     flex-direction: column;
     border-left: 1px solid #333;
-    padding: 0;
-    transition: all 0.3s ease;
 }
 
 .editor-header {
@@ -207,7 +239,6 @@ body {
     height: 8px;
     background-color: #28a745;
     border-radius: 50%;
-    margin-top: 3px;
     margin-left: 10px;
 }
 
@@ -217,7 +248,7 @@ body {
     color: #d4d4d4;
     border: none;
     padding: 20px;
-    font-family: 'Consolas', 'Monaco', monospace;
+    font-family: 'Consolas', monospace;
     font-size: 16px;
     line-height: 1.5;
     resize: none;
@@ -239,9 +270,6 @@ body {
     padding: 8px 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
 }
 
 .run-btn:hover {
@@ -265,110 +293,38 @@ body {
     text-transform: uppercase;
 }
 
+/* Бутон "Прехвърли в редактора" */
 .code-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
-    padding: 10px 16px;
+    padding: 8px 12px;
     background-color: #282c34;
     color: #fff;
     border: 1px solid #3e4451;
     border-radius: 6px;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.404);
+    transition: all 0.2s;
 }
 
 .code-btn:hover {
-    background-color: #282b33;
-    transform: scale(1.02) translateY(-1px);
-    box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.466);
-}
-
-.code-btn:active {
-    transform: translateY(0); /* Натискане надолу */
-    background-color: #21252b;
+    background-color: #323842;
 }
 
 .code-btn svg {
-    width: 16px;
-    height: 16px;
-    stroke: #61dafb;
+    width: 14px;
+    height: 14px;
 }
 
-.bot-text {
-    background-color: #e8f2ff;
-    padding: 14px 18px;
-    margin-left: 5px;
-    border-radius: 0 18px 18px 18px;
-    line-height: 1.6;
-    word-wrap: break-word;
-}
-
-.bot-text strong {
-    font-weight: 650;
-    color: #000;
-}
-
-.bot-text em {
-    font-style: italic;
-    color: #444;
-}
-
-.bot-text ul,
-.bot-text ol {
-    margin: 10px 0;
-    padding-left: 20px;
-}
-
-.bot-text li {
-    margin-bottom: 5px;
-}
-
-.bot-text h3 {
-    margin: 15px 0 10px 0;
-    font-size: 1.1rem;
-    color: #000000;
-}
-
-.bot-text code {
-    background-color: #f5fcff;
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-family: monospace;
-    color: #353535;
-    font-size: 0.9em;
-}
-
-.bot-text p {
-    margin: 0 0 10px 0;
-}
-
-/* --- СТРАНИЧНО МЕНЮ (SIDEBAR) --- */
-
-/* Бутонът за менюто горе вляво */
+/* --- SIDEBAR & USER SECTION --- */
 #menu-btn {
     background: none;
     border: none;
     cursor: pointer;
-    margin-top: 2px;
-    margin-right: 3px;
+    padding: 5px;
     color: #555;
-    padding: 7px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s ease-in-out;
-    transform: scale(0.85);
-}
-
-#menu-btn:hover {
-    background-color: #ebebeb;
 }
 
 .sidebar {
@@ -378,7 +334,7 @@ body {
     background-color: #202123;
     color: white;
     overflow: hidden;
-    transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: width 0.3s ease;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -403,7 +359,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 5px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-weight: bold;
 }
 
@@ -411,14 +367,8 @@ body {
     background: none;
     border: none;
     color: #aaa;
-    font-size: 1.2rem;
     cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-#close-sidebar:hover {
-    color: white;
-    filter: drop-shadow(0 0 2px white);
+    font-size: 1.2rem;
 }
 
 .chat-list {
@@ -431,16 +381,10 @@ body {
     border-radius: 10px;
     cursor: pointer;
     margin-bottom: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     color: #ececf1;
-    font-size: 0.9rem;
-    transition: all 0.2s;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
 }
 
 .chat-item:hover {
@@ -453,10 +397,11 @@ body {
 }
 
 .chat-title {
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
     flex: 1;
+    margin-right: 5px;
 }
 
 .delete-btn {
@@ -465,18 +410,10 @@ body {
     color: #666;
     cursor: pointer;
     padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    opacity: 0.7;
-    transition: all 0.3s ease;
 }
 
 .delete-btn:hover {
     color: #ff4444;
-    opacity: 1;
-    transform: scale(1.08);
 }
 
 #new-chat-btn {
@@ -487,19 +424,78 @@ body {
     border-radius: 10px;
     cursor: pointer;
     margin-top: auto;
-    display: flex;
-    justify-content: center;
     font-weight: bold;
-    transition: all 0.3s ease;
 }
 
-#new-chat-btn:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
+/* User Styles */
+.user-section {
+    padding: 10px 5px;
+    margin-bottom: 10px;
 }
 
-/* --- АНИМАЦИЯ "БОТЪТ МИСЛИ" --- */
+.auth-btn {
+    width: 100%;
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
 
+.auth-btn:hover {
+    background-color: #357ae8;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2A2B32;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.user-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+#user-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: white;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logout-link {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+}
+
+.logout-link:hover {
+    color: #ff4444;
+}
+
+/* Typing indicator */
 .typing-indicator {
     display: flex;
     gap: 4px;
@@ -523,7 +519,9 @@ body {
 }
 
 @keyframes blink {
-    0% {
+
+    0%,
+    100% {
         opacity: 0.2;
         transform: scale(0.8);
     }
@@ -531,10 +529,5 @@ body {
     20% {
         opacity: 1;
         transform: scale(1);
-    }
-
-    100% {
-        opacity: 0.2;
-        transform: scale(0.8);
     }
 }

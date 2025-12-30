@@ -7,6 +7,8 @@
     <title>ScriptSensei - Твоят JS Учител</title>
     <link rel="icon" type="image/png" href="bot-avatar.png">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
@@ -19,10 +21,27 @@
                 <button id="close-sidebar" style="color:white;">✕</button>
             </div>
 
+            <div id="user-section" class="user-section">
+                <button id="login-btn" class="auth-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Вход с Google
+                </button>
+
+                <div id="user-info" class="user-info" style="display: none;">
+                    <img id="user-avatar" src="" alt="User" class="user-avatar-img">
+                    <div class="user-details">
+                        <span id="user-name">Guest</span>
+                        <button id="logout-btn" class="logout-link">Изход</button>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: #333; margin: 15px 0; opacity: 0.3;">
+
             <div class="chat-list">
-                <div class="chat-item active">Текущ разговор</div>
-                <div class="chat-item">Как се прави цикъл?</div>
-                <div class="chat-item">Защо JS е странен?</div>
             </div>
 
             <button id="new-chat-btn">Започни нов чат</button>
@@ -44,12 +63,6 @@
         </div>
 
         <div id="chat-history">
-            <div class="message-row bot-row">
-                <img src="https://robohash.org/scriptsensei?set=set1&bgset=bg1&size=100x100" class="avatar">
-                <div class="message-content bot-text">
-                    Здравей! Аз съм твоят JavaScript ментор. Готов ли си да пишем код?
-                </div>
-            </div>
         </div>
 
         <div class="input-wrapper">
@@ -106,8 +119,9 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>
