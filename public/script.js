@@ -118,32 +118,47 @@ function saveToLocalStorage() {
 async function loadChatsFromFirestore() {
     chatList.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
 
-    // Търсим всички чатове, където userId е на текущия човек
-    const q = query(
-        collection(db, "chats"),
-        where("userId", "==", currentUser.uid),
-        orderBy("createdAt", "desc") // Най-новите първи
-    );
-
-    const querySnapshot = await getDocs(q);
+    // 1. ВЕДНАГА чистим старите чатове, за да не се смесват с тези на потребителя!
     allChats = [];
-    querySnapshot.forEach((doc) => {
-        allChats.push({ id: doc.id, ...doc.data() });
-    });
 
-    renderSidebar();
-    startNewChat();
+    try {
+        // 2. Променихме заявката: Махнахме 'orderBy', за да не гърми за липсващ индекс
+        const q = query(
+            collection(db, "chats"),
+            where("userId", "==", currentUser.uid)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((doc) => {
+            allChats.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 3. Сортираме тук (в JavaScript), вместо в базата
+        // (Най-новите отгоре)
+        allChats.sort((a, b) => b.createdAt - a.createdAt);
+
+        renderSidebar();
+
+        // Стартираме нов чат, само ако нямаме никакви заредени
+        // (За да не ти отваря празен чат всеки път, ако искаш да видиш старите)
+        startNewChat();
+
+    } catch (error) {
+        console.error("Грешка при зареждане на чатовете:", error);
+        chatList.innerHTML = '<div style="padding:10px; color:red;">Грешка. Виж конзолата.</div>';
+    }
 }
 
 async function saveToFirestore(chat) {
     if (currentUser) {
-        // Ако чатът вече има ID (съществува в базата), го обновяваме
-        // Ако е нов (ID-то е число от Date.now()), го създаваме в базата
-
-        // Проверка дали ID-то е дълъг стринг (от Firebase) или число (локално)
+        // Проверка дали ID-то е число (значи е временно, локално)
         const isNewChat = typeof chat.id === 'number';
 
         if (isNewChat) {
+            // Запазваме временното ID, за да знаем какво да сменим
+            const tempId = chat.id;
+
             // Създаваме нов документ в облака
             const docRef = await addDoc(collection(db, "chats"), {
                 userId: currentUser.uid,
@@ -152,10 +167,17 @@ async function saveToFirestore(chat) {
                 createdAt: Date.now()
             });
 
-            // Сменяме временното ID с истинското от базата
+            // Сменяме временното ID с истинското от базата в обекта
             chat.id = docRef.id;
+
+            // 🔥 ВАЖНАТА ПОПРАВКА 🔥
+            // Трябва да кажем на приложението: "Хей, текущият чат вече не е 123, а е abc!"
+            if (currentChatId === tempId) {
+                currentChatId = docRef.id;
+            }
+
         } else {
-            // Обновяваме съществуващ
+            // Ако вече си е с истинско ID, само обновяваме съобщенията
             const chatRef = doc(db, "chats", chat.id);
             await updateDoc(chatRef, {
                 messages: chat.messages,
