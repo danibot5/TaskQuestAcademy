@@ -438,17 +438,26 @@ function addMessageToUI(text, sender) {
         bubble.classList.add('user-bubble');
         bubble.innerText = text;
         rowDiv.appendChild(bubble);
+
     } else {
         rowDiv.classList.add('bot-row');
 
+        // 1. Аватар
         const avatarImg = document.createElement('img');
         avatarImg.src = 'bot-avatar.png'; // Твоята икона
         avatarImg.classList.add('avatar');
 
+        // 2. Създаваме вертикален контейнер (за да сложим бутона ПОД текста)
+        const messageContainer = document.createElement('div');
+        messageContainer.style.display = 'flex';
+        messageContainer.style.flexDirection = 'column';
+        messageContainer.style.maxWidth = '80%'; // Ограничаваме ширината
+
+        // 3. Балончето с текста (Твоят стар textDiv)
         const textDiv = document.createElement('div');
         textDiv.classList.add('bot-text');
 
-        // Markdown + Highlighting
+        // Markdown + Highlighting (Запазваме твоята логика)
         if (typeof marked !== 'undefined') {
             textDiv.innerHTML = marked.parse(text);
             if (typeof hljs !== 'undefined') {
@@ -460,7 +469,7 @@ function addMessageToUI(text, sender) {
             textDiv.innerText = text;
         }
 
-        // Бутон "Прехвърли в редактора"
+        // Бутон "Прехвърли в редактора" (Запазваме твоята логика)
         if (text.includes('```')) {
             const codeMatch = text.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
             if (codeMatch && codeMatch[1]) {
@@ -477,8 +486,19 @@ function addMessageToUI(text, sender) {
             }
         }
 
+        // 4. НОВО: Бутон за четене (Speak Button) 🔊
+        const speakBtn = document.createElement('button');
+        speakBtn.innerHTML = '🔊 Прочети';
+        speakBtn.className = 'speak-btn'; // Ще ползва стила от CSS
+        speakBtn.onclick = () => speakText(text); // Вика функцията за говорене
+
+        // 5. Сглобяване: Слагаме Текста и Бутона в Контейнера
+        messageContainer.appendChild(textDiv);
+        messageContainer.appendChild(speakBtn);
+
+        // 6. Слагаме Аватара и Контейнера в реда
         rowDiv.appendChild(avatarImg);
-        rowDiv.appendChild(textDiv);
+        rowDiv.appendChild(messageContainer);
     }
 
     chatHistory.appendChild(rowDiv);
@@ -675,6 +695,88 @@ if (attachBtn && fileInput) {
 }
 
 // ==========================================
+// 7. TEXT-TO-SPEECH
+// ==========================================
+
+let allVoices = [];
+
+// Тази функция прави две неща: зарежда гласовете И ги показва в конзолата
+function loadAndDebugVoices() {
+    allVoices = window.speechSynthesis.getVoices();
+
+    // Ако масивът е празен, няма смисъл да логваме (Chrome прави това понякога при старт)
+    if (allVoices.length === 0) return;
+
+    console.log(`🎤 Заредени са ${allVoices.length} гласа.`);
+
+    // Проверка дали имаме БГ глас
+    const bgVoice = allVoices.find(v => v.lang.includes('bg') || v.name.includes('Bulgarian') || v.name.includes('Ivan'));
+
+    if (bgVoice) {
+        console.log(`✅ НАМЕРЕН БГ ГЛАС: ${bgVoice.name} (${bgVoice.lang})`);
+    } else {
+        console.warn("❌ НЯМА БГ ГЛАС! Windows ще ползва английския по подразбиране.");
+        console.log("Списък на наличните гласове:", allVoices.map(v => v.name));
+    }
+}
+
+// Слушаме за промени (Chrome зарежда гласовете асинхронно)
+window.speechSynthesis.onvoiceschanged = loadAndDebugVoices;
+
+// Опитваме се да ги заредим и веднага (за всеки случай)
+loadAndDebugVoices();
+
+function speakText(text) {
+    // 1. Спираме текущото говорене
+    window.speechSynthesis.cancel();
+
+    // 2. Гаранция, че гласовете са заредени
+    if (allVoices.length === 0) {
+        allVoices = window.speechSynthesis.getVoices();
+    }
+
+    // 3. ТЪРСЕНЕ НА БЪЛГАРСКИ ГЛАС 🇧🇬
+    // Приоритет: 1. Google (най-добър), 2. Microsoft Ivan (стандартен за Windows), 3. Всеки с 'bg'
+    let selectedVoice = allVoices.find(voice => voice.name.includes("Google") && voice.lang.includes("bg"));
+
+    if (!selectedVoice) {
+        selectedVoice = allVoices.find(voice => voice.name.includes("Ivan")); // Microsoft Ivan
+    }
+    if (!selectedVoice) {
+        selectedVoice = allVoices.find(voice => voice.lang.includes("bg")); // Последен шанс
+    }
+
+    // 4. ПОЧИСТВАНЕ НА ТЕКСТА 🧹
+    const cleanText = text
+        .replace(/\*\*/g, '')       // Маха bold
+        .replace(/\*/g, '')         // Маха italic
+        .replace(/\#/g, '')         // Маха заглавия
+        .replace(/`/g, '')          // Маха code ticks
+        .replace(/\[.*?\]/g, '')    // Маха линкове
+        .replace(/https?:\/\/\S+/g, 'линк')
+        .replace(/```[\s\S]*?```/g, 'Ето примерен код в редактора.');
+
+    // 5. ГОВОРЕНЕ
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = 'bg-BG';
+        // console.log("🗣️ Говоря с глас:", selectedVoice.name);
+    } else {
+        // Ако няма БГ глас, по-добре да не говори глупости на английски
+        console.warn("⚠️ Няма БГ глас, спирам говора, за да не звучи смешно.");
+        alert("За да чуеш гласа, трябва да инсталираш 'Bulgarian' от настройките на Windows -> Time & Language -> Speech.");
+        return; // Спираме функцията тук
+    }
+
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    window.speechSynthesis.speak(utterance);
+}
+
+// ==========================================
 // 8. DARK MODE
 // ==========================================
 const themeToggleBtn = document.getElementById('theme-toggle');
@@ -701,5 +803,8 @@ themeToggleBtn.addEventListener('click', () => {
     }
 });
 
-// Start
+// ==========================================
+// 9. START
+// ==========================================
 startNewChat();
+loadVoices();

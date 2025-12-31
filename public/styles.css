@@ -781,6 +781,51 @@ body {
     transform-origin: bottom right;
 }
 
+/* --- TEXT-TO-SPEECH --- */
+.speak-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Segoe UI', sans-serif;
+    
+    cursor: pointer;
+    margin-top: 4px;
+    margin-left: 5px;
+    padding: 4px 8px;
+    
+    align-self: flex-start; 
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.speak-btn:hover {
+    color: #1a73e8;
+    background-color: rgba(26, 115, 232, 0.1);
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.speak-btn:active {
+    transform: translateY(0);
+}
+
+/* --- DARK MODE НАСТРОЙКИ --- */
+body.dark-mode .speak-btn {
+    color: #aaa; /* По-светло сиво за тъмен фон */
+}
+
+body.dark-mode .speak-btn:hover {
+    color: #61dafb; /* Неоново синьо за тъмния режим */
+    background-color: rgba(97, 218, 251, 0.15);
+}
+
 /* --- CODEMIRROR EDITOR STYLES --- */
 .CodeMirror {
     flex: 1;
