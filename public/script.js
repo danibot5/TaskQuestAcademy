@@ -433,6 +433,7 @@ function addMessageToUI(text, sender) {
     rowDiv.classList.add('message-row');
 
     if (sender === 'user') {
+        // --- ПОТРЕБИТЕЛ ---
         rowDiv.classList.add('user-row');
         const bubble = document.createElement('div');
         bubble.classList.add('user-bubble');
@@ -440,36 +441,33 @@ function addMessageToUI(text, sender) {
         rowDiv.appendChild(bubble);
 
     } else {
+        // --- БОТ (ScriptSensei) ---
         rowDiv.classList.add('bot-row');
 
         // 1. Аватар
         const avatarImg = document.createElement('img');
-        avatarImg.src = 'bot-avatar.png'; // Твоята икона
+        avatarImg.src = 'bot-avatar.png';
         avatarImg.classList.add('avatar');
 
-        // 2. Създаваме вертикален контейнер (за да сложим бутона ПОД текста)
+        // 2. Контейнер
         const messageContainer = document.createElement('div');
         messageContainer.style.display = 'flex';
         messageContainer.style.flexDirection = 'column';
-        messageContainer.style.maxWidth = '80%'; // Ограничаваме ширината
+        messageContainer.style.maxWidth = '80%';
 
-        // 3. Балончето с текста (Твоят стар textDiv)
+        // 3. Балонче с текст
         const textDiv = document.createElement('div');
         textDiv.classList.add('bot-text');
 
-        // Markdown + Highlighting (Запазваме твоята логика)
         if (typeof marked !== 'undefined') {
             textDiv.innerHTML = marked.parse(text);
             if (typeof hljs !== 'undefined') {
-                textDiv.querySelectorAll('pre code').forEach((block) => {
-                    hljs.highlightElement(block);
-                });
+                textDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
             }
         } else {
             textDiv.innerText = text;
         }
 
-        // Бутон "Прехвърли в редактора" (Запазваме твоята логика)
         if (text.includes('```')) {
             const codeMatch = text.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
             if (codeMatch && codeMatch[1]) {
@@ -486,17 +484,61 @@ function addMessageToUI(text, sender) {
             }
         }
 
-        // 4. НОВО: Бутон за четене (Speak Button) 🔊
-        const speakBtn = document.createElement('button');
-        speakBtn.innerHTML = '🔊 Прочети';
-        speakBtn.className = 'speak-btn'; // Ще ползва стила от CSS
-        speakBtn.onclick = () => speakText(text); // Вика функцията за говорене
+        // =================================================================
+        // 4. ЛЕНТА С ДЕЙСТВИЯ (ЕДНОКРАТНО ГЛАСУВАНЕ) 🔒
+        // =================================================================
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'message-actions';
 
-        // 5. Сглобяване: Слагаме Текста и Бутона в Контейнера
+        // Дефинираме променливите предварително, за да ги ползваме вътре в тях
+        let likeBtn, dislikeBtn;
+
+        // A) Бутон ЗВУК 🔊
+        const speakBtn = createActionButton(SVGs.speak, 'Прочети на глас', () => speakText(text));
+
+        // B) Бутон КОПИРАНЕ 📋
+        const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
+
+        // C) Бутон LIKE 👍 (Логика за еднократност)
+        likeBtn = createActionButton(SVGs.like, 'Полезен отговор', () => {
+            // Ако вече е натиснат или забранен -> спри
+            if (likeBtn.disabled) return;
+
+            // 1. Променяме иконата на "Пълна" и цвета на Зелен
+            likeBtn.innerHTML = SVGs.likeFilled;
+            likeBtn.style.color = '#aaa';
+            likeBtn.style.opacity = '1';
+
+            // 2. Премахваме Dislike бутона (вече няма опция за dislike)
+            if (dislikeBtn) dislikeBtn.remove();
+
+            // 3. Забраняваме повторно натискане на Like
+            likeBtn.disabled = true;
+            likeBtn.style.cursor = 'default';
+
+            showToast('Благодарим за оценката!', '👍');
+        });
+
+        // D) Бутон DISLIKE 👎 (Логика за еднократност през Модала)
+        dislikeBtn = createActionButton(SVGs.dislike, 'Неполезен отговор', () => {
+            // Ако вече е натиснат -> спри
+            if (dislikeBtn.disabled) return;
+
+            // Отваряме модала и му казваме: "Хей, това са бутоните, които трябва да промениш!"
+            openFeedbackModal(likeBtn, dislikeBtn);
+        });
+
+        // Добавяме ги в лентата
+
+        actionsDiv.appendChild(copyBtn);
+        actionsDiv.appendChild(likeBtn);
+        actionsDiv.appendChild(dislikeBtn);
+        actionsDiv.appendChild(speakBtn);
+
+        // 5. Сглобяване
         messageContainer.appendChild(textDiv);
-        messageContainer.appendChild(speakBtn);
+        messageContainer.appendChild(actionsDiv);
 
-        // 6. Слагаме Аватара и Контейнера в реда
         rowDiv.appendChild(avatarImg);
         rowDiv.appendChild(messageContainer);
     }
@@ -529,7 +571,173 @@ function removeLoading() {
 }
 
 // ==========================================
-// 7. EVENT LISTENERS
+// 7. ACTIONS & FEEDBACK SYSTEM
+// ==========================================
+
+// --- SVG ИКОНИ (Добавихме Filled версиите) ---
+const SVGs = {
+    speak: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`,
+    copy: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
+    copyDone: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+
+    // LIKE (Outline & Filled)
+    like: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`,
+    likeFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`,
+
+    // DISLIKE (Outline & Filled)
+    dislike: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>`,
+    dislikeFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>`
+};
+
+// --- 1. Функция за показване на TOAST съобщение ---
+function showToast(message, icon = '👍') {
+    const toast = document.getElementById('toast-notification');
+    const toastMsg = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+
+    toastMsg.innerText = message;
+    toastIcon.innerText = icon;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// --- 2. Функция за КОПИРАНЕ ---
+async function copyMessageText(text, buttonElement) {
+    try {
+        await navigator.clipboard.writeText(text);
+        const originalSVG = buttonElement.innerHTML;
+        buttonElement.innerHTML = SVGs.copyDone;
+        buttonElement.style.color = '#4caf50';
+        showToast('Текстът е копиран!', '📋');
+        setTimeout(() => {
+            buttonElement.innerHTML = originalSVG;
+            buttonElement.style.color = '';
+        }, 2000);
+    } catch (err) {
+        showToast('Грешка при копиране.', '⚠️');
+    }
+}
+
+// --- 3. Логика за FEEDBACK MODAL (Dislike) ---
+const feedbackModal = document.getElementById('feedback-modal');
+const closeFeedbackBtn = document.getElementById('close-feedback');
+const feedbackForm = document.getElementById('feedback-form');
+
+// Променлива, която ще помни КОИ бутони са натиснати в момента
+let activeFeedbackUI = null;
+
+const submitFeedbackBtn = document.getElementById('submit-feedback');
+const otherCheckbox = document.getElementById('other-checkbox');
+const feedbackDetails = document.getElementById('feedback-details');
+const allCheckboxes = feedbackForm.querySelectorAll('input[type="checkbox"]');
+
+// ФУНКЦИЯ ЗА ВАЛИДАЦИЯ (Вика се при всеки клик)
+function validateFeedbackForm() {
+    const isOtherChecked = otherCheckbox.checked;
+
+    // 1. Управление на полето за писане
+    if (isOtherChecked) {
+        feedbackDetails.disabled = false;
+        // Премахваме автоматичния focus(), за да не дразни при писане
+    } else {
+        feedbackDetails.disabled = true;
+        feedbackDetails.value = ""; // Чистим текста, ако се откаже
+    }
+
+    // 2. Логика: Валидно ли е за изпращане?
+    let isValid = false;
+    let isAnyChecked = false;
+
+    // Проверяваме дали изобщо има чекнати кутийки
+    allCheckboxes.forEach(box => {
+        if (box.checked) isAnyChecked = true;
+    });
+
+    if (isAnyChecked) {
+        // Имаме поне един чекнат бокс.
+
+        // Ако "Друго" е чекнато -> ЗАДЪЛЖИТЕЛНО трябва да има текст!
+        if (isOtherChecked) {
+            if (feedbackDetails.value.trim().length > 0) {
+                isValid = true; // Хем е чекнато, хем има текст
+            } else {
+                isValid = false; // Чекнато е "Друго", но полето е празно -> ГРЕШКА
+            }
+        } else {
+            // "Друго" не е чекнато, но имаме други чекнати боксове -> ОК
+            isValid = true;
+        }
+    }
+
+    // 3. Управление на бутона
+    if (isValid) {
+        submitFeedbackBtn.disabled = false;
+        submitFeedbackBtn.style.cursor = 'pointer';
+    } else {
+        submitFeedbackBtn.disabled = true;
+        submitFeedbackBtn.style.cursor = 'default';
+    }
+}
+
+// Закачаме слушател към формата (хваща всяка промяна)
+feedbackForm.addEventListener('change', validateFeedbackForm);
+
+// НОВО: Закачаме слушател към полето за писане (хваща всяка буква)
+feedbackDetails.addEventListener('input', validateFeedbackForm);
+
+// Отваряне на модала (вече приема UI елементите като аргументи)
+function openFeedbackModal(likeBtn, dislikeBtn) {
+    activeFeedbackUI = { likeBtn, dislikeBtn };
+    feedbackModal.style.display = 'flex';
+    feedbackForm.reset();
+    validateFeedbackForm();
+}
+
+closeFeedbackBtn.addEventListener('click', () => feedbackModal.style.display = 'none');
+window.addEventListener('click', (e) => {
+    if (e.target === feedbackModal) feedbackModal.style.display = 'none';
+});
+
+// Изпращане на формата
+feedbackForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Ако имаме активни бутони (би трябвало винаги да имаме)
+    if (activeFeedbackUI) {
+        const { likeBtn, dislikeBtn } = activeFeedbackUI;
+
+        // 1. Пълним Dislike иконата и я оцветяваме в червено
+        dislikeBtn.innerHTML = SVGs.dislikeFilled;
+        dislikeBtn.style.color = '#aaa';
+        dislikeBtn.style.opacity = '1';
+        dislikeBtn.disabled = true;
+        dislikeBtn.style.cursor = 'default';
+
+        // 2. Премахваме Like бутона завинаги
+        if (likeBtn) likeBtn.remove();
+
+        // Чистим паметта
+        activeFeedbackUI = null;
+    }
+
+    console.log("Feedback изпратен!");
+    feedbackModal.style.display = 'none';
+    feedbackForm.reset();
+    showToast('Благодарим за мнението!', '🙏');
+});
+
+// --- Помощна функция за създаване на бутон ---
+function createActionButton(svgContent, title, onClickHandler) {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn';
+    btn.innerHTML = svgContent;
+    btn.title = title;
+    btn.addEventListener('click', onClickHandler);
+    return btn;
+}
+
+// ==========================================
+// 8. EVENT LISTENERS
 // ==========================================
 
 sendBtn.addEventListener('click', sendMessage);
@@ -695,7 +903,7 @@ if (attachBtn && fileInput) {
 }
 
 // ==========================================
-// 7. TEXT-TO-SPEECH
+// 9. TEXT-TO-SPEECH
 // ==========================================
 
 let allVoices = [];
@@ -793,7 +1001,7 @@ themeToggleBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// 9. START
+// 10. START
 // ==========================================
 startNewChat();
 loadVoices();
