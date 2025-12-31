@@ -700,60 +700,51 @@ if (attachBtn && fileInput) {
 
 let allVoices = [];
 
-// Тази функция прави две неща: зарежда гласовете И ги показва в конзолата
+// Функция за зареждане и дебъгване
 function loadAndDebugVoices() {
     allVoices = window.speechSynthesis.getVoices();
-
-    // Ако масивът е празен, няма смисъл да логваме (Chrome прави това понякога при старт)
     if (allVoices.length === 0) return;
 
-    console.log(`🎤 Заредени са ${allVoices.length} гласа.`);
-
-    // Проверка дали имаме БГ глас
+    // Търсим нашия човек (Иван или Google BG)
     const bgVoice = allVoices.find(v => v.lang.includes('bg') || v.name.includes('Bulgarian') || v.name.includes('Ivan'));
 
     if (bgVoice) {
-        console.log(`✅ НАМЕРЕН БГ ГЛАС: ${bgVoice.name} (${bgVoice.lang})`);
-    } else {
-        console.warn("❌ НЯМА БГ ГЛАС! Windows ще ползва английския по подразбиране.");
-        console.log("Списък на наличните гласове:", allVoices.map(v => v.name));
+        console.log(`✅ ГОТОВ ЗА ГОВОРЕНЕ: ${bgVoice.name}`);
     }
 }
 
-// Слушаме за промени (Chrome зарежда гласовете асинхронно)
+// Слушаме за промени в гласовете
 window.speechSynthesis.onvoiceschanged = loadAndDebugVoices;
-
-// Опитваме се да ги заредим и веднага (за всеки случай)
 loadAndDebugVoices();
 
 function speakText(text) {
-    // 1. Спираме текущото говорене
+    // 1. Спираме старите приказки
     window.speechSynthesis.cancel();
 
-    // 2. Гаранция, че гласовете са заредени
+    // 2. Гаранция за зареждане
     if (allVoices.length === 0) {
         allVoices = window.speechSynthesis.getVoices();
     }
 
-    // 3. ТЪРСЕНЕ НА БЪЛГАРСКИ ГЛАС 🇧🇬
-    // Приоритет: 1. Google (най-добър), 2. Microsoft Ivan (стандартен за Windows), 3. Всеки с 'bg'
+    // 3. ТЪРСЕНЕ НА ГЛАСА (Приоритет: Google -> Ivan -> Който и да е BG)
     let selectedVoice = allVoices.find(voice => voice.name.includes("Google") && voice.lang.includes("bg"));
 
     if (!selectedVoice) {
         selectedVoice = allVoices.find(voice => voice.name.includes("Ivan")); // Microsoft Ivan
     }
     if (!selectedVoice) {
-        selectedVoice = allVoices.find(voice => voice.lang.includes("bg")); // Последен шанс
+        selectedVoice = allVoices.find(voice => voice.lang.includes("bg"));
     }
 
-    // 4. ПОЧИСТВАНЕ НА ТЕКСТА 🧹
+    // 4. ПОЧИСТВАНЕ (Clean up)
     const cleanText = text
-        .replace(/\*\*/g, '')       // Маха bold
-        .replace(/\*/g, '')         // Маха italic
-        .replace(/\#/g, '')         // Маха заглавия
-        .replace(/`/g, '')          // Маха code ticks
-        .replace(/\[.*?\]/g, '')    // Маха линкове
+        .replace(/\*\*/g, '')           // Маха bold
+        .replace(/\*/g, '')             // Маха italic
+        .replace(/\#/g, '')             // Маха заглавия
+        .replace(/`/g, '')              // Маха code ticks
+        .replace(/\[.*?\]/g, '')        // Маха линкове
         .replace(/https?:\/\/\S+/g, 'линк')
+        .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
         .replace(/```[\s\S]*?```/g, 'Ето примерен код в редактора.');
 
     // 5. ГОВОРЕНЕ
@@ -762,16 +753,14 @@ function speakText(text) {
     if (selectedVoice) {
         utterance.voice = selectedVoice;
         utterance.lang = 'bg-BG';
-        // console.log("🗣️ Говоря с глас:", selectedVoice.name);
     } else {
-        // Ако няма БГ глас, по-добре да не говори глупости на английски
-        console.warn("⚠️ Няма БГ глас, спирам говора, за да не звучи смешно.");
-        alert("За да чуеш гласа, трябва да инсталираш 'Bulgarian' от настройките на Windows -> Time & Language -> Speech.");
-        return; // Спираме функцията тук
+        alert("Грешка: Не намирам БГ глас. Увери се, че си рестартирал браузъра след инсталацията!");
+        return;
     }
 
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.volume = 0.65;
+    utterance.rate = 0.85;
+    utterance.pitch = 0.7;
 
     window.speechSynthesis.speak(utterance);
 }
