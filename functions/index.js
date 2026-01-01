@@ -35,50 +35,56 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
 exports.chat = onRequest({ cors: true }, async (req, res) => {
   try {
     const messages = req.body.messages || [];
+    const attachments = req.body.attachments || []; // <--- ВЕЧЕ Е МАСИВ (PLURAL)
 
-    // Google иска историята в малко по-различен формат
-    // Превръщаме формата на OpenAI (user/assistant) във формата на Google (user/model)
     const history = messages.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
     }));
 
-    // Взимаме последното съобщение (това, което питаш сега)
-    const lastMessage = history.pop();
-    const prompt = lastMessage.parts[0].text;
+    const lastMessageObj = history.pop();
+    const promptText = lastMessageObj.parts[0].text;
 
-    // Стартираме чат сесия с история и системни инструкции
+    // Подготвяме частите
+    const currentMessageParts = [{ text: promptText }];
+
+    // АКО ИМА ФАЙЛОВЕ -> ЗАВЪРТАМЕ ЦИКЪЛ И ГИ ДОБАВЯМЕ ВСИЧКИ 📂
+    if (attachments.length > 0) {
+      attachments.forEach(file => {
+        currentMessageParts.push({
+          inlineData: {
+            mimeType: file.mimeType,
+            data: file.base64
+          }
+        });
+      });
+    }
+
+    // Стартираме чата
     const chat = model.startChat({
       history: [
-        {
-          role: "user",
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Разбрано! Готов съм да помагам на ученика с JavaScript! 🚀" }]
-        },
-        ...history
+        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+        { role: "model", parts: [{ text: "Разбрано! Готов съм да помагам! 🚀" }] },
+        ...history // Старата история (без картинки, за икономия)
       ],
     });
 
-    // Пращаме въпроса
-    const result = await chat.sendMessage(prompt);
+    // Пращаме масива от части (Текст + Картинка)
+    const result = await chat.sendMessage(currentMessageParts);
     const response = await result.response;
-    const text = response.text();
 
-    res.json({ reply: text });
+    res.json({ reply: response.text() });
 
   } catch (error) {
-    console.error("Error with Gemini:", error);
-    res.status(500).json({ error: "Грешка в AI модула: " + error.message });
+    console.error("Error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
 exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
     const { message } = req.body;
-    
+
     // Директна инструкция към AI, без "учителски" промпт
     const prompt = `Summarize this text into a short title (max 5 words) in the same language. No quotes. Text: "${message}"`;
 

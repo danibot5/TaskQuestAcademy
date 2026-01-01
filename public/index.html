@@ -13,7 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
@@ -77,35 +78,38 @@
 
         <div class="input-wrapper">
             <div class="input-container">
-                <input type="file" id="file-input" style="display: none;" accept=".js,.txt,.html,.css,.json">
+                
+                <div id="attachment-preview-list" class="attachment-list" style="display: none;">
+                    </div>
 
-                <button id="attach-btn" class="icon-btn" title="Качи файл с код">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                </button>
+                <div class="input-controls-row">
+                    <input type="file" id="file-input" style="display: none;" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.js,.txt,.html,.css,.json">
 
-                <input type="text" id="user-input" placeholder="Питай ме нещо..." autocomplete="off">
+                    <button id="attach-btn" class="icon-btn" title="Качи файл">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
 
-                <button id="mic-btn" class="icon-btn" title="Говори">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </svg>
-                </button>
+                    <input type="text" id="user-input" placeholder="Питай ме нещо..." autocomplete="off">
 
-                <button id="send-btn" class="send-btn-primary" title="Изпрати">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="19" x2="12" y2="5"></line>
-                        <polyline points="5 12 12 5 19 12"></polyline>
-                    </svg>
-                </button>
+                    <button id="mic-btn" class="icon-btn" title="Говори">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+
+                    <button id="send-btn" class="send-btn-primary" title="Изпрати">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="19" x2="12" y2="5"></line>
+                            <polyline points="5 12 12 5 19 12"></polyline>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="disclaimer">ScriptSensei може да греши. Проверявай кода.</div>
         </div>
@@ -209,7 +213,7 @@
                 <textarea id="feedback-details" placeholder="Допълнителни детайли..." rows="3" disabled></textarea>
 
                 <button type="submit" id="submit-feedback" class="auth-btn" style="margin-top: 15px;" disabled>
-                Изпрати Feedback</button>
+                    Изпрати Feedback</button>
             </form>
         </div>
     </div>

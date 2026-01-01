@@ -26,6 +26,7 @@ const googleProvider = new GoogleAuthProvider();
 let currentUser = null;
 let currentChatId = null;
 let allChats = [];
+let currentAttachments = [];
 
 const chatHistory = document.getElementById('chat-history');
 const userInput = document.getElementById('user-input');
@@ -801,34 +802,90 @@ async function sendFeedbackReport(type, messageContent, reasons = [], details = 
 sendBtn.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
+// --- ФУНКЦИЯ ЗА РИСУВАНЕ НА ПРИКАЧЕНИТЕ ФАЙЛОВЕ ---
+function renderAttachments() {
+    const list = document.getElementById('attachment-preview-list');
+    
+    if (currentAttachments.length === 0) {
+        list.style.display = 'none';
+        return;
+    }
+
+    list.style.display = 'flex';
+    list.innerHTML = ''; // Чистим старото, за да нарисуваме актуалното състояние
+
+    currentAttachments.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'attachment-item';
+
+        // Проверка: Картинка ли е?
+        if (file.mimeType.startsWith('image/')) {
+            item.innerHTML = `
+                <img src="data:${file.mimeType};base64,${file.base64}">
+                <button class="remove-file-btn" onclick="removeAttachment(${index})">✕</button>
+            `;
+        } else {
+            // PDF или код
+            item.innerHTML = `
+                <div class="file-icon" title="${file.name}">📄</div>
+                <button class="remove-file-btn" onclick="removeAttachment(${index})">✕</button>
+            `;
+        }
+        list.appendChild(item);
+    });
+}
+
+// Глобална функция за триене (за да се вика от onclick в HTML-а горе)
+window.removeAttachment = (index) => {
+    currentAttachments.splice(index, 1); // Махаме от масива
+    renderAttachments(); // Прерисуваме
+};
+
 async function sendMessage() {
     const text = userInput.value;
-    if (text.trim() === "") return;
+
+    // Проверка: Има ли текст ИЛИ файлове?
+    if (text.trim() === "" && currentAttachments.length === 0) return;
 
     const isNewChat = !allChats.find(c => c.id === currentChatId) || (typeof currentChatId === 'number');
 
-    addMessageToUI(text, 'user');
-    await saveMessage(text, 'user'); // Тук чатът вече се създава в масива
+    // UI: Текст
+    if (text.trim() !== "") {
+        addMessageToUI(text, 'user');
+        await saveMessage(text, 'user');
+    }
+
+    // UI: Файлове (Показваме колко са пратени)
+    if (currentAttachments.length > 0) {
+        const fileNames = currentAttachments.map(f => f.name).join(', ');
+        addMessageToUI(`📎 <i>Изпратени файлове (${currentAttachments.length}): ${fileNames}</i>`, 'user');
+    }
+
     userInput.value = '';
 
-    // --- НОВА ЛОГИКА ЗА ЗАГЛАВИЕТО 🧠 ---
-    // Ако е нов чат, пускаме генератора на заглавия на заден план
-    if (isNewChat) {
-        // Изчакваме малко (1 сек), за да сме сигурни, че saveMessage е създал обекта
-        // и не блокираме UI-а
-        setTimeout(() => {
-            generateSmartTitle(currentChatId, text);
-        }, 500);
+    // Title Logic
+    if (isNewChat && text.trim() !== "") {
+        setTimeout(() => generateSmartTitle(currentChatId, text), 500);
     }
-    // -------------------------------------
 
-    // --- CONTEXT INJECTION (Надолу кодът си е същият) ---
+    // Context Logic
     const currentChat = allChats.find(c => c.id === currentChatId);
     let messagesPayload = [];
+    if (currentChat && currentChat.messages) {
+        messagesPayload = currentChat.messages.slice(-10).map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text
+        }));
+    }
 
+    // Подготовка на Payload
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
     let messageToSendToAI = text;
+
+    if (messageToSendToAI.trim() === "" && currentAttachments.length > 0) {
+        messageToSendToAI = "Разгледай прикачените файлове.";
+    }
 
     if (editorCode.trim().length > 0) {
         messageToSendToAI += `\n\n--- [SYSTEM CONTEXT] ---\nCODE:\n\`\`\`javascript\n${editorCode}\n\`\`\`\nCONSOLE:\n${consoleOutput}\n------------------------`;
@@ -838,11 +895,22 @@ async function sendMessage() {
 
     showLoading();
 
+    const requestBody = { messages: messagesPayload };
+
+    // 🔥 ПРИКАЧВАМЕ ВСИЧКИ ФАЙЛОВЕ
+    if (currentAttachments.length > 0) {
+        requestBody.attachments = currentAttachments; // Вече пращаме масива, а не единичен файл
+
+        // Чистим UI
+        currentAttachments = [];
+        renderAttachments();
+    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: messagesPayload })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -850,7 +918,7 @@ async function sendMessage() {
 
         if (data.reply) {
             addMessageToUI(data.reply, 'bot');
-            await saveMessage(data.reply, 'bot'); // Запазваме отговора
+            await saveMessage(data.reply, 'bot');
         } else if (data.error) {
             addMessageToUI("🚨 " + data.error, 'bot');
         }
@@ -946,23 +1014,35 @@ if (SpeechRecognition) {
 
 // --- КАЧВАНЕ НА ФАЙЛОВЕ ---
 if (attachBtn && fileInput) {
-    attachBtn.addEventListener('click', () => {
-        fileInput.click();
-    });
+    // Разрешаваме избирането на повече от 1 файл (multiple)
+    fileInput.multiple = true;
+
+    attachBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+        const files = Array.from(event.target.files); // Взимаме всички избрани
+        if (files.length === 0) return;
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            // Вмъкваме съдържанието в полето за писане
-            userInput.value = `Ето съдържанието на файла "${file.name}":\n\n${content}\n\nМоля, обясни кода.`;
-            userInput.focus();
-        };
-        reader.readAsText(file);
-        fileInput.value = ''; // Чистим, за да може да качим същия файл пак
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const base64String = e.target.result.split(',')[1];
+
+                // Добавяме в масива
+                currentAttachments.push({
+                    base64: base64String,
+                    mimeType: file.type,
+                    name: file.name
+                });
+
+                // Когато се зареди -> рисуваме
+                renderAttachments();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        fileInput.value = ''; // Ресет на инпута, за да може да качим същите пак
+        userInput.focus();
     });
 }
 
