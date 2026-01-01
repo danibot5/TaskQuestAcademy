@@ -439,28 +439,34 @@ function addMessageToUI(text, sender) {
         rowDiv.classList.add('user-row');
         const bubble = document.createElement('div');
         bubble.classList.add('user-bubble');
-        bubble.innerText = text;
+
+        // Ако текстът съдържа HTML тагове за прикачени файлове (от sendMessage), ги ползваме
+        if (text.includes('<i>Изпратен файл') || text.includes('<i>Изпратени файлове')) {
+            bubble.innerHTML = text;
+        } else {
+            bubble.innerText = text;
+        }
+
         rowDiv.appendChild(bubble);
 
     } else {
         // --- БОТ (ScriptSensei) ---
         rowDiv.classList.add('bot-row');
 
-        // 1. Аватар
         const avatarImg = document.createElement('img');
         avatarImg.src = 'bot-avatar.png';
         avatarImg.classList.add('avatar');
 
-        // 2. Контейнер
         const messageContainer = document.createElement('div');
         messageContainer.style.display = 'flex';
         messageContainer.style.flexDirection = 'column';
         messageContainer.style.maxWidth = '80%';
+        messageContainer.style.width = '100%'; // Важно за кода
 
-        // 3. Балонче с текст
         const textDiv = document.createElement('div');
         textDiv.classList.add('bot-text');
 
+        // 1. Рендираме Markdown (Текст -> HTML)
         if (typeof marked !== 'undefined') {
             textDiv.innerHTML = marked.parse(text);
             if (typeof hljs !== 'undefined') {
@@ -470,77 +476,148 @@ function addMessageToUI(text, sender) {
             textDiv.innerText = text;
         }
 
-        // Бутон за прехвърли в редактора
-        if (text.includes('```')) {
-            const codeMatch = text.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
-            if (codeMatch && codeMatch[1]) {
-                const cleanCode = codeMatch[1].trim();
-                const runCodeBtn = document.createElement('button');
-                runCodeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg> Прехвърли в редактора`;
-                runCodeBtn.className = "code-btn";
-                runCodeBtn.onclick = function () {
-                    editor.setValue(cleanCode);
-                    runCodeBtn.innerHTML = "✅ Готово!";
-                    setTimeout(() => runCodeBtn.innerHTML = "Прехвърли пак", 2000);
-                };
-                textDiv.appendChild(runCodeBtn);
-            }
-        }
+        // ============================================================
+        // 🔥 НОВА ЛОГИКА: БУТОНИ ПОД ВСЕКИ КОДОВ БЛОК 🔥
+        // ============================================================
 
-        // 4. Лента с действия
+        // Намираме всички блокове с код, които marked.js е създал
+        const codeBlocks = textDiv.querySelectorAll('pre');
+
+        codeBlocks.forEach((preBlock) => {
+            const codeElement = preBlock.querySelector('code');
+            if (!codeElement) return;
+
+            const codeText = codeElement.innerText; // Самият код
+
+            // Опитваме се да познаем езика от класа (напр. language-javascript)
+            let language = 'txt';
+            codeElement.classList.forEach(cls => {
+                if (cls.startsWith('language-')) {
+                    language = cls.replace('language-', '');
+                }
+            });
+
+            // Създаваме лентата с бутони
+            const toolbar = document.createElement('div');
+            toolbar.style.display = 'flex';
+            toolbar.style.gap = '10px';
+            toolbar.style.marginTop = '5px';
+            toolbar.style.marginBottom = '15px';
+            toolbar.style.justifyContent = 'flex-end';
+
+            // --- БУТОН 1: ПРЕХВЪРЛИ 🚀 ---
+            const runBtn = document.createElement('button');
+            runBtn.className = 'code-btn';
+            runBtn.classList.add('transfer-to-editor-btn');
+            runBtn.innerHTML = `Прехвърли в редактора`;
+            runBtn.title = "Сложи този код в редактора";
+            runBtn.onclick = () => {
+                editor.setValue(codeText);
+                runBtn.innerHTML = "✅ Готово!";
+                setTimeout(() => runBtn.innerHTML = "Прехвърли в редактора", 2500);
+            };
+
+            // --- БУТОН 2: ИЗТЕГЛИ 💾 ---
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'code-btn';
+            downloadBtn.classList.add('download-btn-style');
+            downloadBtn.style.color = 'white';
+
+            // Оправяме разширението за файла
+            let ext = language ? language.toLowerCase() : 'txt';
+            const extensionMap = {
+                'javascript': 'js',
+                'js': 'js',
+                'python': 'py',
+                'py': 'py',
+                'csharp': 'cs',
+                'cs': 'cs',
+                'cpp': 'cpp',
+                'c++': 'cpp',
+                'html': 'html',
+                'xml': 'html',
+                'css': 'css',
+                'json': 'json',
+                'markdown': 'md',
+                'md': 'md',
+                'java': 'java',
+                'php': 'php',
+                'ruby': 'rb',
+                'rb': 'rb',
+                'go': 'go',
+                'golang': 'go',
+                'typescript': 'ts',
+                'ts': 'ts',
+                'txt': 'txt',
+                'text': 'txt'
+            };
+
+            if (extensionMap[ext]) {
+                ext = extensionMap[ext];
+            } else if (ext.length > 5)
+                ext = 'txt';
+
+            downloadBtn.innerHTML = `Изтегли .${ext}`;
+
+            downloadBtn.onclick = () => {
+                const blob = new Blob([codeText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `solution_${Date.now()}.${ext}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                downloadBtn.innerHTML = "✅ Изтеглен!";
+                setTimeout(() => downloadBtn.innerHTML = `Изтегли .${ext}`, 2500);
+            };
+
+            // Добавяме бутоните в лентата
+            toolbar.appendChild(runBtn);
+            toolbar.appendChild(downloadBtn);
+
+            // Вмъкваме лентата ВЕДНАГА СЛЕД <pre> блока
+            preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
+        });
+
+        // ============================================================
+
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
 
         let likeBtn, dislikeBtn;
-
-        // A) Бутон ЗВУК 🔊
         const speakBtn = createActionButton(SVGs.speak, 'Прочети на глас', () => speakText(text));
-
-        // B) Бутон КОПИРАНЕ 📋
         const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
 
-        // C) Бутон LIKE 👍
         likeBtn = createActionButton(SVGs.like, 'Полезен отговор', () => {
             if (likeBtn.disabled) return;
             likeBtn.innerHTML = SVGs.likeFilled;
-            likeBtn.style.color = '#4caf50'; // Зелено
+            likeBtn.style.color = '#4caf50';
             likeBtn.style.opacity = '1';
-
             if (dislikeBtn) dislikeBtn.remove();
-
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
-
             sendFeedbackReport('like', text);
             showToast('Благодарим за оценката!', '👍');
         });
 
-        // D) Бутон DISLIKE 👎
         dislikeBtn = createActionButton(SVGs.dislike, 'Неполезен отговор', () => {
             if (dislikeBtn.disabled) return;
             openFeedbackModal(likeBtn, dislikeBtn);
         });
 
-        // =========================================================
-        // 🔥 ТУК Е ПРОМЯНАТА (СКРИВАНЕ НА ПАЛЦИТЕ ЗА ЗДРАВЕЙ) 🔥
-        // =========================================================
-
-        // Проверяваме дали съобщението започва с нашия поздрав
         const isWelcomeMessage = text.startsWith("Здравей! Аз съм твоят ментор");
 
-        // 1. Копирането е винаги налично
         actionsDiv.appendChild(copyBtn);
-
-        // 2. Слагаме палците САМО ако НЕ е "Здравей..."
         if (!isWelcomeMessage) {
             actionsDiv.appendChild(likeBtn);
             actionsDiv.appendChild(dislikeBtn);
         }
-
-        // 3. Звукът е винаги наличен
         actionsDiv.appendChild(speakBtn);
 
-        // 5. Сглобяване
         messageContainer.appendChild(textDiv);
         messageContainer.appendChild(actionsDiv);
 
@@ -805,7 +882,7 @@ userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessa
 // --- ФУНКЦИЯ ЗА РИСУВАНЕ НА ПРИКАЧЕНИТЕ ФАЙЛОВЕ ---
 function renderAttachments() {
     const list = document.getElementById('attachment-preview-list');
-    
+
     if (currentAttachments.length === 0) {
         list.style.display = 'none';
         return;

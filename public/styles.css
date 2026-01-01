@@ -116,12 +116,23 @@ body {
     max-width: 100%;
     margin-top: 10px;
     border: 1px solid #3a404e;
+    margin-bottom: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
 }
 
 .bot-text code {
     background-color: transparent !important;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.9em;
+}
+
+.code-toolbar {
+    background: #2d2d2d;
+    padding: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin-bottom: 20px;
 }
 
 /* --- ЗОНА ЗА ПИСАНЕ --- */
@@ -374,25 +385,37 @@ body {
     cursor: default;
 }
 
-/* Бутон "Прехвърли в редактора" */
 .code-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     background-color: #282c34;
     color: #fff;
-    border: 1px solid #3e4451;
+    border: none;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.code-btn:hover {
+.transfer-to-editor-btn {
+    border: 1px solid #3e4451;
+}
+
+.transfer-to-editor-btn:hover {
+    border-color: #4b5261;
     background-color: #323842;
-    transform: scale(1.03);
+}
+
+.download-btn-style {
+    background-color: #2196f3;
+}
+
+.download-btn-style:hover {
+    background-color: #1976d2;
 }
 
 .code-btn svg {
