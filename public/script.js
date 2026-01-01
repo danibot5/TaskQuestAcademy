@@ -513,6 +513,9 @@ function addMessageToUI(text, sender) {
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
 
+            // 4. ИЗПРАЩАМЕ ДОКЛАДА КЪМ FIREBASE 🚀
+            sendFeedbackReport('like', text);
+
             showToast('Благодарим за оценката!', '👍');
         });
 
@@ -699,19 +702,41 @@ window.addEventListener('click', (e) => {
 feedbackForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    // Ако имаме активни бутони (би трябвало винаги да имаме)
+    // Събираме данните от формата
+    const selectedReasons = [];
+    allCheckboxes.forEach(box => {
+        if (box.checked) {
+            // Взимаме текста на лейбъла, или стойността (value)
+            selectedReasons.push(box.value);
+        }
+    });
+    const detailsText = feedbackDetails.value;
+
+    // Ако имаме активни бутони
     if (activeFeedbackUI) {
         const { likeBtn, dislikeBtn } = activeFeedbackUI;
 
-        // 1. Пълним Dislike иконата и я оцветяваме в червено
+        // Взимаме текста на съобщението, за което се отнася
+        // (Намираме го като се качим нагоре по DOM дървото до bot-text)
+        // Трик: Тъй като activeFeedbackUI пази бутоните, можем да намерим текста до тях.
+        // Но по-лесно: Нека просто вземем последния bot-msg или да разчитаме, че е ясно.
+        // ПО-ДОБЪР ВАРИАНТ: Трябва да знаем текста.
+        // Най-лесно е да вземем текста от DOM-а спрямо бутона:
+        const messageContainer = dislikeBtn.closest('.message-row').querySelector('.bot-text');
+        const messageText = messageContainer ? messageContainer.innerText : "Текстът не е намерен";
+
+        // 1. Пълним Dislike иконата
         dislikeBtn.innerHTML = SVGs.dislikeFilled;
-        dislikeBtn.style.color = '#aaa';
+        dislikeBtn.style.color = '#f44336'; // Червено
         dislikeBtn.style.opacity = '1';
         dislikeBtn.disabled = true;
         dislikeBtn.style.cursor = 'default';
 
-        // 2. Премахваме Like бутона завинаги
+        // 2. Премахваме Like бутона
         if (likeBtn) likeBtn.remove();
+
+        // 3. ИЗПРАЩАМЕ ДОКЛАДА КЪМ FIREBASE 🚀
+        sendFeedbackReport('dislike', messageText, selectedReasons, detailsText);
 
         // Чистим паметта
         activeFeedbackUI = null;
@@ -734,7 +759,39 @@ function createActionButton(svgContent, title, onClickHandler) {
 }
 
 // ==========================================
-// 8. EVENT LISTENERS
+// 8. FEEDBACK TO FIREBASE
+// ==========================================
+async function sendFeedbackReport(type, messageContent, reasons = [], details = "") {
+    try {
+        // Събираме данните за доклада
+        const report = {
+            type: type, // 'like' или 'dislike'
+            message: messageContent, // Какво е казал бота
+            userEmail: currentUser ? currentUser.email : "Guest", // Кой го е казал
+            userId: currentUser ? currentUser.uid : "anonymous",
+            timestamp: Date.now(), // Кога
+            date: new Date().toLocaleString() // Човешка дата
+        };
+
+        // Ако е dislike, добавяме причините
+        if (type === 'dislike') {
+            report.reasons = reasons;
+            report.details = details;
+        }
+
+        // Пращаме го в нова колекция "feedback_logs"
+        // (Firestore автоматично ще я създаде, ако я няма!)
+        await addDoc(collection(db, "feedback_logs"), report);
+
+        console.log(`✅ Feedback (${type}) изпратен успешно!`);
+
+    } catch (error) {
+        console.error("Грешка при пращане на feedback:", error);
+    }
+}
+
+// ==========================================
+// 9. EVENT LISTENERS
 // ==========================================
 
 sendBtn.addEventListener('click', sendMessage);
@@ -901,7 +958,7 @@ if (attachBtn && fileInput) {
 }
 
 // ==========================================
-// 9. TEXT-TO-SPEECH
+// 10. TEXT-TO-SPEECH
 // ==========================================
 
 let allVoices = [];
@@ -972,7 +1029,7 @@ function speakText(text) {
 }
 
 // ==========================================
-// 10. DARK MODE    
+// 11. DARK MODE    
 // ==========================================
 const themeToggleBtn = document.getElementById('theme-toggle');
 const body = document.body;
@@ -1017,7 +1074,7 @@ themeToggleBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// 11. START
+// 12. START
 // ==========================================
 startNewChat();
 loadVoices();
