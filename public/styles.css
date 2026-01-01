@@ -1276,6 +1276,10 @@ body.dark-mode #close-sidebar {
     color: white;
 }
 
+body.dark-mode #close-sidebar:hover {
+    color: #ff2c2c;
+}
+
 body.dark-mode .chat-item {
     color: #ececf1;
 }
