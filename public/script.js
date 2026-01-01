@@ -468,6 +468,7 @@ function addMessageToUI(text, sender) {
             textDiv.innerText = text;
         }
 
+        // Бутон за прехвърли в редактора
         if (text.includes('```')) {
             const codeMatch = text.match(/```(?:javascript|js)?\s*([\s\S]*?)```/i);
             if (codeMatch && codeMatch[1]) {
@@ -484,10 +485,10 @@ function addMessageToUI(text, sender) {
             }
         }
 
+        // 4. Лента с действия
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
 
-        // Дефинираме променливите предварително, за да ги ползваме вътре в тях
         let likeBtn, dislikeBtn;
 
         // A) Бутон ЗВУК 🔊
@@ -496,43 +497,45 @@ function addMessageToUI(text, sender) {
         // B) Бутон КОПИРАНЕ 📋
         const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
 
-        // C) Бутон LIKE 👍 (Логика за еднократност)
+        // C) Бутон LIKE 👍
         likeBtn = createActionButton(SVGs.like, 'Полезен отговор', () => {
-            // Ако вече е натиснат или забранен -> спри
             if (likeBtn.disabled) return;
-
-            // 1. Променяме иконата на "Пълна" и цвета на Зелен
             likeBtn.innerHTML = SVGs.likeFilled;
-            likeBtn.style.color = '#aaa';
+            likeBtn.style.color = '#4caf50'; // Зелено
             likeBtn.style.opacity = '1';
 
-            // 2. Премахваме Dislike бутона (вече няма опция за dislike)
             if (dislikeBtn) dislikeBtn.remove();
 
-            // 3. Забраняваме повторно натискане на Like
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
 
-            // 4. ИЗПРАЩАМЕ ДОКЛАДА КЪМ FIREBASE 🚀
             sendFeedbackReport('like', text);
-
             showToast('Благодарим за оценката!', '👍');
         });
 
-        // D) Бутон DISLIKE 👎 (Логика за еднократност през Модала)
+        // D) Бутон DISLIKE 👎
         dislikeBtn = createActionButton(SVGs.dislike, 'Неполезен отговор', () => {
-            // Ако вече е натиснат -> спри
             if (dislikeBtn.disabled) return;
-
-            // Отваряме модала и му казваме: "Хей, това са бутоните, които трябва да промениш!"
             openFeedbackModal(likeBtn, dislikeBtn);
         });
 
-        // Добавяме ги в лентата
+        // =========================================================
+        // 🔥 ТУК Е ПРОМЯНАТА (СКРИВАНЕ НА ПАЛЦИТЕ ЗА ЗДРАВЕЙ) 🔥
+        // =========================================================
 
+        // Проверяваме дали съобщението започва с нашия поздрав
+        const isWelcomeMessage = text.startsWith("Здравей! Аз съм твоят ментор");
+
+        // 1. Копирането е винаги налично
         actionsDiv.appendChild(copyBtn);
-        actionsDiv.appendChild(likeBtn);
-        actionsDiv.appendChild(dislikeBtn);
+
+        // 2. Слагаме палците САМО ако НЕ е "Здравей..."
+        if (!isWelcomeMessage) {
+            actionsDiv.appendChild(likeBtn);
+            actionsDiv.appendChild(dislikeBtn);
+        }
+
+        // 3. Звукът е винаги наличен
         actionsDiv.appendChild(speakBtn);
 
         // 5. Сглобяване
