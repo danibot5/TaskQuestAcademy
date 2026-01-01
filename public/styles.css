@@ -389,9 +389,18 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 10px 5px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     font-weight: bold;
     color: #333;
+    font-size: 1rem;
+}
+
+.section-title {
+    padding: 5px 5px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 1rem;
 }
 
 #close-sidebar {
@@ -506,7 +515,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #ebebeb;
+    background: #e8f2ff;
     padding: 8px;
     border-radius: 20px;
     transition: all 0.3s ease;
@@ -1342,4 +1351,8 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 
 body.dark-mode ::-webkit-scrollbar-corner {
     background: #1e1e1e;
+}
+
+body.dark-mode .section-title {
+    color: white;
 }
