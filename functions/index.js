@@ -74,3 +74,22 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     res.status(500).json({ error: "Грешка в AI модула: " + error.message });
   }
 });
+
+exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    // Директна инструкция към AI, без "учителски" промпт
+    const prompt = `Summarize this text into a short title (max 5 words) in the same language. No quotes. Text: "${message}"`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const title = response.text().replace(/["']/g, "").trim();
+
+    res.json({ reply: title });
+
+  } catch (error) {
+    console.error("Title Error:", error);
+    res.json({ reply: "Нов разговор" });
+  }
+});

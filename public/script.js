@@ -50,8 +50,9 @@ const regModal = document.getElementById('register-modal');
 const loginModal = document.getElementById('login-modal');
 const closeModals = document.querySelectorAll('.close-modal');
 
-// Линк към Backend (Смени го, ако не е локален)
+
 const API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/chat';
+const TITLE_API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/generateTitle';
 
 // ==========================================
 // 3. AUTHENTICATION LOGIC (Вход/Изход)
@@ -804,21 +805,26 @@ async function sendMessage() {
     const text = userInput.value;
     if (text.trim() === "") return;
 
+    const isNewChat = !allChats.find(c => c.id === currentChatId) || (typeof currentChatId === 'number');
+
     addMessageToUI(text, 'user');
-    await saveMessage(text, 'user'); // Запазваме веднага
+    await saveMessage(text, 'user'); // Тук чатът вече се създава в масива
     userInput.value = '';
 
-    // --- CONTEXT INJECTION ---
+    // --- НОВА ЛОГИКА ЗА ЗАГЛАВИЕТО 🧠 ---
+    // Ако е нов чат, пускаме генератора на заглавия на заден план
+    if (isNewChat) {
+        // Изчакваме малко (1 сек), за да сме сигурни, че saveMessage е създал обекта
+        // и не блокираме UI-а
+        setTimeout(() => {
+            generateSmartTitle(currentChatId, text);
+        }, 500);
+    }
+    // -------------------------------------
+
+    // --- CONTEXT INJECTION (Надолу кодът си е същият) ---
     const currentChat = allChats.find(c => c.id === currentChatId);
     let messagesPayload = [];
-
-    if (currentChat) {
-        const recentMessages = currentChat.messages.slice(-10);
-        messagesPayload = recentMessages.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text
-        }));
-    }
 
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
@@ -1077,7 +1083,46 @@ themeToggleBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// 12. START
+// 12. SMART TITLE GENERATION
+// ==========================================
+async function generateSmartTitle(chatId, firstMessage) {
+    console.log("Generating smart title for:", firstMessage);
+
+    try {
+        // Пращаме заявка към новата ни специализирана функция
+        const response = await fetch(TITLE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: firstMessage }) // Пращаме само текста
+        });
+
+        const data = await response.json();
+
+        if (data.reply) {
+            let smartTitle = data.reply;
+
+            // Намираме чата и го обновяваме
+            const chat = allChats.find(c => c.id === chatId);
+            if (chat) {
+                chat.title = smartTitle;
+
+                // Запазваме новото яко заглавие
+                if (currentUser) {
+                    await saveToFirestore(chat);
+                } else {
+                    saveToLocalStorage();
+                }
+
+                renderSidebar();
+            }
+        }
+    } catch (error) {
+        console.error("Failed to generate title:", error);
+    }
+}
+
+// ==========================================
+// 13. START
 // ==========================================
 startNewChat();
 loadVoices();
