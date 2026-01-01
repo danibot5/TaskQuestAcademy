@@ -484,9 +484,6 @@ function addMessageToUI(text, sender) {
             }
         }
 
-        // =================================================================
-        // 4. ЛЕНТА С ДЕЙСТВИЯ (ЕДНОКРАТНО ГЛАСУВАНЕ) 🔒
-        // =================================================================
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
 
@@ -806,27 +803,27 @@ if (newChatBtn) newChatBtn.addEventListener('click', () => { startNewChat(); sid
 
 // Code Runner
 const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
-    mode: "javascript",       // Разбира JS
-    theme: "dracula",         // Тъмна тема (като на снимката ти)
-    lineNumbers: true,        // Номера на редовете
-    autoCloseBrackets: true,  // Автоматично затваря скоби () {}
-    lineWrapping: true,       // Пренася дългите редове
-    readOnly: false,        // <--- ГАРАНТИРАМЕ, ЧЕ МОЖЕ ДА СЕ ПИШЕ
+    mode: "javascript",
+    theme: "eclipse",
+    lineNumbers: true,
+    autoCloseBrackets: true,
+    lineWrapping: true,
+    readOnly: false,
     cursorBlinkRate: 530,
 });
 
-// --- ОБНОВЕН БУТОН ЗА ИЗПЪЛНЕНИЕ ---
+// 2. Логика на бутона "Изпълни"
 document.getElementById('run-btn').addEventListener('click', () => {
-    // ВАЖНО: Взимаме кода от editor, а не от textarea
     const userCode = editor.getValue();
-
     const outputBox = document.getElementById('console-output');
+
+    // Ресет на конзолата
     outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
 
     try {
         const originalLog = console.log;
+        // Пренасочваме console.log към нашето прозорче
         console.log = (msg) => {
-            // Ако е обект, го правим на текст, за да се чете
             if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
             outputBox.innerHTML += `<div>> ${msg}</div>`;
             originalLog(msg);
@@ -835,6 +832,7 @@ document.getElementById('run-btn').addEventListener('click', () => {
         // Изпълняваме кода
         new Function(userCode)();
 
+        // Връщаме старата конзола
         console.log = originalLog;
     } catch (e) {
         outputBox.innerHTML += `<div style="color:#ff4444;">🚨 ${e.message}</div>`;
@@ -974,34 +972,52 @@ function speakText(text) {
 }
 
 // ==========================================
-// 8. DARK MODE
+// 10. DARK MODE    
 // ==========================================
 const themeToggleBtn = document.getElementById('theme-toggle');
 const body = document.body;
 
-// Проверка: Имали ли сме запазена тема преди?
-const savedTheme = localStorage.getItem('scriptsensei_theme');
-if (savedTheme === 'dark') {
-    body.classList.add('dark-mode');
-    themeToggleBtn.innerText = '☀️'; // Сменяме иконката на слънце
+// ФУНКЦИЯ-ДИРИГЕНТ: Тя управлява всичко наведнъж
+function applyTheme(themeName) {
+    if (themeName === 'dark') {
+        // 1. Включваме тъмния CSS за сайта (Sidebar, Chat, Console стават тъмни от CSS-а)
+        body.classList.add('dark-mode');
+        themeToggleBtn.innerText = '☀️';
+
+        // 2. Ключовият момент: Казваме на CodeMirror да си сложи вампирското наметало
+        editor.setOption("theme", "dracula");
+    } else {
+        // 1. Изключваме тъмния CSS (връщаме се към Light CSS)
+        body.classList.remove('dark-mode');
+        themeToggleBtn.innerText = '🌙';
+
+        // 2. Връщаме светлата тема на редактора
+        editor.setOption("theme", "eclipse");
+    }
+
+    // 3. Запомняме избора
+    localStorage.setItem('scriptsensei_theme', themeName);
 }
 
-themeToggleBtn.addEventListener('click', () => {
-    // Превключваме класа
-    body.classList.toggle('dark-mode');
+// ПРОВЕРКА ПРИ ЗАРЕЖДАНЕ (Initial Check)
+const savedTheme = localStorage.getItem('scriptsensei_theme');
+if (savedTheme === 'dark') {
+    applyTheme('dark');
+} else {
+    applyTheme('light');
+}
 
-    // Проверяваме дали сме в тъмен режим и запазваме избора
+// СЛУШАТЕЛ НА БУТОНА
+themeToggleBtn.addEventListener('click', () => {
     if (body.classList.contains('dark-mode')) {
-        localStorage.setItem('scriptsensei_theme', 'dark');
-        themeToggleBtn.innerText = '☀️';
+        applyTheme('light');
     } else {
-        localStorage.setItem('scriptsensei_theme', 'light');
-        themeToggleBtn.innerText = '🌙';
+        applyTheme('dark');
     }
 });
 
 // ==========================================
-// 10. START
+// 11. START
 // ==========================================
 startNewChat();
 loadVoices();

@@ -75,7 +75,7 @@ body {
 
 /* БАЛОНЧЕ ЗА БОТА + FIX ЗА КОДА */
 .bot-text {
-    background-color: #ebebeb;
+    background-color: rgb(241, 241, 241);
     padding: 0 18px;
     padding-bottom: 10px;
     margin-left: 5px;
@@ -213,20 +213,20 @@ body {
 /* --- ДЕСЕН ПАНЕЛ (EDITOR) --- */
 .code-panel {
     flex: 6;
-    background-color: #1e1e1e;
+    background-color: white;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid #333;
+    border-left: 1px solid #ddd;
 }
 
 .editor-header {
-    background-color: #252526;
-    color: #ccc;
+    background-color: #f3f3f3;
+    color: #333;
     padding: 10px 20px;
     font-size: 0.9rem;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #ddd;
 }
 
 .status-dot {
@@ -251,9 +251,9 @@ body {
 }
 
 .controls {
-    background-color: #252526;
+    background-color: #f3f3f3;
     padding: 10px 20px;
-    border-top: 1px solid #333;
+    border-top: 1px solid #ddd;
     display: flex;
     justify-content: flex-end;
 }
@@ -275,11 +275,11 @@ body {
 .console {
     height: 250px;
     flex-shrink: 0;
-    background-color: #0f0f0f;
-    color: #00dd00;
+    background-color: #fafafa;
+    color: #333;
     padding: 15px 20px;
     font-family: monospace;
-    border-top: 1px solid #333;
+    border-top: 1px solid #ddd;
     overflow-y: auto;
 }
 
@@ -341,8 +341,9 @@ body {
     position: relative;
     width: 0;
     height: 100vh;
-    background-color: #202123;
-    color: white;
+    background-color: #f7f7f8;
+    color: #333;
+    border-right: 1px solid #e5e5e5;
     overflow: hidden;
     transition: width 0.3s ease;
     display: flex;
@@ -371,12 +372,13 @@ body {
     padding: 10px 5px;
     margin-bottom: 10px;
     font-weight: bold;
+    color: #333;
 }
 
 #close-sidebar {
     background: none;
     border: none;
-    color: #ffffff;
+    color: #555;
     cursor: pointer;
     font-weight: bold;
     font-size: 1.1rem;
@@ -399,7 +401,7 @@ body {
     border-radius: 15px;
     cursor: pointer;
     margin-bottom: 5px;
-    color: #ececf1;
+    color: #333;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -407,11 +409,11 @@ body {
 }
 
 .chat-item:hover {
-    background-color: #2a2b32;
+    background-color: #ececf1;
 }
 
 .chat-item.active {
-    background-color: #343541;
+    background-color: #ebebeb;
     border-left: 3px solid #1a73e8;
 }
 
@@ -439,7 +441,7 @@ body {
 
 #new-chat-btn {
     background-color: #28a745;
-    border: 1px solid #444;
+    border: none;
     color: white;
     padding: 10px;
     border-radius: 15px;
@@ -485,9 +487,10 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #2A2B32;
+    background: #ebebeb;
     padding: 8px;
-    border-radius: 15px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
 }
 
 .user-avatar-img {
@@ -504,7 +507,7 @@ body {
 #user-name {
     font-size: 0.85rem;
     font-weight: bold;
-    color: white;
+    color: #4f4f4f;
     max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -513,7 +516,7 @@ body {
 .logout-link {
     background: none;
     border: none;
-    color: #aaa;
+    color: #9d9d9d;
     font-size: 0.75rem;
     cursor: pointer;
     text-align: left;
@@ -733,7 +736,7 @@ body {
 
 .user-email-text {
     font-size: 0.75rem;
-    color: #aaa;
+    color: #9d9d9d;
     margin-bottom: 5px;
     word-break: break-all;
 }
@@ -853,10 +856,10 @@ body {
     cursor: default;
     transform: none;
     box-shadow: none;
-    opacity: 1;     
+    opacity: 1;
 }
 
-body.dark-mode .action-btn:disabled, 
+body.dark-mode .action-btn:disabled,
 .action-btn:disabled:hover {
     background-color: transparent !important;
 }
@@ -1061,8 +1064,8 @@ body.dark-mode #feedback-details {
     width: 100%;
     font-size: 16px;
     font-family: 'Consolas', 'Monaco', monospace;
-    background-color: #1e1e1e !important;
-    color: #f8f8f2 !important;
+    background-color: #ffffff !important;
+    color: #333333 !important;
     z-index: 1;
 }
 
@@ -1073,12 +1076,6 @@ body.dark-mode #feedback-details {
 
 .CodeMirror-gutters {
     padding-right: 3.5px !important;
-}
-
-.code-panel {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
 }
 
 .cm-s-dracula.CodeMirror,
@@ -1129,10 +1126,6 @@ body.dark-mode #feedback-details {
 
 
 /* --- DARK MODE --- */
-body.dark-mode .user-email-text {
-    color: #888;
-}
-
 body.dark-mode {
     background-color: #1e1e1e;
 }
@@ -1248,4 +1241,64 @@ body.dark-mode a {
 
 body.dark-mode a:hover {
     color: #92caff !important;
+}
+
+body.dark-mode .sidebar {
+    background-color: #202123;
+    color: white;
+    border-right: 1px solid #333;
+}
+
+body.dark-mode .sidebar-header {
+    color: white;
+}
+
+body.dark-mode #close-sidebar {
+    color: white;
+}
+
+body.dark-mode .chat-item {
+    color: #ececf1;
+}
+
+body.dark-mode .chat-item:hover {
+    background-color: #2a2b32;
+}
+
+body.dark-mode .chat-item.active {
+    background-color: #343541;
+}
+
+body.dark-mode .code-panel {
+    background-color: #1e1e1e;
+    border-left: 1px solid #333;
+}
+
+body.dark-mode .editor-header,
+body.dark-mode .controls {
+    background-color: #252526;
+    color: #ccc;
+    border-color: #333;
+}
+
+body.dark-mode .console {
+    background-color: #0f0f0f;
+    color: #00dd00;
+    border-top: 1px solid #333;
+}
+
+body.dark-mode .CodeMirror {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .user-info {
+    background: #2A2B32;
+}
+
+body.dark-mode #user-name {
+    color: white;
+}
+
+body.dark-mode .user-email-text {
+    color: #aaa;
 }
