@@ -476,7 +476,15 @@ body {
     margin-bottom: 5px;
     font-weight: bold;
     color: #333;
-    font-size: 1rem;
+    font-size: 1.2rem;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+    margin-bottom: 5px;
 }
 
 .section-title {
@@ -484,7 +492,54 @@ body {
     font-weight: bold;
     color: #333;
     margin-bottom: 5px;
-    font-size: 1rem;
+    font-size: 1.05rem;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-radius: 20px;
+    padding: 2px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.search-wrapper.active {
+    background: rgba(0,0,0,0.05);
+    padding-left: 10px;
+}
+
+#search-input {
+    width: 0;
+    opacity: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.8rem;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: inherit;
+}
+
+.search-wrapper.active #search-input {
+    width: 95px;
+    opacity: 1;
+}
+
+#search-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #5d5d5d;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+#search-toggle-btn:hover {
+    color: black;
 }
 
 #close-sidebar {
@@ -540,7 +595,7 @@ body {
 .delete-btn {
     background: none;
     border: none;
-    color: #666;
+    color: #8b8b8b;
     cursor: pointer;
     padding: 2px;
     transition: all 0.3s ease;
@@ -1448,4 +1503,16 @@ body.dark-mode .attachment-list {
 body.dark-mode .attachment-item {
     border-color: #444;
     background: #333;
+}
+
+body.dark-mode .search-wrapper.active {
+    background: rgba(255,255,255,0.1);
+}
+
+body.dark-mode #search-toggle-btn {
+    color: #c1c1c1;
+}
+
+body.dark-mode #search-toggle-btn:hover {
+    color: white;
 }

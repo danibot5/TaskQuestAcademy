@@ -377,7 +377,7 @@ function renderSidebar() {
 
     // Сортираме (ако сме Guest, защото Firestore ги връща сортирани)
     if (!currentUser) {
-        // allChats.sort((a, b) => b.id - a.id); 
+        allChats.sort((a, b) => b.id - a.id);
     }
 
     allChats.forEach(chat => {
@@ -424,6 +424,11 @@ function renderSidebar() {
         div.appendChild(delBtn);
         chatList.appendChild(div);
     });
+
+    const searchInputRef = document.getElementById('search-input');
+    if (searchInputRef && searchInputRef.value.trim() !== "") {
+        filterChats(searchInputRef.value.toLowerCase());
+    }
 }
 
 // ==========================================
@@ -1288,7 +1293,65 @@ async function generateSmartTitle(chatId, firstMessage) {
 }
 
 // ==========================================
-// 13. START
+// 13. SEARCH FUNCTIONALITY
+// ==========================================
+const searchWrapper = document.getElementById('search-wrapper');
+const searchInput = document.getElementById('search-input');
+const searchToggleBtn = document.getElementById('search-toggle-btn');
+
+function closeSearch() {
+    searchWrapper.classList.remove('active');
+    searchInput.value = '';
+    filterChats('');
+}
+
+if (searchWrapper && searchToggleBtn) {
+
+    searchToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        if (searchWrapper.classList.contains('active')) {
+            closeSearch();
+        } else {
+            searchWrapper.classList.add('active');
+            searchInput.focus();
+        }
+    });
+
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        filterChats(searchTerm);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!searchWrapper.classList.contains('active')) return;
+
+        // Проверяваме какво е натиснато:
+        const isClickInsideSearch = searchWrapper.contains(e.target);
+        const isClickOnChat = e.target.closest('.chat-item'); // Магията!
+
+        if (!isClickInsideSearch && !isClickOnChat) {
+            closeSearch();
+        }
+    });
+}
+
+function filterChats(term) {
+    const chatItems = document.querySelectorAll('.chat-item');
+    chatItems.forEach(item => {
+        const titleSpan = item.querySelector('.chat-title');
+        const titleText = titleSpan ? titleSpan.innerText.toLowerCase() : "";
+
+        if (titleText.includes(term)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// ==========================================
+// 14. START
 // ==========================================
 startNewChat();
 loadVoices();
