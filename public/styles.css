@@ -592,18 +592,85 @@ body {
     margin-right: 5px;
 }
 
-.delete-btn {
+.chat-options-btn {
     background: none;
     border: none;
     color: #8b8b8b;
     cursor: pointer;
-    padding: 2px;
-    transition: all 0.3s ease;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0; /* Скрито по подразбиране */
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.delete-btn:hover {
-    color: #ff2c2c;
-    transform: scale(1.08);
+.chat-item:hover .chat-options-btn,
+.chat-options-btn.active {
+    opacity: 1;
+}
+
+.chat-options-btn:hover {
+    color: #333;
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* --- DROPDOWN MENU (Падащото меню) --- */
+.chat-menu-dropdown {
+    position: absolute;
+    right: 5px;
+    top: 35px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    padding: 5px;
+    z-index: 100;
+    min-width: 140px;
+    display: none;
+    flex-direction: column;
+    border: 1px solid #eee;
+    animation: fadeIn 0.15s ease;
+}
+
+.chat-menu-dropdown.show {
+    display: flex;
+}
+
+.menu-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #444;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.menu-option:hover {
+    background-color: #efefef;
+}
+
+.menu-option.delete-opt {
+    color: #ff4444;
+}
+
+.menu-option.delete-opt:hover {
+    background-color: #fff0f0;
+}
+
+/* Иконка за закачен чат (отпред на заглавието) */
+.pinned-icon {
+    font-size: 0.8rem;
+    margin-right: 6px;
+    color: #1a73e8; /* Google Blue */
+    transform: rotate(45deg); /* За да изглежда по-яко */
 }
 
 #new-chat-btn {
@@ -1515,4 +1582,27 @@ body.dark-mode #search-toggle-btn {
 
 body.dark-mode #search-toggle-btn:hover {
     color: white;
+}
+
+body.dark-mode .chat-options-btn:hover {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+}
+
+body.dark-mode .chat-menu-dropdown {
+    background: #252526;
+    border-color: #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .menu-option {
+    color: #ddd;
+}
+
+body.dark-mode .menu-option:hover {
+    background-color: #333;
+}
+
+body.dark-mode .menu-option.delete-opt:hover {
+    background-color: #3e2a2a;
 }

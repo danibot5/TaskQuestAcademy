@@ -372,64 +372,149 @@ function loadChat(id) {
     if (window.innerWidth < 800) sidebar.classList.remove('open');
 }
 
+async function updateChatData(chat) {
+    if (currentUser) {
+        try {
+            const chatRef = doc(db, "chats", chat.id);
+            await updateDoc(chatRef, {
+                title: chat.title,
+                isPinned: chat.isPinned || false
+            });
+        } catch (e) {
+            console.error("Error updating chat:", e);
+        }
+    } else {
+        saveToLocalStorage();
+    }
+}
+
 function renderSidebar() {
     chatList.innerHTML = '';
 
-    // Сортираме (ако сме Guest, защото Firestore ги връща сортирани)
-    if (!currentUser) {
-        allChats.sort((a, b) => b.id - a.id);
-    }
+    allChats.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+
+        const dateA = a.createdAt || a.id;
+        const dateB = b.createdAt || b.id;
+        return dateB - dateA;
+    });
 
     allChats.forEach(chat => {
         const div = document.createElement('div');
         div.classList.add('chat-item');
+        div.style.position = 'relative';
         if (chat.id === currentChatId) div.classList.add('active');
 
-        // Клик върху чата
-        div.addEventListener('click', () => loadChat(chat.id));
+        div.addEventListener('click', (e) => {
+            if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
+            loadChat(chat.id);
+        });
 
+        // --- ЗАГЛАВИЕ ---
         const titleSpan = document.createElement('span');
         titleSpan.classList.add('chat-title');
-        titleSpan.innerText = chat.title || "Нов разговор";
 
-        const delBtn = document.createElement('button');
-        delBtn.classList.add('delete-btn');
-        delBtn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-        `;
+        // Добавяме иконка, ако е Pinned 📌
+        let pinIconHTML = chat.isPinned ? `<span class="pinned-icon" style="color: #abababff; margin-right: 7.5px; margin-top: 5px;">${SVGs.pin}</span>` : '';
+        titleSpan.innerHTML = pinIconHTML + (chat.title || "Нов разговор");
 
-        // Клик върху кошчето
-        delBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!confirm("Искаш ли да изтриеш този чат?")) return;
 
-            // Локално изтриване
+        // --- БУТОН С ТРИ ТОЧКИ (MENU) ---
+        const optionsBtn = document.createElement('button');
+        optionsBtn.className = 'chat-options-btn';
+        optionsBtn.innerHTML = SVGs.moreVertical;
+
+        // --- ПАДАЩО МЕНЮ ---
+        const menuDropdown = document.createElement('div');
+        menuDropdown.className = 'chat-menu-dropdown';
+
+        // Опция 1: RENAME ✏️
+        const renameOpt = document.createElement('button');
+        renameOpt.className = 'menu-option';
+        renameOpt.innerHTML = `${SVGs.edit} Преименувай`;
+        renameOpt.onclick = async () => {
+            const newTitle = prompt("Ново име на чата:", chat.title);
+            if (newTitle && newTitle.trim() !== "") {
+                chat.title = newTitle.trim();
+                await updateChatData(chat); // Запазваме промяната
+                renderSidebar();
+            }
+        };
+
+        // Опция 2: PIN / UNPIN 📌
+        const pinOpt = document.createElement('button');
+        pinOpt.className = 'menu-option';
+        const isPinned = chat.isPinned;
+        pinOpt.innerHTML = isPinned ? `${SVGs.pin} Откачи` : `${SVGs.pin} Закачи`;
+        // Лека визуална разлика, ако е закачен
+        if (isPinned) pinOpt.style.color = '#1a73e8';
+
+        pinOpt.onclick = async () => {
+            chat.isPinned = !chat.isPinned; // Обръщаме стойността (true <-> false)
+            await updateChatData(chat); // Запазваме
+            renderSidebar(); // Пренареждаме
+        };
+
+        // Опция 3: DELETE 🗑️
+        const deleteOpt = document.createElement('button');
+        deleteOpt.className = 'menu-option delete-opt';
+        deleteOpt.innerHTML = `${SVGs.trash} Изтрий`;
+        deleteOpt.onclick = async () => {
+            if (!confirm("Сигурен ли си, че искаш да изтриеш този чат?")) return;
+
+            // Локално триене
             allChats = allChats.filter(c => c.id !== chat.id);
 
-            // Cloud/Storage изтриване
-            if (currentUser) {
-                await deleteFromFirestore(chat.id);
-            } else {
-                saveToLocalStorage();
-            }
+            // DB триене
+            if (currentUser) await deleteFromFirestore(chat.id);
+            else saveToLocalStorage();
 
             if (chat.id === currentChatId) startNewChat();
             else renderSidebar();
-        });
+        };
+
+        // Сглобяване на менюто
+        menuDropdown.appendChild(renameOpt);
+        menuDropdown.appendChild(pinOpt);
+        menuDropdown.appendChild(deleteOpt);
+
+        // Логика за отваряне на менюто
+        optionsBtn.onclick = (e) => {
+            e.stopPropagation(); // Спира клика да не стигне до чата
+
+            // Затваряме всички други отворени менюта първо
+            document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => {
+                if (el !== menuDropdown) el.classList.remove('show');
+            });
+            document.querySelectorAll('.chat-options-btn.active').forEach(el => {
+                if (el !== optionsBtn) el.classList.remove('active');
+            });
+
+            // Отваряме/Затваряме текущото
+            menuDropdown.classList.toggle('show');
+            optionsBtn.classList.toggle('active');
+        };
 
         div.appendChild(titleSpan);
-        div.appendChild(delBtn);
+        div.appendChild(optionsBtn);
+        div.appendChild(menuDropdown);
         chatList.appendChild(div);
     });
 
+    // Запазване на Search филтъра (Memory Fix)
     const searchInputRef = document.getElementById('search-input');
     if (searchInputRef && searchInputRef.value.trim() !== "") {
         filterChats(searchInputRef.value.toLowerCase());
     }
 }
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.chat-options-btn')) {
+        document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => el.classList.remove('show'));
+        document.querySelectorAll('.chat-options-btn.active').forEach(el => el.classList.remove('active'));
+    }
+});
 
 // ==========================================
 // 6. UI HELPERS (Непроменени)
@@ -673,7 +758,13 @@ const SVGs = {
 
     // DISLIKE (Outline & Filled)
     dislike: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>`,
-    dislikeFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>`
+    dislikeFilled: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>`,
+
+    // ИКОНИ ЗА МЕНЮТО
+    moreVertical: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>`,
+    edit: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+    pin: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`,
+    trash: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
 };
 
 // --- 1. Функция за показване на TOAST съобщение ---
