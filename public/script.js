@@ -1050,6 +1050,15 @@ document.getElementById('run-btn').addEventListener('click', () => {
     }
 });
 
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F5') {
+        e.preventDefault();
+        document.getElementById('run-btn').click();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        document.getElementById('run-btn').click();
+    }
+});
+
 const micBtn = document.getElementById('mic-btn');
 const attachBtn = document.getElementById('attach-btn');
 const fileInput = document.getElementById('file-input');
