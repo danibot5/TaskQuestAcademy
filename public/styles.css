@@ -233,9 +233,25 @@ body {
     flex: 1;
     background: transparent;
     border: none;
-    padding: 10px;
+    padding: 5px;
     font-size: 1rem;
     outline: none;
+    font-family: 'Segoe UI', sans-serif;
+    resize: none;
+    overflow-y: hidden;
+    min-height: 24px;
+    max-height: 200px;
+    line-height: 1.5;
+    color: inherit;
+}
+
+#user-input::-webkit-scrollbar {
+    width: 6px;
+}
+
+#user-input::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
 }
 
 .icon-btn,
@@ -507,7 +523,7 @@ body {
 
 .search-wrapper.active {
     background: rgba(0,0,0,0.05);
-    padding-left: 10px;
+    padding-left: 7.5px;
 }
 
 #search-input {
@@ -535,11 +551,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
+    transition: all 0.25s ease;
 }
 
 #search-toggle-btn:hover {
     color: black;
+}
+
+.search-wrapper.active #search-toggle-btn {
+    transform: translateX(15px);
 }
 
 #close-sidebar {

@@ -986,7 +986,26 @@ async function sendFeedbackReport(type, messageContent, reasons = [], details = 
 // ==========================================
 
 sendBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+if (userInput) {
+    // 1. Автоматично разтягане при писане
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto'; // Ресетваме, за да може да се смали, ако трием
+        this.style.height = (this.scrollHeight) + 'px'; // Слагаме височина според съдържанието
+        
+        // Ако е празно, връщаме на 1 ред (визуално)
+        if (this.value === '') {
+            this.style.height = ''; 
+        }
+    });
+
+    // 2. Слушане за Enter (Изпращане) vs Shift+Enter (Нов ред)
+    userInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // Спираме новия ред
+            sendMessage();
+        }
+    });
+}
 
 // --- ФУНКЦИЯ ЗА РИСУВАНЕ НА ПРИКАЧЕНИТЕ ФАЙЛОВЕ ---
 function renderAttachments() {
@@ -1048,6 +1067,7 @@ async function sendMessage() {
     }
 
     userInput.value = '';
+    userInput.style.height = 'auto';
 
     // Title Logic
     if (isNewChat && text.trim() !== "") {
