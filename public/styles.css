@@ -95,11 +95,11 @@ body {
 /* БАЛОНЧЕ ЗА БОТА + FIX ЗА КОДА */
 .bot-text {
     background-color: rgb(241, 241, 241);
-    padding: 0 18px;
-    padding-bottom: 10px;
-    margin-left: 5px;
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: 0;
     border-radius: 0 18px 18px 18px;
-    line-height: 1.6;
+    line-height: 1.5;
     max-width: 90%;
     min-width: 0;
     overflow: hidden;
@@ -157,7 +157,7 @@ body {
     display: flex;
     border: 1px solid rgb(214, 214, 214);
     gap: 8px;
-    flex-direction: column !important; 
+    flex-direction: column !important;
     align-items: stretch !important;
     padding: 10px !important;
     transition: all 0.3s ease;
@@ -181,7 +181,7 @@ body {
     flex-wrap: wrap;
     gap: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .attachment-item {
@@ -238,19 +238,32 @@ body {
     outline: none;
     font-family: 'Segoe UI', sans-serif;
     resize: none;
-    overflow-y: hidden;
     min-height: 24px;
     max-height: 200px;
     line-height: 1.5;
     color: inherit;
+    box-sizing: border-box;
+    overflow-y: hidden;
 }
 
 #user-input::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 #user-input::-webkit-scrollbar-thumb {
-    background-color: #ccc;
+    background-color: #888;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+#user-input::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+    cursor: default;
+}
+
+#user-input::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 4px;
 }
 
@@ -522,7 +535,7 @@ body {
 }
 
 .search-wrapper.active {
-    background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
     padding-left: 7.5px;
 }
 
@@ -633,7 +646,7 @@ body {
 
 .chat-options-btn:hover {
     color: #333;
-    background-color: rgba(0,0,0,0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* --- DROPDOWN MENU (Падащото меню) --- */
@@ -643,7 +656,7 @@ body {
     top: 35px;
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     padding: 5px;
     z-index: 100;
     min-width: 140px;
@@ -689,8 +702,10 @@ body {
 .pinned-icon {
     font-size: 0.8rem;
     margin-right: 6px;
-    color: #1a73e8; /* Google Blue */
-    transform: rotate(45deg); /* За да изглежда по-яко */
+    color: #1a73e8;
+    /* Google Blue */
+    transform: rotate(45deg);
+    /* За да изглежда по-яко */
 }
 
 #new-chat-btn {
@@ -701,13 +716,12 @@ body {
     border-radius: 15px;
     cursor: pointer;
     margin-top: auto;
-    font-weight: bold;
+    font-weight: 600;
     transition: all 0.3s ease;
 }
 
 #new-chat-btn:hover {
     background-color: #218838;
-    transform: scale(1.02);
 }
 
 /* User Styles */
@@ -1584,7 +1598,7 @@ body.dark-mode .section-title {
 }
 
 body.dark-mode .attachment-list {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .attachment-item {
@@ -1593,7 +1607,7 @@ body.dark-mode .attachment-item {
 }
 
 body.dark-mode .search-wrapper.active {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode #search-toggle-btn {
@@ -1606,13 +1620,13 @@ body.dark-mode #search-toggle-btn:hover {
 
 body.dark-mode .chat-options-btn:hover {
     color: #fff;
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .chat-menu-dropdown {
     background: #252526;
     border-color: #333;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .menu-option {

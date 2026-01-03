@@ -988,18 +988,30 @@ async function sendFeedbackReport(type, messageContent, reasons = [], details = 
 sendBtn.addEventListener('click', sendMessage);
 if (userInput) {
     // 1. Автоматично разтягане при писане
-    userInput.addEventListener('input', function() {
-        this.style.height = 'auto'; // Ресетваме, за да може да се смали, ако трием
-        this.style.height = (this.scrollHeight) + 'px'; // Слагаме височина според съдържанието
-        
-        // Ако е празно, връщаме на 1 ред (визуално)
+    userInput.addEventListener('input', function () {
+        // Ресетваме височината, за да измерим правилно при триене
+        this.style.height = 'auto';
+
+        // Задаваме височината колкото е текста (дори да е 500px)
+        // CSS max-height: 200px ще го отреже визуално
+        this.style.height = (this.scrollHeight) + 'px';
+
+        // Ако съдържанието е по-високо от 200px -> пускаме скрола
+        if (this.scrollHeight > 200) {
+            this.style.overflowY = 'auto';
+        } else {
+            this.style.overflowY = 'hidden';
+        }
+
+        // Ако е празно
         if (this.value === '') {
-            this.style.height = ''; 
+            this.style.height = '';
+            this.style.overflowY = 'hidden';
         }
     });
 
     // 2. Слушане за Enter (Изпращане) vs Shift+Enter (Нов ред)
-    userInput.addEventListener('keydown', function(e) {
+    userInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault(); // Спираме новия ред
             sendMessage();
@@ -1068,6 +1080,7 @@ async function sendMessage() {
 
     userInput.value = '';
     userInput.style.height = 'auto';
+    userInput.style.overflowY = 'hidden';
 
     // Title Logic
     if (isNewChat && text.trim() !== "") {
@@ -1153,6 +1166,8 @@ const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
 });
 
 // 2. Логика на бутона "Изпълни"
+const REAL_CONSOLE_LOG = console.log;
+
 document.getElementById('run-btn').addEventListener('click', () => {
     const userCode = editor.getValue();
     const outputBox = document.getElementById('console-output');
@@ -1161,21 +1176,29 @@ document.getElementById('run-btn').addEventListener('click', () => {
     outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
 
     try {
-        const originalLog = console.log;
         // Пренасочваме console.log към нашето прозорче
         console.log = (msg) => {
-            if (typeof msg === 'object') msg = JSON.stringify(msg, null, 2);
+            // Форматираме обектите красиво
+            if (typeof msg === 'object') {
+                try {
+                    msg = JSON.stringify(msg, null, 2);
+                } catch (e) {
+                    msg = '[Circular Object or Error]';
+                }
+            }
+
             outputBox.innerHTML += `<div>> ${msg}</div>`;
-            originalLog(msg);
+
+            REAL_CONSOLE_LOG(msg);
         };
 
         // Изпълняваме кода
         new Function(userCode)();
 
-        // Връщаме старата конзола
-        console.log = originalLog;
     } catch (e) {
         outputBox.innerHTML += `<div style="color:#ff4444;">🚨 ${e.message}</div>`;
+    } finally {
+        console.log = REAL_CONSOLE_LOG;
     }
 });
 
