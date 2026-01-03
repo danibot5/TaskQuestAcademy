@@ -396,6 +396,29 @@ async function saveMessage(text, sender) {
     renderSidebar();
 }
 
+async function saveFeedbackToHistory(messageText, feedbackType) {
+    const chat = allChats.find(c => c.id === currentChatId);
+    if (!chat) return;
+
+    // Намираме съобщението в масива
+    // (Търсим по текст, но понеже може да има повтарящи се, взимаме последното намерено или най-близкото)
+    // Тъй като потребителят обикновено оценява последното, ще търсим отзад напред или просто по съвпадение.
+    // За по-сигурно: Търсим съобщение, което е от 'bot' и има същия текст.
+    const msgIndex = chat.messages.findIndex(m => m.text === messageText && m.sender === 'bot');
+
+    if (msgIndex !== -1) {
+        // Обновяваме локалния обект
+        chat.messages[msgIndex].feedback = feedbackType;
+
+        // Запазваме в базата
+        if (currentUser) {
+            await saveToFirestore(chat);
+        } else {
+            saveToLocalStorage();
+        }
+    }
+}
+
 function loadChat(id) {
     currentChatId = id;
     chatHistory.innerHTML = '';
@@ -403,7 +426,7 @@ function loadChat(id) {
     const chat = allChats.find(c => c.id === id);
     if (chat) {
         addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot'); // Винаги показваме поздрава
-        chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender));
+        chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender, msg.feedback));
     }
 
     renderSidebar();
@@ -562,8 +585,37 @@ document.addEventListener('click', (e) => {
 // ==========================================
 // 6. UI HELPERS (Непроменени)
 // ==========================================
+async function handleFeedback(type, text, messageRow, likeBtn, dislikeBtn) {
+    // 1. UI Промени веднага
+    if (type === 'like') {
+        // Ако вече е натиснат веднъж, спираме повторни кликове
+        if (likeBtn.disabled) return;
 
-function addMessageToUI(text, sender) {
+        likeBtn.innerHTML = SVGs.likeFilled;
+        likeBtn.style.color = '#c9c9c9ff'; // Сиво
+        likeBtn.style.opacity = '1';
+
+        // 🔥 ВАЖНО: Заключваме веднага след клик
+        likeBtn.disabled = true;
+        likeBtn.style.cursor = 'default';
+
+        // Махаме другия бутон веднага
+        if (dislikeBtn) dislikeBtn.remove();
+
+        sendFeedbackReport('like', text);
+        showToast('Благодарим за оценката!', '👍');
+    } else {
+        // За Dislike отваряме модала
+        // (Там вече оправихме логиката да маха Like бутона при submit)
+        openFeedbackModal(likeBtn, dislikeBtn, text);
+        return;
+    }
+
+    // 2. ЗАПАЗВАНЕ В ИСТОРИЯТА 💾
+    await saveFeedbackToHistory(text, type);
+}
+
+function addMessageToUI(text, sender, feedbackStatus = null) {
     const rowDiv = document.createElement('div');
     rowDiv.classList.add('message-row');
 
@@ -725,30 +777,49 @@ function addMessageToUI(text, sender) {
         const speakBtn = createActionButton(SVGs.speak, 'Прочети на глас', () => speakText(text));
         const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
 
-        likeBtn = createActionButton(SVGs.like, 'Полезен отговор', () => {
-            if (likeBtn.disabled) return;
+        likeBtn = createActionButton(
+            feedbackStatus === 'like' ? SVGs.likeFilled : SVGs.like, // Ако вече е лайкнато -> пълна икона
+            'Полезен отговор',
+            () => handleFeedback('like', text, rowDiv, likeBtn, dislikeBtn) // Извикваме новата функция
+        );
+
+        dislikeBtn = createActionButton(
+            feedbackStatus === 'dislike' ? SVGs.dislikeFilled : SVGs.dislike, // Ако вече е хейтнато -> пълна икона
+            'Неполезен отговор',
+            () => handleFeedback('dislike', text, rowDiv, likeBtn, dislikeBtn)
+        );
+
+        // 2. ВЪЗСТАНОВЯВАНЕ НА СТАТУСА (Ако user-ът вече е гласувал преди рефреш)
+        if (feedbackStatus === 'like') {
             likeBtn.innerHTML = SVGs.likeFilled;
-            likeBtn.style.color = '#4caf50';
+            likeBtn.style.color = '#c9c9c9ff';
             likeBtn.style.opacity = '1';
-            if (dislikeBtn) dislikeBtn.remove();
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
-            sendFeedbackReport('like', text);
-            showToast('Благодарим за оценката!', '👍');
-        });
+            // Тук вече НЕ ни трябва dislikeBtn.remove(), защото долният if ще се погрижи да не го добави!
 
-        dislikeBtn = createActionButton(SVGs.dislike, 'Неполезен отговор', () => {
-            if (dislikeBtn.disabled) return;
-            openFeedbackModal(likeBtn, dislikeBtn);
-        });
+        } else if (feedbackStatus === 'dislike') {
+            dislikeBtn.innerHTML = SVGs.dislikeFilled;
+            dislikeBtn.style.color = '#c9c9c9ff';
+            dislikeBtn.style.opacity = '1';
+            dislikeBtn.disabled = true;
+            dislikeBtn.style.cursor = 'default';
+        }
 
         const isWelcomeMessage = text.startsWith("Здравей! Аз съм твоят ментор");
 
         actionsDiv.appendChild(copyBtn);
+
         if (!isWelcomeMessage) {
-            actionsDiv.appendChild(likeBtn);
-            actionsDiv.appendChild(dislikeBtn);
+            if (feedbackStatus !== 'dislike') {
+                actionsDiv.appendChild(likeBtn);
+            }
+
+            if (feedbackStatus !== 'like') {
+                actionsDiv.appendChild(dislikeBtn);
+            }
         }
+
         actionsDiv.appendChild(speakBtn);
 
         messageContainer.appendChild(textDiv);
@@ -833,7 +904,7 @@ async function copyMessageText(text, buttonElement) {
         await navigator.clipboard.writeText(text);
         const originalSVG = buttonElement.innerHTML;
         buttonElement.innerHTML = SVGs.copyDone;
-        buttonElement.style.color = '#4caf50';
+        buttonElement.style.color = '#c9c9c9ff';
         showToast('Текстът е копиран!', '📋');
         setTimeout(() => {
             buttonElement.innerHTML = originalSVG;
@@ -912,8 +983,8 @@ feedbackForm.addEventListener('change', validateFeedbackForm);
 feedbackDetails.addEventListener('input', validateFeedbackForm);
 
 // Отваряне на модала (вече приема UI елементите като аргументи)
-function openFeedbackModal(likeBtn, dislikeBtn) {
-    activeFeedbackUI = { likeBtn, dislikeBtn };
+function openFeedbackModal(likeBtn, dislikeBtn, rawText) {
+    activeFeedbackUI = { likeBtn, dislikeBtn, rawText };
     feedbackModal.style.display = 'flex';
     feedbackForm.reset();
     validateFeedbackForm();
@@ -925,7 +996,7 @@ window.addEventListener('click', (e) => {
 });
 
 // Изпращане на формата
-feedbackForm.addEventListener('submit', (e) => {
+feedbackForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     // Събираме данните от формата
@@ -940,20 +1011,12 @@ feedbackForm.addEventListener('submit', (e) => {
 
     // Ако имаме активни бутони
     if (activeFeedbackUI) {
-        const { likeBtn, dislikeBtn } = activeFeedbackUI;
-
-        // Взимаме текста на съобщението, за което се отнася
-        // (Намираме го като се качим нагоре по DOM дървото до bot-text)
-        // Трик: Тъй като activeFeedbackUI пази бутоните, можем да намерим текста до тях.
-        // Но по-лесно: Нека просто вземем последния bot-msg или да разчитаме, че е ясно.
-        // ПО-ДОБЪР ВАРИАНТ: Трябва да знаем текста.
-        // Най-лесно е да вземем текста от DOM-а спрямо бутона:
-        const messageContainer = dislikeBtn.closest('.message-row').querySelector('.bot-text');
-        const messageText = messageContainer ? messageContainer.innerText : "Текстът не е намерен";
+        // 🔥 Взимаме rawText от обекта, който запазихме в стъпка 1
+        const { likeBtn, dislikeBtn, rawText } = activeFeedbackUI;
 
         // 1. Пълним Dislike иконата
         dislikeBtn.innerHTML = SVGs.dislikeFilled;
-        dislikeBtn.style.color = '#f44336'; // Червено
+        dislikeBtn.style.color = '#c9c9c9ff';
         dislikeBtn.style.opacity = '1';
         dislikeBtn.disabled = true;
         dislikeBtn.style.cursor = 'default';
@@ -962,7 +1025,11 @@ feedbackForm.addEventListener('submit', (e) => {
         if (likeBtn) likeBtn.remove();
 
         // 3. ИЗПРАЩАМЕ ДОКЛАДА КЪМ FIREBASE 🚀
-        sendFeedbackReport('dislike', messageText, selectedReasons, detailsText);
+        // Ползваме rawText (оригинала), а не extracted text!
+        sendFeedbackReport('dislike', rawText, selectedReasons, detailsText);
+
+        // 🔥 ЗАПАЗВАМЕ ГО ЗАВИНАГИ (Вече ще го намери, защото текстът съвпада 1:1)
+        await saveFeedbackToHistory(rawText, 'dislike');
 
         // Чистим паметта
         activeFeedbackUI = null;
