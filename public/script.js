@@ -406,6 +406,11 @@ function renderSidebar() {
         div.style.position = 'relative';
         if (chat.id === currentChatId) div.classList.add('active');
 
+        div.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            optionsBtn.click();
+        });
+
         div.addEventListener('click', (e) => {
             if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
             loadChat(chat.id);
