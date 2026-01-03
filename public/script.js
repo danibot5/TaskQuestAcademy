@@ -329,7 +329,42 @@ async function deleteFromFirestore(chatId) {
 function startNewChat() {
     currentChatId = Date.now(); // Временно ID
     chatHistory.innerHTML = '';
+
+    // 1. Показваме поздрава
     addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot');
+
+    // 2. Добавяме SUGGESTION CHIPS (Подсказките) 💡
+    const suggestions = [
+        "Обясни ми какво е Closure! 📦",
+        "Напиши код за Snake игра! 🐍",
+        "Как работи async/await? ⏳",
+        "Дебъгни кода в редактора! 🐞"
+    ];
+
+    const chipsContainer = document.createElement('div');
+    chipsContainer.className = 'suggestions-container';
+    // Добавяме го към последното съобщение (или отделно) - нека е отделно под бота
+    chipsContainer.style.marginLeft = "45px"; // Да е подравнено с текста на бота
+    chipsContainer.style.marginBottom = "20px";
+
+    suggestions.forEach(text => {
+        const chip = document.createElement('button');
+        chip.className = 'suggestion-chip';
+        chip.innerText = text;
+
+        // При клик -> попълва полето и праща
+        chip.onclick = () => {
+            userInput.value = text; // Слагаме текста
+            chipsContainer.remove(); // Махаме подсказките, защото вече сме избрали
+            sendMessage(); // Пращаме веднага
+        };
+
+        chipsContainer.appendChild(chip);
+    });
+
+    chatHistory.appendChild(chipsContainer);
+    // Скролваме леко
+    chipsContainer.scrollIntoView({ behavior: "smooth", block: "end" });
 
     // Махаме активния клас от менюто
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));

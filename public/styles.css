@@ -135,6 +135,33 @@ body {
     margin-bottom: 20px;
 }
 
+/* --- SUGGESTION CHIPS (Бързи подсказки) --- */
+.suggestions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 90%;
+}
+
+.suggestion-chip {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #555;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.suggestion-chip:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+    border-color: #ccc;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
 /* --- ЗОНА ЗА ПИСАНЕ --- */
 .input-wrapper {
     position: absolute;
@@ -1639,4 +1666,15 @@ body.dark-mode .menu-option:hover {
 
 body.dark-mode .menu-option.delete-opt:hover {
     background-color: #3e2a2a;
+}
+
+body.dark-mode .suggestion-chip {
+    background-color: #2b2d31;
+    border-color: #444;
+    color: #ddd;
+}
+
+body.dark-mode .suggestion-chip:hover {
+    background-color: #343541;
+    border-color: #666;
 }
