@@ -27,6 +27,9 @@ let currentUser = null;
 let currentChatId = null;
 let allChats = [];
 let currentAttachments = [];
+let currentCleanText = "";
+let speechCharIndex = 0;
+let isSpeakingNow = false;
 
 const chatHistory = document.getElementById('chat-history');
 const userInput = document.getElementById('user-input');
@@ -769,7 +772,12 @@ const SVGs = {
     moreVertical: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>`,
     edit: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
     pin: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`,
-    trash: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+    trash: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
+
+    // НОВИ ИКОНИ ЗА HEADER-А
+    share: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>`,
+    volumeOn: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`,
+    volumeOff: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`
 };
 
 // --- 1. Функция за показване на TOAST съобщение ---
@@ -1234,9 +1242,79 @@ if (attachBtn && fileInput) {
 }
 
 // ==========================================
-// 10. TEXT-TO-SPEECH
+// 10. HEADER CONTROLS (MUTE & SHARE) 🎛️
 // ==========================================
+const muteBtn = document.getElementById('mute-btn');
+const shareAppBtn = document.getElementById('share-app-btn');
+let isMuted = localStorage.getItem('scriptsensei_muted') === 'true'; // Помни избора
 
+// --- 1. MUTE LOGIC ---
+function updateMuteUI() {
+    if (isMuted) {
+        muteBtn.innerHTML = SVGs.volumeOff;
+        muteBtn.style.color = '#ff4444';
+
+        // АКО В МОМЕНТА ГОВОРИ:
+        // Рестартираме го от текущата позиция, но този път ще тръгне с volume = 0
+        if (isSpeakingNow) {
+            resumeSpeaking(speechCharIndex);
+        }
+
+    } else {
+        muteBtn.innerHTML = SVGs.volumeOn;
+        muteBtn.style.color = '';
+
+        // АКО В МОМЕНТА ГОВОРИ (БЕЗШУМНО):
+        // Рестартираме го от текущата позиция, но този път ще тръгне с volume = 1
+        if (isSpeakingNow) {
+            resumeSpeaking(speechCharIndex);
+        }
+    }
+}
+
+if (muteBtn) {
+    updateMuteUI(); // Init
+
+    muteBtn.addEventListener('click', () => {
+        isMuted = !isMuted;
+        localStorage.setItem('scriptsensei_muted', isMuted);
+        updateMuteUI();
+    });
+}
+
+// --- 2. SHARE LOGIC ---
+if (shareAppBtn) {
+    shareAppBtn.innerHTML = SVGs.share;
+
+    shareAppBtn.addEventListener('click', async () => {
+        const shareData = {
+            title: 'ScriptSensei',
+            text: 'Учи JavaScript с моя личен AI ментор! 🚀',
+            url: window.location.href
+        };
+
+        // Ако браузърът поддържа модерно споделяне (на телефони)
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.log('Share canceled');
+            }
+        } else {
+            // За компютри: Копираме линка
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                showToast('Линка е копиран!', '🔗');
+            } catch (err) {
+                showToast('Грешка при споделяне', '⚠️');
+            }
+        }
+    });
+}
+
+// ==========================================
+// 11. TEXT-TO-SPEECH
+// ==========================================
 let allVoices = [];
 
 // Функция за зареждане и дебъгване
@@ -1257,55 +1335,78 @@ window.speechSynthesis.onvoiceschanged = loadAndDebugVoices;
 loadAndDebugVoices();
 
 function speakText(text) {
-    // 1. Спираме старите приказки
-    window.speechSynthesis.cancel();
-
-    // 2. Гаранция за зареждане
-    if (allVoices.length === 0) {
-        allVoices = window.speechSynthesis.getVoices();
-    }
-
-    // 3. ТЪРСЕНЕ НА ГЛАСА (Приоритет: Google -> Ivan -> Който и да е BG)
-    let selectedVoice = allVoices.find(voice => voice.name.includes("Google") && voice.lang.includes("bg"));
-
-    if (!selectedVoice) {
-        selectedVoice = allVoices.find(voice => voice.name.includes("Ivan")); // Microsoft Ivan
-    }
-    if (!selectedVoice) {
-        selectedVoice = allVoices.find(voice => voice.lang.includes("bg"));
-    }
-
-    // 4. ПОЧИСТВАНЕ (Clean up)
+    // 1. Почистване на текста
     const cleanText = text
-        .replace(/\*\*/g, '')           // Маха bold
-        .replace(/\*/g, '')             // Маха italic
-        .replace(/\#/g, '')             // Маха заглавия
-        .replace(/`/g, '')              // Маха code ticks
-        .replace(/\[.*?\]/g, '')        // Маха линкове
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/\#/g, '')
+        .replace(/`/g, '')
+        .replace(/\[.*?\]/g, '')
         .replace(/https?:\/\/\S+/g, 'линк')
         .replace(/[\p{Emoji}\p{Extended_Pictographic}]/gu, '')
         .replace(/```[\s\S]*?```/g, 'Ето примерен код в редактора.');
 
-    // 5. ГОВОРЕНЕ
-    const utterance = new SpeechSynthesisUtterance(cleanText);
+    // 2. Запазваме данните в глобалните променливи
+    currentCleanText = cleanText;
+    speechCharIndex = 0; // Ресетваме брояча
+    isSpeakingNow = true;
+
+    // 3. Стартираме говора от началото
+    resumeSpeaking(0);
+}
+
+function resumeSpeaking(startIndex) {
+    // Спираме текущото (за да не се застъпят)
+    window.speechSynthesis.cancel();
+
+    // Ако сме стигнали края, спираме
+    if (startIndex >= currentCleanText.length) {
+        isSpeakingNow = false;
+        return;
+    }
+
+    // Взимаме оставащия текст
+    const remainingText = currentCleanText.substring(startIndex);
+    const utterance = new SpeechSynthesisUtterance(remainingText);
+
+    // --- НАСТРОЙКА НА ГЛАСА ---
+    if (allVoices.length === 0) allVoices = window.speechSynthesis.getVoices();
+    let selectedVoice = allVoices.find(v => v.name.includes("Google") && v.lang.includes("bg")) ||
+        allVoices.find(v => v.name.includes("Ivan")) ||
+        allVoices.find(v => v.lang.includes("bg"));
 
     if (selectedVoice) {
         utterance.voice = selectedVoice;
         utterance.lang = 'bg-BG';
-    } else {
-        alert("Грешка: Не намирам БГ глас. Увери се, че си рестартирал браузъра след инсталацията!");
-        return;
     }
 
-    utterance.volume = 0.65;
-    utterance.rate = 0.85;
-    utterance.pitch = 0.7;
+    // --- МАГИЯТА: VOLUME 🎛️ ---
+    // Ако е mute -> volume = 0 (говори безшумно)
+    // Ако не е mute -> volume = 1 (чува се)
+    utterance.volume = isMuted ? 0 : 1;
+
+    utterance.rate = 0.9;
+    utterance.pitch = 0.8;
+
+    // --- СЛЕДЕНЕ НА ПРОГРЕСА (TRACKING) 📡 ---
+    // Това събитие се вика на всяка дума/граница, дори когато е muted!
+    utterance.onboundary = (event) => {
+        // Обновяваме глобалния индекс: Началото на отрязъка + колкото е минало сега
+        speechCharIndex = startIndex + event.charIndex;
+    };
+
+    utterance.onend = () => {
+        // Когато свърши естествено
+        if (speechCharIndex >= currentCleanText.length - 10) {
+            isSpeakingNow = false;
+        }
+    };
 
     window.speechSynthesis.speak(utterance);
 }
 
 // ==========================================
-// 11. DARK MODE    
+// 12. DARK MODE    
 // ==========================================
 const themeToggleBtn = document.getElementById('theme-toggle');
 const body = document.body;

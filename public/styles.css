@@ -484,7 +484,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding-right: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
 }
 
 .section-title {
@@ -565,7 +565,7 @@ body {
 
 .chat-item {
     padding: 10px;
-    border-radius: 15px;
+    border-radius: 20px;
     cursor: pointer;
     margin-bottom: 5px;
     color: #333;
