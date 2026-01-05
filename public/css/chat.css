@@ -229,6 +229,17 @@
     color: #5d5d5d;
 }
 
+.action-btn:disabled {
+    background-color: transparent !important; /* Прозрачен фон */
+    cursor: default;
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+.action-btn:disabled:hover {
+    background-color: transparent !important;
+}
+
 .speak-btn {
     background-color: white;
     border: none;

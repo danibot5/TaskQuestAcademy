@@ -32,7 +32,13 @@ export function renderSidebar() {
         // Десен клик -> отваря менюто
         div.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            optionsBtn.click();
+            e.stopPropagation(); // Спираме стандартното меню
+
+            // Затваряме другите отворени менюта
+            document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => el.classList.remove('show'));
+
+            // Отваряме нашето
+            menuDropdown.classList.add('show');
         });
 
         // Ляв клик -> зарежда чата
@@ -457,32 +463,38 @@ export function initFeedbackSystem() {
 }
 
 export async function shareChat() {
-    // Взимаме текущия чат от state
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
-
     if (!currentChat || !currentChat.messages || currentChat.messages.length === 0) {
         showToast('Няма какво да се сподели!', '⚠️');
         return;
     }
 
-    // Форматираме текста за споделяне
     let shareText = `📜 *Чат със ScriptSensei: ${currentChat.title || 'Разговор'}*\n\n`;
-
     currentChat.messages.forEach(msg => {
         const role = msg.sender === 'user' ? '👤 Аз' : '🤖 Sensei';
-        // Изчистваме малко markdown символите за по-чист вид при копиране
         let cleanText = msg.text.replace(/```/g, '');
         shareText += `${role}: ${cleanText}\n\n`;
     });
-
     shareText += `\n🚀 *Генерирано от ScriptSensei*`;
 
-    // Копиране в клипборда
+    // Опит за Native Share (за мобилни)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'ScriptSensei Chat',
+                text: shareText
+            });
+            return; // Ако успее, спираме до тук
+        } catch (err) {
+            // Ако откаже споделяне, продължаваме към клипборда
+        }
+    }
+
+    // Fallback: Clipboard
     try {
         await navigator.clipboard.writeText(shareText);
         showToast('Чатът е копиран в клипборда!', '📋');
     } catch (err) {
-        console.error('Failed to copy: ', err);
         showToast('Грешка при споделяне.', '❌');
     }
 }
