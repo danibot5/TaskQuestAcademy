@@ -156,9 +156,9 @@ body {
 }
 
 .suggestion-chip:hover {
-    background-color: #f4fbff;
-    transform: scale(1.02) translateY(-1.5px);
-    border-color: #ccc;
+    background-color: #f6fbff;
+    transform: scale(1.03) translateY(-1.5px);
+    border-color: #ddd;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
