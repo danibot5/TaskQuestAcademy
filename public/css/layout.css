@@ -1,0 +1,256 @@
+.chat-panel {
+    flex: 4;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.top-bar {
+    padding: 5px 25px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #444;
+    display: flex;
+    align-items: center;
+}
+
+#menu-btn {
+    background: none;
+    border: none;
+    border-radius: 25%;
+    cursor: pointer;
+    margin-right: 5px;
+    padding: 5px;
+    color: #555;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+}
+
+#menu-btn:hover {
+    background: #e1e1e1;
+}
+
+.sidebar {
+    position: relative;
+    width: 0;
+    height: 100vh;
+    background-color: #f7f7f8;
+    color: #333;
+    border-right: 1px solid #e5e5e5;
+    overflow: hidden;
+    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.sidebar.open {
+    width: 260px;
+}
+
+.sidebar-content-wrapper {
+    width: 260px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+#close-sidebar {
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: all 0.25s ease;
+}
+
+#close-sidebar:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 2px #ff2c2c);
+    color: #ff2c2c;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+    margin-bottom: 15px;
+}
+
+#chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 30px 150px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    scroll-behavior: smooth;
+}
+
+.section-title {
+    padding: 5px 5px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 1.05rem;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-radius: 20px;
+    padding: 2px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.search-wrapper.active {
+    background: rgba(0, 0, 0, 0.05);
+    padding-left: 7.5px;
+}
+
+#search-input {
+    width: 0;
+    opacity: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.8rem;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: inherit;
+}
+
+.search-wrapper.active #search-input {
+    width: 95px;
+    opacity: 1;
+}
+
+#search-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #5d5d5d;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+}
+
+#search-toggle-btn:hover {
+    color: black;
+}
+
+.search-wrapper.active #search-toggle-btn {
+    transform: translateX(15px);
+}
+
+.chat-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-item {
+    padding: 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.chat-item:hover {
+    background-color: #ececf1;
+}
+
+.chat-item.active {
+    background-color: #ebebeb;
+    border-left: 3px solid #1a73e8;
+}
+
+.chat-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    margin-right: 5px;
+}
+
+.user-section {
+    padding: 10px 5px;
+    margin-bottom: 10px;
+}
+
+#guest-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #e8f2ff;
+    padding: 8px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.user-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+#user-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #4f4f4f;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-email-text {
+    font-size: 0.75rem;
+    color: #9d9d9d;
+    margin-bottom: 5px;
+    word-break: break-all;
+}
+
+#share-and-theme-divider {
+    background: #a9a9a9;
+    width: 1px;
+    height: 20px;
+    margin: 0 5px;
+}

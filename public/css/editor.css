@@ -1,0 +1,151 @@
+/* --- ДЕСЕН ПАНЕЛ (EDITOR) --- */
+.code-panel {
+    flex: 6;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #ddd;
+}
+
+.editor-header {
+    background-color: #f3f3f3;
+    color: #333;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #28a745;
+    border-radius: 50%;
+    margin-left: 10px;
+}
+
+#code-editor {
+    flex: 2;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    padding: 20px;
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+}
+
+.controls {
+    background-color: #f3f3f3;
+    padding: 10px 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.run-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.run-btn:hover {
+    background-color: #218838;
+}
+
+.console {
+    height: 250px;
+    flex-shrink: 0;
+    background-color: #fafafa;
+    color: #333;
+    padding: 15px 20px;
+    font-family: monospace;
+    border-top: 1px solid #ddd;
+    overflow-y: auto;
+}
+
+.console-label {
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.console-label:hover {
+    cursor: default;
+}
+
+/* --- CODEMIRROR EDITOR STYLES --- */
+.CodeMirror {
+    flex: 1;
+    height: auto !important;
+    width: 100%;
+    font-size: 16px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    z-index: 1;
+}
+
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+    padding-left: 15px !important;
+}
+
+.CodeMirror-gutters {
+    padding-right: 3.5px !important;
+}
+
+.cm-s-dracula.CodeMirror,
+.cm-s-dracula .CodeMirror-gutters {
+    background-color: #282c34 !important;
+    color: #abb2bf !important;
+    border: none;
+}
+
+.cm-s-dracula .CodeMirror-gutters {
+    border-right: 1px solid #3e4451;
+}
+
+/* CodeMirror Syntax Highlighting Fixes */
+.cm-s-dracula span.cm-comment {
+    color: #5c6370 !important;
+    font-style: italic;
+}
+
+.cm-s-dracula span.cm-keyword,
+.cm-s-dracula span.cm-operator {
+    color: #c678dd !important;
+}
+
+.cm-s-dracula span.cm-string {
+    color: #98c379 !important;
+}
+
+.cm-s-dracula span.cm-number {
+    color: #d19a66 !important;
+}
+
+.cm-s-dracula span.cm-property {
+    color: #61afef !important;
+}
+
+.cm-s-dracula span.cm-variable-2,
+.cm-s-dracula span.cm-atom {
+    color: #e5c07b !important;
+}
+
+.cm-s-dracula span.cm-def {
+    color: #dedede !important;
+}
+
+.cm-s-dracula span.cm-variable {
+    color: #d19a66 !important;
+}

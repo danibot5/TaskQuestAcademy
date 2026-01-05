@@ -75,7 +75,7 @@ onAuthStateChanged(auth, (user) => {
         userInfoDiv.style.display = 'flex';
 
         // Слагаме аватара
-        userAvatar.src = user.photoURL || 'bot-avatar.png';
+        userAvatar.src = user.photoURL || 'images/bot-avatar.png';
 
         // 1. Подготвяме името
         let nameHTML = `<div id="user-name" style="font-weight: bold; font-size: 0.9rem;">${user.displayName || 'User'}</div>`;
@@ -638,7 +638,7 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
         rowDiv.classList.add('bot-row');
 
         const avatarImg = document.createElement('img');
-        avatarImg.src = 'bot-avatar.png';
+        avatarImg.src = 'images/bot-avatar.png';
         avatarImg.classList.add('avatar');
 
         const messageContainer = document.createElement('div');
@@ -818,7 +818,7 @@ function showLoading() {
     rowDiv.id = 'loading-indicator';
 
     const avatarImg = document.createElement('img');
-    avatarImg.src = 'bot-avatar.png';
+    avatarImg.src = 'images/bot-avatar.png';
     avatarImg.classList.add('avatar');
 
     const bubble = document.createElement('div');

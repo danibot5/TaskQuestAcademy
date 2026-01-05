@@ -1,0 +1,262 @@
+/* --- DARK MODE --- */
+body.dark-mode {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .chat-panel {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .top-bar {
+    color: #fff;
+}
+
+body.dark-mode #menu-btn {
+    color: #ededed;
+}
+
+body.dark-mode #menu-btn:hover {
+    background: #444;
+}
+
+body.dark-mode .bot-text {
+    background-color: #2b2d31;
+    color: #e1e1e1;
+}
+
+body.dark-mode .user-bubble {
+    background-color: #3e4451;
+    color: #fff;
+}
+
+body.dark-mode .input-wrapper {
+    background: linear-gradient(to top, #1e1e1e 80%, rgba(30, 30, 30, 0));
+}
+
+body.dark-mode .input-container {
+    background-color: #2b2d31;
+    border-color: #444;
+    color: #fff;
+}
+
+body.dark-mode .input-container:focus-within {
+    background-color: #1e1e1e;
+    border-color: #1a73e8;
+}
+
+body.dark-mode #user-input {
+    color: #fff;
+}
+
+body.dark-mode .icon-btn {
+    color: #aaa;
+}
+
+body.dark-mode .icon-btn:hover {
+    background-color: #444;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+body.dark-mode .modal-box {
+    background-color: #252526;
+    color: #e1e1e1;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .modal-box h2 {
+    color: #fff;
+}
+
+body.dark-mode .modal-box p {
+    color: #aaa;
+}
+
+body.dark-mode .modal-box input {
+    background-color: #333;
+    border-color: #444;
+    color: #fff;
+}
+
+body.dark-mode .modal-box input:focus {
+    border-color: #1a73e8;
+    background-color: #3a3a3a;
+}
+
+body.dark-mode .google-auth-btn {
+    background-color: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode .google-auth-btn:hover {
+    background-color: #444;
+}
+
+body.dark-mode .close-modal {
+    color: #aaa;
+}
+
+body.dark-mode .close-modal:hover {
+    color: #fff;
+}
+
+body.dark-mode a {
+    color: #4da3ff !important;
+    text-decoration: underline;
+}
+
+body.dark-mode a:hover {
+    color: #92caff !important;
+}
+
+body.dark-mode .sidebar {
+    background-color: #202123;
+    color: white;
+    border-right: 1px solid #333;
+}
+
+body.dark-mode .sidebar-header {
+    color: white;
+}
+
+body.dark-mode #close-sidebar {
+    color: white;
+}
+
+body.dark-mode #close-sidebar:hover {
+    color: #ff2c2c;
+}
+
+body.dark-mode .chat-item {
+    color: #ececf1;
+}
+
+body.dark-mode .chat-item:hover {
+    background-color: #2a2b32;
+}
+
+body.dark-mode .chat-item.active {
+    background-color: #343541;
+}
+
+body.dark-mode .code-panel {
+    background-color: #1e1e1e;
+    border-left: 1px solid #333;
+}
+
+body.dark-mode .editor-header,
+body.dark-mode .controls {
+    background-color: #252526;
+    color: #ccc;
+    border-color: #333;
+}
+
+body.dark-mode .console {
+    background-color: #0f0f0f;
+    color: #00dd00;
+    border-top: 1px solid #333;
+}
+
+body.dark-mode .CodeMirror {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .user-info {
+    background: #2A2B32;
+}
+
+body.dark-mode #user-name {
+    color: white;
+}
+
+body.dark-mode .user-email-text {
+    color: #aaa;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background-color: #4a4a4a;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background-color: #666;
+}
+
+body.dark-mode ::-webkit-scrollbar-corner {
+    background: #1e1e1e;
+}
+
+body.dark-mode .section-title {
+    color: white;
+}
+
+body.dark-mode .attachment-list {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .attachment-item {
+    border-color: #444;
+    background: #333;
+}
+
+body.dark-mode .search-wrapper.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode #search-toggle-btn {
+    color: #c1c1c1;
+}
+
+body.dark-mode #search-toggle-btn:hover {
+    color: white;
+}
+
+body.dark-mode .chat-options-btn:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .chat-menu-dropdown {
+    background: #252526;
+    border-color: #333;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .menu-option {
+    color: #ddd;
+}
+
+body.dark-mode .menu-option:hover {
+    background-color: #333;
+}
+
+body.dark-mode .menu-option.delete-opt:hover {
+    background-color: #3e2a2a;
+}
+
+body.dark-mode .suggestion-chip {
+    background-color: #2b2d31;
+    border-color: #444;
+    color: #ddd;
+}
+
+body.dark-mode .suggestion-chip:hover {
+    background-color: #343541;
+    border-color: #666;
+}
+
+body.dark-mode #share-and-theme-divider {
+    background: #fcfcfc6f;
+}
