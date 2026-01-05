@@ -151,13 +151,13 @@ body {
     border-radius: 20px;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .suggestion-chip:hover {
-    background-color: #f0f0f0;
-    transform: translateY(-2px);
+    background-color: #eff9ff;
+    transform: scale(1.02) translateY(-1.5px);
     border-color: #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -999,6 +999,17 @@ body {
 
 .divider::after {
     margin-left: 10px;
+}
+
+#share-and-theme-divider {
+    background: #a9a9a9;
+    width: 1px;
+    height: 20px;
+    margin: 0 5px;
+}
+
+.body.dark-mode #share-and-theme-divider {
+    background: #d75a5a;
 }
 
 .error-msg {

@@ -625,7 +625,6 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
         const bubble = document.createElement('div');
         bubble.classList.add('user-bubble');
 
-        // Ако текстът съдържа HTML тагове за прикачени файлове (от sendMessage), ги ползваме
         if (text.includes('<i>Изпратен файл') || text.includes('<i>Изпратени файлове')) {
             bubble.innerHTML = text;
         } else {
@@ -646,12 +645,12 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
         messageContainer.style.display = 'flex';
         messageContainer.style.flexDirection = 'column';
         messageContainer.style.maxWidth = '80%';
-        messageContainer.style.width = '100%'; // Важно за кода
+        messageContainer.style.width = '100%';
 
         const textDiv = document.createElement('div');
         textDiv.classList.add('bot-text');
 
-        // 1. Рендираме Markdown (Текст -> HTML)
+        // 1. Рендираме Markdown
         if (typeof marked !== 'undefined') {
             textDiv.innerHTML = marked.parse(text);
             if (typeof hljs !== 'undefined') {
@@ -662,19 +661,17 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
         }
 
         // ============================================================
-        // 🔥 НОВА ЛОГИКА: БУТОНИ ПОД ВСЕКИ КОДОВ БЛОК 🔥
+        // 🔥 ПОПРАВЕНА ЛОГИКА ЗА БУТОНИТЕ ПОД КОДА 🔥
         // ============================================================
 
-        // Намираме всички блокове с код, които marked.js е създал
         const codeBlocks = textDiv.querySelectorAll('pre');
 
         codeBlocks.forEach((preBlock) => {
             const codeElement = preBlock.querySelector('code');
             if (!codeElement) return;
 
-            const codeText = codeElement.innerText; // Самият код
+            const codeText = codeElement.innerText;
 
-            // Опитваме се да познаем езика от класа (напр. language-javascript)
             let language = 'txt';
             codeElement.classList.forEach(cls => {
                 if (cls.startsWith('language-')) {
@@ -690,57 +687,42 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
             toolbar.style.marginBottom = '15px';
             toolbar.style.justifyContent = 'flex-end';
 
-            // --- БУТОН 1: ПРЕХВЪРЛИ 🚀 ---
-            const runBtn = document.createElement('button');
-            runBtn.className = 'code-btn';
-            runBtn.classList.add('transfer-to-editor-btn');
-            runBtn.innerHTML = `Прехвърли в редактора`;
-            runBtn.title = "Сложи този код в редактора";
-            runBtn.onclick = () => {
-                editor.setValue(codeText);
-                runBtn.innerHTML = "✅ Готово!";
-                setTimeout(() => runBtn.innerHTML = "Прехвърли в редактора", 2500);
-            };
+            // --- БУТОН 1: ПРЕХВЪРЛИ (САМО ЗА JS) 🚀 ---
+            // Тук създаваме и ВЕДНАГА добавяме бутона, ако е JS
+            if (language === 'javascript' || language === 'js') {
+                const runBtn = document.createElement('button');
+                runBtn.className = 'code-btn';
+                runBtn.classList.add('transfer-to-editor-btn');
+                runBtn.innerHTML = `Прехвърли в редактора`;
+                runBtn.title = "Сложи този код в редактора";
+                runBtn.onclick = () => {
+                    editor.setValue(codeText);
+                    runBtn.innerHTML = "✅ Готово!";
+                    setTimeout(() => runBtn.innerHTML = "Прехвърли в редактора", 2500);
+                };
+                toolbar.appendChild(runBtn); // Добавяме го веднага тук!
+            }
 
-            // --- БУТОН 2: ИЗТЕГЛИ 💾 ---
+            // --- БУТОН 2: ИЗТЕГЛИ (ЗА ВСИЧКИ) 💾 ---
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'code-btn';
             downloadBtn.classList.add('download-btn-style');
             downloadBtn.style.color = 'white';
-
-            // Оправяме разширението за файла
+            
+            // Оправяме разширението
             let ext = language ? language.toLowerCase() : 'txt';
             const extensionMap = {
-                'javascript': 'js',
-                'js': 'js',
-                'python': 'py',
-                'py': 'py',
-                'csharp': 'cs',
-                'cs': 'cs',
-                'cpp': 'cpp',
-                'c++': 'cpp',
-                'html': 'html',
-                'xml': 'html',
-                'css': 'css',
-                'json': 'json',
-                'markdown': 'md',
-                'md': 'md',
-                'java': 'java',
-                'php': 'php',
-                'ruby': 'rb',
-                'rb': 'rb',
-                'go': 'go',
-                'golang': 'go',
-                'typescript': 'ts',
-                'ts': 'ts',
-                'txt': 'txt',
-                'text': 'txt'
+                'javascript': 'js', 'js': 'js', 'python': 'py', 'py': 'py',
+                'csharp': 'cs', 'cs': 'cs', 'cpp': 'cpp', 'c++': 'cpp',
+                'html': 'html', 'xml': 'html', 'css': 'css', 'json': 'json',
+                'markdown': 'md', 'md': 'md', 'java': 'java', 'php': 'php',
+                'ruby': 'rb', 'rb': 'rb', 'go': 'go', 'golang': 'go',
+                'typescript': 'ts', 'ts': 'ts', 'txt': 'txt', 'text': 'txt'
             };
 
             if (extensionMap[ext]) {
                 ext = extensionMap[ext];
-            } else if (ext.length > 5)
-                ext = 'txt';
+            } else if (ext.length > 5) ext = 'txt';
 
             downloadBtn.innerHTML = `Изтегли .${ext}`;
 
@@ -760,12 +742,13 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
                 setTimeout(() => downloadBtn.innerHTML = `Изтегли .${ext}`, 2500);
             };
 
-            // Добавяме бутоните в лентата
-            toolbar.appendChild(runBtn);
+            // Добавяме бутона за теглене
             toolbar.appendChild(downloadBtn);
 
             // Вмъкваме лентата ВЕДНАГА СЛЕД <pre> блока
             preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
+            
+            // 🛑 ИЗТРИХМЕ ДУБЛИРАЩИТЕ СЕ РЕДОВЕ ТУК, КОИТО ЧУПЕХА КОДА 🛑
         });
 
         // ============================================================
@@ -778,26 +761,23 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
         const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
 
         likeBtn = createActionButton(
-            feedbackStatus === 'like' ? SVGs.likeFilled : SVGs.like, // Ако вече е лайкнато -> пълна икона
+            feedbackStatus === 'like' ? SVGs.likeFilled : SVGs.like,
             'Полезен отговор',
-            () => handleFeedback('like', text, rowDiv, likeBtn, dislikeBtn) // Извикваме новата функция
+            () => handleFeedback('like', text, rowDiv, likeBtn, dislikeBtn)
         );
 
         dislikeBtn = createActionButton(
-            feedbackStatus === 'dislike' ? SVGs.dislikeFilled : SVGs.dislike, // Ако вече е хейтнато -> пълна икона
+            feedbackStatus === 'dislike' ? SVGs.dislikeFilled : SVGs.dislike,
             'Неполезен отговор',
             () => handleFeedback('dislike', text, rowDiv, likeBtn, dislikeBtn)
         );
 
-        // 2. ВЪЗСТАНОВЯВАНЕ НА СТАТУСА (Ако user-ът вече е гласувал преди рефреш)
         if (feedbackStatus === 'like') {
             likeBtn.innerHTML = SVGs.likeFilled;
             likeBtn.style.color = '#c9c9c9ff';
             likeBtn.style.opacity = '1';
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
-            // Тук вече НЕ ни трябва dislikeBtn.remove(), защото долният if ще се погрижи да не го добави!
-
         } else if (feedbackStatus === 'dislike') {
             dislikeBtn.innerHTML = SVGs.dislikeFilled;
             dislikeBtn.style.color = '#c9c9c9ff';
@@ -814,7 +794,6 @@ function addMessageToUI(text, sender, feedbackStatus = null) {
             if (feedbackStatus !== 'dislike') {
                 actionsDiv.appendChild(likeBtn);
             }
-
             if (feedbackStatus !== 'like') {
                 actionsDiv.appendChild(dislikeBtn);
             }
@@ -1387,7 +1366,7 @@ if (attachBtn && fileInput) {
 }
 
 // ==========================================
-// 10. HEADER CONTROLS (MUTE & SHARE) 🎛️
+// 10. HEADER CONTROLS
 // ==========================================
 const muteBtn = document.getElementById('mute-btn');
 const shareAppBtn = document.getElementById('share-app-btn');
