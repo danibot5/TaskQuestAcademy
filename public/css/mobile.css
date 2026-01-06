@@ -1,0 +1,111 @@
+@media screen and (max-width: 850px) {
+    body {
+        flex-direction: column;
+    }
+
+    .code-panel {
+        display: none !important;
+    }
+
+    .chat-panel {
+        flex: 1;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        z-index: 2000;
+        box-shadow: none;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.open {
+        width: 85%;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-content-wrapper {
+        width: 100%;
+        padding: 15px;
+    }
+
+    #close-sidebar {
+        font-size: 1.5rem;
+        padding: 10px;
+    }
+
+    .input-wrapper {
+        padding: 10px;
+        background: #fff;
+    }
+
+    body.dark-mode .input-wrapper {
+        background: #1e1e1e;
+    }
+
+    .input-container {
+        border-radius: 25px !important;
+        padding: 5px 10px !important;
+    }
+
+    .input-controls-row {
+        gap: 5px;
+    }
+
+    .icon-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    #send-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .user-bubble {
+        max-width: 85%;
+        font-size: 0.95rem;
+    }
+
+    .bot-text {
+        max-width: 95%;
+        font-size: 0.95rem;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .message-row {
+        gap: 8px;
+    }
+
+    .avatar {
+        width: 24px;
+        height: 24px;
+    }
+
+    .top-bar {
+        padding: 10px 15px;
+        justify-content: space-between;
+    }
+
+    .brand-name {
+        font-size: 1rem;
+    }
+
+    .modal-box {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .toast {
+        width: 80%;
+        text-align: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+}

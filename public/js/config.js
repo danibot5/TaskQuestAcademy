@@ -17,5 +17,5 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/chat';
-export const TITLE_API_URL = 'http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/generateTitle';
+export const API_URL = 'https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/chat';
+export const TITLE_API_URL = 'https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/generateTitle';
