@@ -1,126 +1,168 @@
 # 🤖 ScriptSensei
-### The AI-Powered JavaScript Mentor & Live Coding Environment
+### The AI‑Powered JavaScript Mentor & Live Coding Environment
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-live-success.svg)
-![Stack](https://img.shields.io/badge/tech-Firebase%20%7C%20VanillaJS%20%7C%20OpenAI-orange.svg)
+![Stack](https://img.shields.io/badge/tech-Firebase%20%7C%20VanillaJS%20%7C%20LLMs-orange.svg)
 
-**ScriptSensei** is an interactive educational platform designed to bridge the gap between static coding tutorials and real-time mentorship. Unlike traditional learning apps, ScriptSensei utilizes **Large Language Models (LLM)** to provide context-aware feedback, debug code in real-time, and explain complex JavaScript concepts instantly.
+**ScriptSensei** is an interactive educational platform that bridges the gap between static tutorials and real‑time mentorship. Instead of passively watching videos or reading docs, users learn JavaScript by **writing code, running it instantly, and receiving contextual AI guidance**—all in one place.
 
-It features a **dual-pane interface**: a conversational AI on the left and a fully functional live code editor on the right, allowing users to learn, write, and execute code in a single seamless environment.
+The app features a **dual‑pane interface**:
+- **Left:** a conversational AI mentor that understands your intent
+- **Right:** a fully functional live JavaScript editor with execution and console output
+
+Together, they create a focused, hands‑on learning environment designed to feel like pair‑programming with a senior developer.
 
 ---
 
 ## 🚀 Live Demo
-**Try it online:** [https://scriptsensei-4e8fe.web.app](https://scriptsensei-4e8fe.web.app)
+👉 **Try it here:** https://scriptsensei-4e8fe.web.app
 
 ---
 
 ## ✨ Key Features
 
-* **🧠 Context-Aware AI Chat:** The AI doesn't just chat; it "sees" the code you write in the editor and the errors in the console, providing highly specific debugging advice.
-* **💻 Integrated Code Editor:** Built on **CodeMirror**, featuring syntax highlighting, auto-bracketing, and line numbering.
-* **▶️ Live Code Execution:** Safe, sandboxed execution of JavaScript code directly in the browser with a custom console output.
-* **🎙️ Voice Interaction:** Full Speech-to-Text and Text-to-Speech (TTS) support for a hands-free learning experience.
-* **☁️ Cloud & Local Sync:** * **Guest Mode:** Saves chat history and settings to LocalStorage.
-    * **User Mode:** Syncs chats, history, and preferences across devices using **Firebase Firestore**.
-* **📎 Multimodal Support:** Upload images or text files for the AI to analyze (e.g., "Explain this code screenshot").
-* **🎨 Theming:** Toggle between Light and Dark (Dracula) modes for comfortable coding at any time.
-* **📱 Fully Responsive:** Optimized mobile layout for learning on the go.
+- **🧠 Context‑Aware AI Mentor**  
+  The AI has access to the current editor state and console output, allowing it to give precise debugging help, explanations, and improvement suggestions.
+
+- **💻 Integrated Code Editor**  
+  Powered by **CodeMirror**, with syntax highlighting, auto‑bracketing, indentation, and line numbers.
+
+- **▶️ Live JavaScript Execution**  
+  Run JavaScript safely in the browser with a sandboxed environment and custom console output.
+
+- **🎙️ Voice Interaction**  
+  Speech‑to‑Text and Text‑to‑Speech (TTS) support for a hands‑free learning experience.
+
+- **☁️ Cloud & Local Sync**  
+  - **Guest Mode:** Chat history and preferences saved to LocalStorage  
+  - **User Mode:** Full cross‑device sync via **Firebase Authentication + Firestore**
+
+- **📎 Multimodal Input**  
+  Upload images or text files for the AI to analyze (e.g. screenshots of code or error messages).
+
+- **🎨 Theming**  
+  Light and Dark (Dracula) themes for comfortable coding day or night.
+
+- **📱 Fully Responsive**  
+  Optimized for mobile and tablet usage.
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
-The project has recently undergone a major refactor from a monolithic script to a scalable, **ES6 Modular Architecture**.
+ScriptSensei was refactored from a monolithic script into a scalable **ES6 modular architecture**, making the codebase maintainable and extensible.
 
-### **Frontend**
-* **Core:** HTML5, CSS3 (Custom Variables, Flexbox/Grid), Vanilla JavaScript (ES Modules).
-* **Editor:** CodeMirror 5.
-* **Markdown & Highlighting:** Marked.js, Highlight.js.
-* **Structure:**
-    * `js/auth.js` - Firebase Authentication logic.
-    * `js/chat.js` - Chat interface and message handling.
-    * `js/editor.js` - Code editor configuration and execution logic.
-    * `js/db.js` - Firestore & LocalStorage interaction layer.
-    * `js/state.js` - Centralized state management.
-    * `js/ui.js` - DOM manipulation and UI rendering.
+### Frontend
+- **Core:** HTML5, CSS3 (Custom Properties, Flexbox, Grid)
+- **Language:** Vanilla JavaScript (ES Modules)
+- **Editor:** CodeMirror 5
+- **Markdown & Highlighting:** Marked.js, Highlight.js
 
-### **Backend (Serverless)**
-* **Platform:** Firebase Cloud Functions (Node.js).
-* **Database:** Cloud Firestore (NoSQL).
-* **AI Integration:** OpenAI API / Groq (Server-side handling for security).
+**Key Modules:**
+- `js/auth.js` – Firebase Authentication
+- `js/chat.js` – Chat UI and message handling
+- `js/editor.js` – Code editor setup & execution logic
+- `js/db.js` – Firestore & LocalStorage abstraction layer
+- `js/state.js` – Centralized app state management
+- `js/ui.js` – DOM updates and UI rendering
+
+### Backend (Serverless)
+- **Platform:** Firebase Cloud Functions (Node.js)
+- **Database:** Cloud Firestore (NoSQL)
+- **AI Layer:** OpenAI / Groq APIs (handled server‑side for security)
 
 ---
 
 ## 📂 Project Structure
 
-```text
+```
 /
-├── functions/              # Backend (Node.js + Firebase Cloud Functions)
-│   ├── index.js            # Main server entry point (AI logic)
-│   └── .env                # Server secrets (API Keys)
+├── functions/              # Backend (Firebase Cloud Functions)
+│   ├── index.js            # Main server entry (AI logic)
+│   └── .env                # Server secrets (API keys)
 │
 ├── public/                 # Frontend (Hosting root)
 │   ├── css/                # Modular CSS (base, chat, editor, themes, mobile)
 │   ├── js/                 # ES6 Modules
-│   │   ├── config.js       # Client-side config
+│   │   ├── config.js       # Client‑side configuration
 │   │   ├── main.js         # App entry point
 │   │   └── ...
-│   ├── images/             # Assets
-│   └── index.html          # Single Page Application entry
+│   ├── images/             # Static assets
+│   └── index.html          # SPA entry point
 │
 ├── firebase.json           # Firebase hosting configuration
-└── firestore.rules         # Database security rules
+└── firestore.rules         # Firestore security rules
+```
 
-🔧 Installation & Setup
-To run ScriptSensei locally for development:
+---
 
-1. Prerequisites
-Node.js (v18 or higher)
+## 🔧 Installation & Setup
 
-Firebase CLI (npm install -g firebase-tools)
+Follow these steps to run ScriptSensei locally for development.
 
-2. Clone the Repository
-Bash
+### 1. Prerequisites
+- **Node.js** v18 or higher
+- **Firebase CLI**
+  ```bash
+  npm install -g firebase-tools
+  ```
 
-git clone [https://github.com/yourusername/ScriptSensei.git](https://github.com/yourusername/ScriptSensei.git)
+### 2. Clone the Repository
+```bash
+git clone https://github.com/yourusername/ScriptSensei.git
 cd ScriptSensei
-3. Setup Backend (Functions)
-Navigate to the functions folder and install dependencies:
+```
 
-Bash
-
+### 3. Backend Setup (Functions)
+```bash
 cd functions
 npm install
-Create a .env file in the functions/ folder and add your LLM API Key:
+```
 
-Фрагмент от код
-
+Create a `.env` file inside the `functions/` directory:
+```env
 OPENAI_API_KEY=sk-your-secret-key-here
-4. Setup Frontend
-Navigate to public/js/config.js and ensure the API URLs point to your local emulator or production server.
+```
 
-5. Run Locally (Emulators)
-Start the full stack (Hosting + Functions + Firestore) locally:
+### 4. Frontend Configuration
+Edit `public/js/config.js` and make sure the API endpoints point to:
+- Firebase emulators (local development), or
+- Deployed Cloud Functions (production)
 
-Bash
-
+### 5. Run Locally (Firebase Emulators)
+```bash
 firebase emulators:start
-Access the app at http://localhost:5000.
+```
 
-🤝 Contributing
-Contributions are welcome! Whether it's a bug fix, a new feature, or a UI improvement:
+Open the app at:
+```
+http://localhost:5000
+```
 
-Fork the repository.
+---
 
-Create a feature branch (git checkout -b feature/AmazingFeature).
+## 🤝 Contributing
 
-Commit your changes.
+Contributions are very welcome ❤️
 
-Open a Pull Request.
+1. Fork the repository
+2. Create a new branch:
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. Commit your changes
+4. Open a Pull Request
 
-📄 License
-Distributed under the MIT License. See LICENSE for more information.
+Whether it’s a bug fix, new feature, or UI improvement—every contribution helps.
 
-Built with ❤️ by Dani.
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
+
+---
+
+Built with ❤️ by **Dani**
+
