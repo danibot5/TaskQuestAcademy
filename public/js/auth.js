@@ -11,36 +11,35 @@ import {
     sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// DOM Елементи (ще ги вземем динамично, за да сме сигурни, че HTML-ът е зареден)
 const getEl = (id) => document.getElementById(id);
 
 export function initAuth() {
-    // Слушаме за промяна в статуса (Login/Logout)
     onAuthStateChanged(auth, (user) => {
         const userDetailsDiv = document.querySelector('.user-details');
         const guestButtons = getEl('guest-buttons');
         const userInfoDiv = getEl('user-info');
         const userAvatar = getEl('user-avatar');
-
-        // Модали
         const regModal = getEl('register-modal');
         const loginModal = getEl('login-modal');
 
         if (user) {
-            // --- ПОТРЕБИТЕЛЯТ Е ВЛЯЗЪЛ ---
             setCurrentUser(user);
 
             guestButtons.style.display = 'none';
             userInfoDiv.style.display = 'flex';
             userAvatar.src = user.photoURL || 'images/bot-avatar.png';
 
-            // Рендираме UI за потребителя
-            let nameHTML = `<div id="user-name" style="font-weight: bold; font-size: 0.9rem;">${user.displayName || 'User'}</div>`;
-            if (user.emailVerified) {
-                nameHTML = `<div id="user-name" style="font-weight: bold; font-size: 0.9rem;">
-                    ${user.displayName || 'User'} <span title="Потвърден" style="color: #4caf50;">✔</span>
-                 </div>`;
-            }
+            const displayName = user.displayName || 'User';
+            const verifiedIcon = user.emailVerified
+                ? `<span class="verified-badge" title="Потвърден имейл">✔</span>`
+                : '';
+
+            const nameHTML = `
+                <div class="name-wrapper">
+                    <div id="user-name" title="${displayName}">${displayName}</div>
+                    ${verifiedIcon}
+                </div>`;
+
             const emailHTML = `<div class="user-email-text">${user.email}</div>`;
 
             let actionButtonsHTML = '';
@@ -51,7 +50,6 @@ export function initAuth() {
 
             userDetailsDiv.innerHTML = nameHTML + emailHTML + actionButtonsHTML;
 
-            // Закачаме слушатели за новите бутони
             document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
             const verifyBtn = document.getElementById('resend-verify-btn');
@@ -67,14 +65,12 @@ export function initAuth() {
                 });
             }
 
-            // Затваряме модалите и зареждаме чатовете
             regModal.style.display = 'none';
             loginModal.style.display = 'none';
 
             loadChatsFromFirestore();
 
         } else {
-            // --- GUEST MODE ---
             setCurrentUser(null);
             guestButtons.style.display = 'flex';
             userInfoDiv.style.display = 'none';
@@ -84,7 +80,6 @@ export function initAuth() {
         }
     });
 
-    // --- SETUP EVENT LISTENERS ЗА МОДАЛИТЕ ---
     setupAuthEventListeners();
 }
 
@@ -94,11 +89,9 @@ function setupAuthEventListeners() {
     const errorBoxReg = getEl('reg-error');
     const errorBoxLogin = getEl('login-error');
 
-    // Отваряне
     getEl('open-register-btn').addEventListener('click', () => { regModal.style.display = 'flex'; });
     getEl('open-login-btn').addEventListener('click', () => { loginModal.style.display = 'flex'; });
 
-    // Затваряне
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', () => {
             regModal.style.display = 'none';
@@ -106,7 +99,6 @@ function setupAuthEventListeners() {
         });
     });
 
-    // Регистрация
     getEl('perform-register-btn').addEventListener('click', async () => {
         const name = getEl('reg-name').value;
         const email = getEl('reg-email').value;
@@ -132,7 +124,6 @@ function setupAuthEventListeners() {
         }
     });
 
-    // Логин с Email
     getEl('perform-login-btn').addEventListener('click', async () => {
         const email = getEl('login-email').value;
         const password = getEl('login-password').value;
@@ -144,7 +135,6 @@ function setupAuthEventListeners() {
         }
     });
 
-    // Логин с Google
     getEl('google-login-btn').addEventListener('click', () => {
         signInWithPopup(auth, googleProvider).catch((error) => {
             getEl('login-error').innerText = error.message;

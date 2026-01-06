@@ -1,10 +1,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Зареждаме ключа
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-// Избираме модела (gemini-1.5-flash е бърз и безплатен, gemini-1.5-pro е по-умен)
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
@@ -35,7 +33,7 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
 exports.chat = onRequest({ cors: true }, async (req, res) => {
   try {
     const messages = req.body.messages || [];
-    const attachments = req.body.attachments || []; // <--- ВЕЧЕ Е МАСИВ (PLURAL)
+    const attachments = req.body.attachments || [];
 
     const history = messages.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
@@ -45,10 +43,8 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     const lastMessageObj = history.pop();
     const promptText = lastMessageObj.parts[0].text;
 
-    // Подготвяме частите
     const currentMessageParts = [{ text: promptText }];
 
-    // АКО ИМА ФАЙЛОВЕ -> ЗАВЪРТАМЕ ЦИКЪЛ И ГИ ДОБАВЯМЕ ВСИЧКИ 📂
     if (attachments.length > 0) {
       attachments.forEach(file => {
         currentMessageParts.push({
@@ -60,16 +56,14 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
       });
     }
 
-    // Стартираме чата
     const chat = model.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
         { role: "model", parts: [{ text: "Разбрано! Готов съм да помагам! 🚀" }] },
-        ...history // Старата история (без картинки, за икономия)
+        ...history
       ],
     });
 
-    // Пращаме масива от части (Текст + Картинка)
     const result = await chat.sendMessage(currentMessageParts);
     const response = await result.response;
 
@@ -85,7 +79,6 @@ exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
     const { message } = req.body;
 
-    // Директна инструкция към AI, без "учителски" промпт
     const prompt = `Summarize this text into a short title (max 5 words) in the same language. No quotes. Text: "${message}"`;
 
     const result = await model.generateContent(prompt);

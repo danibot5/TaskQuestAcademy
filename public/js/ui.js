@@ -1,21 +1,27 @@
 import { state } from './state.js';
 import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
-import { loadChat, startNewChat } from './chat.js'; // За Sidebar кликовете
+import { loadChat, startNewChat } from './chat.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
-import { editor } from './editor.js'; // За бутона "Прехвърли в редактора"
+import { editor } from './editor.js';
 
-// --- DOM Елементи ---
 const chatHistory = document.getElementById('chat-history');
 const chatList = document.querySelector('.chat-list');
 const sidebar = document.getElementById('sidebar');
+const LANGUAGE_EXTENSIONS = {
+    'javascript': 'js', 'js': 'js', 'python': 'py', 'py': 'py',
+    'csharp': 'cs', 'cs': 'cs', 'cpp': 'cpp', 'c++': 'cpp',
+    'html': 'html', 'xml': 'html', 'css': 'css', 'json': 'json',
+    'markdown': 'md', 'md': 'md', 'java': 'java', 'php': 'php',
+    'ruby': 'rb', 'rb': 'rb', 'go': 'go', 'golang': 'go',
+    'typescript': 'ts', 'ts': 'ts', 'txt': 'txt', 'text': 'txt'
+};
 
-// ==========================================================
-// 1. RENDER SIDEBAR (Списък с чатове)
-// ==========================================================
 export function renderSidebar() {
     chatList.innerHTML = '';
 
-    // Сортиране: Pinned най-горе, после по дата
+    const searchInput = document.getElementById('search-input');
+    const filterTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
     state.allChats.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
@@ -27,42 +33,40 @@ export function renderSidebar() {
     state.allChats.forEach(chat => {
         const div = document.createElement('div');
         div.classList.add('chat-item');
+        div.style.position = 'relative';
+
         if (chat.id === state.currentChatId) div.classList.add('active');
 
-        // Десен клик -> отваря менюто
+        if (filterTerm && !chat.title.toLowerCase().includes(filterTerm)) {
+            div.style.display = 'none';
+        } else {
+            div.style.display = 'flex';
+        }
+
         div.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            e.stopPropagation(); // Спираме стандартното меню
-
-            // Затваряме другите отворени менюта
+            e.stopPropagation();
             document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => el.classList.remove('show'));
-
-            // Отваряме нашето
             menuDropdown.classList.add('show');
         });
 
-        // Ляв клик -> зарежда чата
         div.addEventListener('click', (e) => {
             if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
             loadChat(chat.id);
         });
 
-        // Заглавие
         const titleSpan = document.createElement('span');
         titleSpan.classList.add('chat-title');
         let pinIconHTML = chat.isPinned ? `<span class="pinned-icon">${SVGs.pin}</span>` : '';
         titleSpan.innerHTML = pinIconHTML + (chat.title || "Нов разговор");
 
-        // Бутон за меню (...)
         const optionsBtn = document.createElement('button');
         optionsBtn.className = 'chat-options-btn';
         optionsBtn.innerHTML = SVGs.moreVertical;
 
-        // Падащо меню
         const menuDropdown = document.createElement('div');
         menuDropdown.className = 'chat-menu-dropdown';
 
-        // Опция: Преименувай
         const renameOpt = document.createElement('button');
         renameOpt.className = 'menu-option';
         renameOpt.innerHTML = `${SVGs.edit} Преименувай`;
@@ -75,7 +79,6 @@ export function renderSidebar() {
             }
         };
 
-        // Опция: Закачи/Откачи
         const pinOpt = document.createElement('button');
         pinOpt.className = 'menu-option';
         pinOpt.innerHTML = chat.isPinned ? `${SVGs.pin} Откачи` : `${SVGs.pin} Закачи`;
@@ -86,16 +89,12 @@ export function renderSidebar() {
             renderSidebar();
         };
 
-        // Опция: Изтрий
         const deleteOpt = document.createElement('button');
         deleteOpt.className = 'menu-option delete-opt';
         deleteOpt.innerHTML = `${SVGs.trash} Изтрий`;
         deleteOpt.onclick = async () => {
             if (!confirm("Сигурен ли си, че искаш да изтриеш този чат?")) return;
-
-            // Махаме го от локалния масив веднага (за бързина)
             state.allChats = state.allChats.filter(c => c.id !== chat.id);
-
             if (state.currentUser) await deleteFromFirestore(chat.id);
             else saveToLocalStorage();
 
@@ -107,7 +106,6 @@ export function renderSidebar() {
         menuDropdown.appendChild(pinOpt);
         menuDropdown.appendChild(deleteOpt);
 
-        // Логика за отваряне на менюто
         optionsBtn.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => {
@@ -123,17 +121,13 @@ export function renderSidebar() {
     });
 }
 
-// Затваряне на менютата при клик навън
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.chat-options-btn')) {
         document.querySelectorAll('.chat-menu-dropdown.show').forEach(el => el.classList.remove('show'));
     }
 });
 
-// ==========================================================
-// 2. RENDER MESSAGES (Основна функция)
-// ==========================================================
-export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMessage = false) {
+export function addMessageToUI(text, sender, feedbackStatus = null) {
     const rowDiv = document.createElement('div');
     rowDiv.classList.add('message-row');
 
@@ -142,16 +136,15 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
         const bubble = document.createElement('div');
         bubble.classList.add('user-bubble');
 
-        // Ако е HTML (файлове) или текст
         if (text.includes('<i>Изпратен файл') || text.includes('<i>Изпратени файлове')) {
             bubble.innerHTML = text;
         } else {
             bubble.innerText = text;
         }
+
         rowDiv.appendChild(bubble);
 
     } else {
-        // --- BOT ---
         rowDiv.classList.add('bot-row');
 
         const avatarImg = document.createElement('img');
@@ -167,7 +160,6 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
         const textDiv = document.createElement('div');
         textDiv.classList.add('bot-text');
 
-        // Markdown Parsing
         if (typeof marked !== 'undefined') {
             textDiv.innerHTML = marked.parse(text);
             if (typeof hljs !== 'undefined') {
@@ -177,17 +169,19 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
             textDiv.innerText = text;
         }
 
-        // --- CODE BUTTONS LOGIC ---
         const codeBlocks = textDiv.querySelectorAll('pre');
+
         codeBlocks.forEach((preBlock) => {
             const codeElement = preBlock.querySelector('code');
             if (!codeElement) return;
+
             const codeText = codeElement.innerText;
 
-            // Детекция на езика
             let language = 'txt';
             codeElement.classList.forEach(cls => {
-                if (cls.startsWith('language-')) language = cls.replace('language-', '');
+                if (cls.startsWith('language-')) {
+                    language = cls.replace('language-', '');
+                }
             });
 
             const toolbar = document.createElement('div');
@@ -197,11 +191,12 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
             toolbar.style.marginBottom = '15px';
             toolbar.style.justifyContent = 'flex-end';
 
-            // Бутон: Прехвърли (само за JS)
             if (language === 'javascript' || language === 'js') {
                 const runBtn = document.createElement('button');
-                runBtn.className = 'code-btn transfer-to-editor-btn';
+                runBtn.className = 'code-btn';
+                runBtn.classList.add('transfer-to-editor-btn');
                 runBtn.innerHTML = `Прехвърли в редактора`;
+                runBtn.title = "Сложи този код в редактора";
                 runBtn.onclick = () => {
                     editor.setValue(codeText);
                     runBtn.innerHTML = "✅ Готово!";
@@ -210,12 +205,21 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
                 toolbar.appendChild(runBtn);
             }
 
-            // Бутон: Изтегли
             const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'code-btn download-btn-style';
+            downloadBtn.className = 'code-btn';
+            downloadBtn.classList.add('download-btn-style');
             downloadBtn.style.color = 'white';
-            let ext = language === 'javascript' ? 'js' : (language || 'txt');
+
+            let ext = language ? language.toLowerCase() : 'txt';
+
+            if (LANGUAGE_EXTENSIONS[ext]) {
+                ext = LANGUAGE_EXTENSIONS[ext];
+            } else if ((ext.length > 5)) {
+                ext = 'txt';
+            }
+
             downloadBtn.innerHTML = `Изтегли .${ext}`;
+
             downloadBtn.onclick = () => {
                 const blob = new Blob([codeText], { type: 'text/plain' });
                 const url = window.URL.createObjectURL(blob);
@@ -227,21 +231,24 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
+
+                downloadBtn.innerHTML = "✅ Изтеглен!";
+                setTimeout(() => downloadBtn.innerHTML = `Изтегли .${ext}`, 2500);
             };
+
             toolbar.appendChild(downloadBtn);
 
             preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
+
         });
 
-        // --- ACTION BUTTONS (Copy, Speak, Feedback) ---
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
 
         let likeBtn, dislikeBtn;
-        const speakBtn = createActionButton(SVGs.speak, 'Прочети', () => speakText(text));
-        const copyBtn = createActionButton(SVGs.copy, 'Копирай', (e) => copyMessageText(text, e.currentTarget));
+        const speakBtn = createActionButton(SVGs.speak, 'Прочети на глас', () => speakText(text));
+        const copyBtn = createActionButton(SVGs.copy, 'Копирай текста', (e) => copyMessageText(text, e.currentTarget));
 
-        // Like/Dislike логика
         likeBtn = createActionButton(
             feedbackStatus === 'like' ? SVGs.likeFilled : SVGs.like,
             'Полезен отговор',
@@ -254,28 +261,38 @@ export function addMessageToUI(text, sender, feedbackStatus = null, isWelcomeMes
             () => handleFeedback('dislike', text, rowDiv, likeBtn, dislikeBtn)
         );
 
-        // Възстановяване на статуса (оцветяване)
         if (feedbackStatus === 'like') {
+            likeBtn.innerHTML = SVGs.likeFilled;
             likeBtn.style.color = '#c9c9c9ff';
+            likeBtn.style.opacity = '1';
             likeBtn.disabled = true;
             likeBtn.style.cursor = 'default';
         } else if (feedbackStatus === 'dislike') {
+            dislikeBtn.innerHTML = SVGs.dislikeFilled;
             dislikeBtn.style.color = '#c9c9c9ff';
+            dislikeBtn.style.opacity = '1';
             dislikeBtn.disabled = true;
             dislikeBtn.style.cursor = 'default';
         }
 
+        const isWelcomeMessage = text.startsWith("Здравей! Аз съм твоят ментор");
+
         actionsDiv.appendChild(copyBtn);
 
-        // Ако не е поздрав, показваме бутоните за оценка
         if (!isWelcomeMessage) {
-            if (feedbackStatus !== 'dislike') actionsDiv.appendChild(likeBtn);
-            if (feedbackStatus !== 'like') actionsDiv.appendChild(dislikeBtn);
+            if (feedbackStatus !== 'dislike') {
+                actionsDiv.appendChild(likeBtn);
+            }
+            if (feedbackStatus !== 'like') {
+                actionsDiv.appendChild(dislikeBtn);
+            }
         }
+
         actionsDiv.appendChild(speakBtn);
 
         messageContainer.appendChild(textDiv);
         messageContainer.appendChild(actionsDiv);
+
         rowDiv.appendChild(avatarImg);
         rowDiv.appendChild(messageContainer);
     }
@@ -316,12 +333,9 @@ export function removeLoading() {
     if (loader) loader.remove();
 }
 
-// ==========================================================
-// 3. ATTACHMENTS & THEMES
-// ==========================================================
 export function renderAttachments() {
     const list = document.getElementById('attachment-preview-list');
-    const files = state.currentAttachments; // Взимаме директно от state
+    const files = state.currentAttachments;
 
     if (files.length === 0) {
         list.style.display = 'none';
@@ -350,7 +364,6 @@ export function renderAttachments() {
     });
 }
 
-// Тъмна Тема Логика
 export function toggleTheme() {
     const body = document.body;
     const btn = document.getElementById('theme-toggle');
@@ -359,7 +372,6 @@ export function toggleTheme() {
     btn.innerText = isDark ? '☀️' : '🌙';
     localStorage.setItem('scriptsensei_theme', isDark ? 'dark' : 'light');
 
-    // Обновяваме редактора
     editor.setOption("theme", isDark ? "dracula" : "eclipse");
 }
 
@@ -375,12 +387,9 @@ export function initTheme() {
     }
 }
 
-// ==========================================================
-// 4. FEEDBACK FORM LOGIC
-// ==========================================================
 const feedbackModal = document.getElementById('feedback-modal');
 const feedbackForm = document.getElementById('feedback-form');
-let activeFeedbackUI = null; // Тук пазим кой бутон е натиснат
+let activeFeedbackUI = null;
 
 async function handleFeedback(type, text, messageRow, likeBtn, dislikeBtn) {
     if (type === 'like') {
@@ -396,7 +405,6 @@ async function handleFeedback(type, text, messageRow, likeBtn, dislikeBtn) {
         showToast('Благодарим за оценката!', '👍');
         await saveFeedbackToHistory(text, 'like');
     } else {
-        // Dislike -> отваря модал
         openFeedbackModal(likeBtn, dislikeBtn, text);
     }
 }
@@ -409,7 +417,6 @@ function openFeedbackModal(likeBtn, dislikeBtn, rawText) {
     document.getElementById('submit-feedback').disabled = true;
 }
 
-// Инициализация на listeners за feedback формата
 export function initFeedbackSystem() {
     const closeBtn = document.getElementById('close-feedback');
     const detailsInput = document.getElementById('feedback-details');
@@ -418,7 +425,6 @@ export function initFeedbackSystem() {
 
     closeBtn.onclick = () => feedbackModal.style.display = 'none';
 
-    // Валидация
     feedbackForm.addEventListener('change', validate);
     detailsInput.addEventListener('input', validate);
 
@@ -441,18 +447,15 @@ export function initFeedbackSystem() {
 
         const { likeBtn, dislikeBtn, rawText } = activeFeedbackUI;
 
-        // Взимаме причините
         const reasons = Array.from(feedbackForm.querySelectorAll('input:checked')).map(i => i.value);
         const details = detailsInput.value;
 
-        // UI Update
         dislikeBtn.innerHTML = SVGs.dislikeFilled;
         dislikeBtn.style.color = '#c9c9c9ff';
         dislikeBtn.disabled = true;
         dislikeBtn.style.cursor = 'default';
         if (likeBtn) likeBtn.remove();
 
-        // Send & Save
         sendFeedbackReport('dislike', rawText, reasons, details);
         await saveFeedbackToHistory(rawText, 'dislike');
 
@@ -477,20 +480,17 @@ export async function shareChat() {
     });
     shareText += `\n🚀 *Генерирано от ScriptSensei*`;
 
-    // Опит за Native Share (за мобилни)
     if (navigator.share) {
         try {
             await navigator.share({
                 title: 'ScriptSensei Chat',
                 text: shareText
             });
-            return; // Ако успее, спираме до тук
+            return;
         } catch (err) {
-            // Ако откаже споделяне, продължаваме към клипборда
         }
     }
 
-    // Fallback: Clipboard
     try {
         await navigator.clipboard.writeText(shareText);
         showToast('Чатът е копиран в клипборда!', '📋');

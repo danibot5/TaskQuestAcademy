@@ -1,22 +1,99 @@
+/* --------------------- */
+/* ----- DARK MODE ----- */
+/* --------------------- */
+
 body.dark-mode {
     background-color: #1e1e1e;
 }
 
+
+/* ------------------------------ */
+/* ----- LAYOUT AND SIDEBAR ----- */
+/* ------------------------------ */
+
 body.dark-mode .chat-panel {
     background-color: #1e1e1e;
+}
+
+body.dark-mode .sidebar {
+    background-color: #202123;
+    color: white;
+    border-right: 1px solid #333;
+}
+
+body.dark-mode .sidebar-header {
+    color: white;
+}
+
+body.dark-mode .section-title {
+    color: white;
+}
+
+body.dark-mode #close-sidebar {
+    color: white;
+}
+
+body.dark-mode #close-sidebar:hover {
+    color: #ff2c2c;
 }
 
 body.dark-mode .top-bar {
     color: #fff;
 }
 
-body.dark-mode #menu-btn {
-    color: #ededed;
+body.dark-mode #share-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
 }
 
-body.dark-mode #menu-btn:hover {
-    background: #444;
+body.dark-mode #share-and-theme-divider {
+    background: #fcfcfc6f;
 }
+
+
+/* --------------------------- */
+/* ----- CHAT LIST ITEMS ----- */
+/* --------------------------- */
+
+body.dark-mode .chat-item {
+    color: #ececf1;
+}
+
+body.dark-mode .chat-item:hover {
+    background-color: #2a2b32;
+}
+
+body.dark-mode .chat-item.active {
+    background-color: #343541;
+}
+
+body.dark-mode .chat-options-btn:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .chat-menu-dropdown {
+    background: #2b2d31;
+    border-color: #444;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .menu-option {
+    color: #e1e1e1;
+}
+
+body.dark-mode .menu-option:hover {
+    background-color: #3e4047;
+}
+
+body.dark-mode .menu-option.delete-opt:hover {
+    background-color: #3e2a2a;
+}
+
+
+/* ------------------------------- */
+/* --- MESSAGES & CHAT BUBBLES ---  */
+/* ------------------------------- */
 
 body.dark-mode .bot-text {
     background-color: #2b2d31;
@@ -27,6 +104,20 @@ body.dark-mode .user-bubble {
     background-color: #3e4451;
     color: #fff;
 }
+
+body.dark-mode a {
+    color: #4da3ff !important;
+    text-decoration: underline;
+}
+
+body.dark-mode a:hover {
+    color: #92caff !important;
+}
+
+
+/* ---------------------- */
+/* ----- INPUT AREA ----- */
+/* ---------------------- */
 
 body.dark-mode .input-wrapper {
     background: linear-gradient(to top, #1e1e1e 80%, rgba(30, 30, 30, 0));
@@ -47,6 +138,20 @@ body.dark-mode #user-input {
     color: #fff;
 }
 
+body.dark-mode .attachment-list {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .attachment-item {
+    border-color: #444;
+    background: #333;
+}
+
+
+/* --------------------------- */
+/* ----- BUTTONS & ICONS ----- */
+/* --------------------------- */
+
 body.dark-mode .icon-btn {
     color: #aaa;
 }
@@ -55,14 +160,92 @@ body.dark-mode .icon-btn:hover {
     background-color: #444;
 }
 
-body.dark-mode ::-webkit-scrollbar-track {
-    background: #1e1e1e;
+body.dark-mode #menu-btn {
+    color: #ededed;
 }
 
-body.dark-mode ::-webkit-scrollbar-thumb {
+body.dark-mode #menu-btn:hover {
     background: #444;
 }
 
+body.dark-mode #search-toggle-btn {
+    color: #c1c1c1;
+}
+
+body.dark-mode #search-toggle-btn:hover {
+    color: white;
+}
+
+body.dark-mode .search-wrapper.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode #search-input {
+    color: white;
+}
+
+body.dark-mode .action-btn {
+    color: #aaa;
+}
+
+body.dark-mode .action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+body.dark-mode .action-btn:disabled,
+.action-btn:disabled:hover {
+    background-color: transparent !important;
+}
+
+
+/* ----------------------- */
+/* ----- SUGGESTIONS ----- */
+/* ----------------------- */
+
+body.dark-mode .suggestion-card {
+    background-color: #2b2d31;
+    border-color: #444;
+    color: #ececf1;
+    box-shadow: none;
+}
+
+body.dark-mode .suggestion-card:hover {
+    border-color: #1a73e8;
+    background-color: #343541;
+    box-shadow: 0 5px 14px rgba(26, 115, 232, 0.2);
+}
+
+
+/* ---------------------------- */
+/* ----- EDITOR & CONSOLE ----- */
+/* ---------------------------- */
+
+body.dark-mode .code-panel {
+    background-color: #1e1e1e;
+    border-left: 1px solid #333;
+}
+
+body.dark-mode .editor-header,
+body.dark-mode .controls {
+    background-color: #252526;
+    color: #ccc;
+    border-color: #333;
+}
+
+body.dark-mode .console {
+    background-color: #0f0f0f;
+    color: #00dd00;
+    border-top: 1px solid #333;
+}
+
+body.dark-mode .CodeMirror {
+    background-color: #1e1e1e !important;
+}
+
+/* -------------------------- */
+/* ----- MODALS & FORMS ----- */
+/* -------------------------- */
 body.dark-mode .modal-box {
     background-color: #252526;
     color: #e1e1e1;
@@ -106,181 +289,10 @@ body.dark-mode .close-modal:hover {
     color: #fff;
 }
 
-body.dark-mode a {
-    color: #4da3ff !important;
-    text-decoration: underline;
-}
 
-body.dark-mode a:hover {
-    color: #92caff !important;
-}
-
-body.dark-mode .sidebar {
-    background-color: #202123;
-    color: white;
-    border-right: 1px solid #333;
-}
-
-body.dark-mode .sidebar-header {
-    color: white;
-}
-
-body.dark-mode #close-sidebar {
-    color: white;
-}
-
-body.dark-mode #close-sidebar:hover {
-    color: #ff2c2c;
-}
-
-body.dark-mode .chat-item {
-    color: #ececf1;
-}
-
-body.dark-mode .chat-item:hover {
-    background-color: #2a2b32;
-}
-
-body.dark-mode .chat-item.active {
-    background-color: #343541;
-}
-
-body.dark-mode .code-panel {
-    background-color: #1e1e1e;
-    border-left: 1px solid #333;
-}
-
-body.dark-mode .editor-header,
-body.dark-mode .controls {
-    background-color: #252526;
-    color: #ccc;
-    border-color: #333;
-}
-
-body.dark-mode .console {
-    background-color: #0f0f0f;
-    color: #00dd00;
-    border-top: 1px solid #333;
-}
-
-body.dark-mode .CodeMirror {
-    background-color: #1e1e1e !important;
-}
-
-body.dark-mode .user-info {
-    background: #2A2B32;
-}
-
-body.dark-mode #user-name {
-    color: white;
-}
-
-body.dark-mode .user-email-text {
-    color: #aaa;
-}
-
-body.dark-mode ::-webkit-scrollbar-track {
-    background: #1e1e1e;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb {
-    background-color: #4a4a4a;
-    border: 3px solid transparent;
-    background-clip: content-box;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background-color: #666;
-}
-
-body.dark-mode ::-webkit-scrollbar-corner {
-    background: #1e1e1e;
-}
-
-body.dark-mode .section-title {
-    color: white;
-}
-
-body.dark-mode .attachment-list {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-body.dark-mode .attachment-item {
-    border-color: #444;
-    background: #333;
-}
-
-body.dark-mode .search-wrapper.active {
-    background: rgba(255, 255, 255, 0.1);
-} 
-
-body.dark-mode #search-toggle-btn {
-    color: #c1c1c1;
-}
-
-body.dark-mode #search-toggle-btn:hover {
-    color: white;
-}
-
-body.dark-mode #search-input {
-    color: white;
-}
-
-body.dark-mode .chat-options-btn:hover {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-body.dark-mode .chat-menu-dropdown {
-    background: #2b2d31;
-    border-color: #444;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-}
-
-body.dark-mode .menu-option {
-    color: #e1e1e1;
-}
-
-body.dark-mode .menu-option:hover {
-    background-color: #3e4047;
-}
-
-body.dark-mode .menu-option.delete-opt:hover {
-    background-color: #3e2a2a;
-}
-
-body.dark-mode .suggestion-chip {
-    background-color: #2b2d31;
-    border-color: #444;
-    color: #ddd;
-}
-
-body.dark-mode .suggestion-chip:hover {
-    background-color: #343541;
-    border-color: #666;
-}
-
-body.dark-mode .suggestion-card {
-    background-color: #2b2d31;
-    border-color: #444;
-    color: #ececf1;
-    box-shadow: none;
-}
-
-body.dark-mode .suggestion-card:hover {
-    border-color: #1a73e8;
-    background-color: #343541;
-    box-shadow: 0 5px 14px rgba(26, 115, 232, 0.2);
-}
-
-body.dark-mode #share-and-theme-divider {
-    background: #fcfcfc6f;
-}
-
-body.dark-mode #share-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-}
+/* ---------------------------------- */
+/* ----- FEEDBACK FORM ELEMENTS ----- */
+/* ---------------------------------- */
 
 body.dark-mode #feedback-details {
     background-color: #333;
@@ -311,11 +323,11 @@ body.dark-mode .checkmark {
     border-color: #555;
 }
 
-body.dark-mode .checkbox-container:hover input ~ .checkmark {
+body.dark-mode .checkbox-container:hover input~.checkmark {
     background-color: #444;
 }
 
-body.dark-mode .checkbox-container input:checked ~ .checkmark {
+body.dark-mode .checkbox-container input:checked~.checkmark {
     background-color: #1a73e8;
     border-color: #1a73e8;
 }
@@ -328,16 +340,50 @@ body.dark-mode .feedback-box p {
     color: #bbb;
 }
 
-body.dark-mode .action-btn:disabled,
-.action-btn:disabled:hover {
-    background-color: transparent !important;
+
+/* --------------------- */
+/* ----- USER INFO ----- */
+/* --------------------- */
+
+body.dark-mode .user-info {
+    background: #2A2B32;
 }
 
-body.dark-mode .action-btn {
+body.dark-mode #user-name {
+    color: white;
+}
+
+body.dark-mode .user-email-text {
     color: #aaa;
 }
 
-body.dark-mode .action-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
+
+/* ---------------------- */
+/* ----- SCROLLBARS ----- */
+/* ---------------------- */
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background-color: #4a4a4a;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background-color: #666;
+}
+
+body.dark-mode ::-webkit-scrollbar-corner {
+    background: #1e1e1e;
 }

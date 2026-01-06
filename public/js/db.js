@@ -4,7 +4,6 @@ import { renderSidebar } from './ui.js';
 import { startNewChat } from './chat.js';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- GUEST (LocalStorage) ---
 export function loadChatsFromLocalStorage() {
     const localData = localStorage.getItem('scriptsensei_chats');
     const chats = localData ? JSON.parse(localData) : [];
@@ -19,7 +18,6 @@ export function saveToLocalStorage() {
     }
 }
 
-// --- USER (Firestore) ---
 export async function loadChatsFromFirestore() {
     const chatListEl = document.querySelector('.chat-list');
     chatListEl.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
@@ -38,7 +36,6 @@ export async function loadChatsFromFirestore() {
             loadedChats.push({ id: doc.id, ...doc.data() });
         });
 
-        // Сортиране най-новите отгоре
         loadedChats.sort((a, b) => b.createdAt - a.createdAt);
         setAllChats(loadedChats);
 
@@ -85,7 +82,6 @@ export async function deleteFromFirestore(chatId) {
     }
 }
 
-// --- ОБЩИ ФУНКЦИИ ЗА ЗАПАЗВАНЕ ---
 export async function saveMessage(text, sender) {
     let chat = state.allChats.find(c => c.id === state.currentChatId);
 

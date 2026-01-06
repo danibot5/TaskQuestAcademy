@@ -4,16 +4,13 @@ import { saveToFirestore, saveToLocalStorage, saveMessage } from './db.js';
 import { API_URL, TITLE_API_URL } from './config.js';
 import { editor } from './editor.js';
 
-// --- START NEW CHAT ---
 export function startNewChat() {
-    setCurrentChatId(Date.now()); // Временно ID
+    setCurrentChatId(Date.now());
     const chatHistory = document.getElementById('chat-history');
     chatHistory.innerHTML = '';
 
-    // 1. Показваме поздрава
     addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot', null, true);
 
-    // 2. Добавяме SUGGESTION CHIPS
     const suggestions = [
         { text: "Напиши код за Snake игра!" },
         { text: "Обясни ми какво е Closure!" },
@@ -42,14 +39,11 @@ export function startNewChat() {
     });
 
     chatHistory.appendChild(chipsContainer);
-    // Скролваме леко
     chipsContainer.scrollIntoView({ behavior: "smooth", block: "end" });
 
-    // Махаме активния клас от менюто
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
 }
 
-// --- LOAD CHAT ---
 export function loadChat(id) {
     setCurrentChatId(id);
     const chatHistory = document.getElementById('chat-history');
@@ -58,32 +52,31 @@ export function loadChat(id) {
 
     const chat = state.allChats.find(c => c.id === id);
     if (chat) {
-        // Винаги показваме поздрава
         addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot', null, true);
         chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender, msg.feedback));
     }
 
     renderSidebar();
     if (window.innerWidth < 800) sidebar.classList.remove('open');
+
+    setTimeout(() => {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }, 50);
 }
 
-// --- SEND MESSAGE ---
 export async function sendMessage() {
     const userInput = document.getElementById('user-input');
     const text = userInput.value;
 
-    // Проверка: Има ли текст ИЛИ файлове?
     if (text.trim() === "" && state.currentAttachments.length === 0) return;
 
     const isNewChat = !state.allChats.find(c => c.id === state.currentChatId) || (typeof state.currentChatId === 'number');
 
-    // UI: Текст
     if (text.trim() !== "") {
         addMessageToUI(text, 'user');
         await saveMessage(text, 'user');
     }
 
-    // UI: Файлове
     if (state.currentAttachments.length > 0) {
         const fileNames = state.currentAttachments.map(f => f.name).join(', ');
         addMessageToUI(`📎 <i>Изпратени файлове (${state.currentAttachments.length}): ${fileNames}</i>`, 'user');
@@ -92,12 +85,10 @@ export async function sendMessage() {
     userInput.value = '';
     userInput.style.height = 'auto';
 
-    // Smart Title Logic
     if (isNewChat && text.trim() !== "") {
         setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
     }
 
-    // Context Logic
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
     let messagesPayload = [];
     if (currentChat && currentChat.messages) {
@@ -107,7 +98,6 @@ export async function sendMessage() {
         }));
     }
 
-    // Подготовка на Payload (взимаме код от Едитора)
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
     let messageToSendToAI = text;
@@ -126,12 +116,10 @@ export async function sendMessage() {
 
     const requestBody = { messages: messagesPayload };
 
-    // 🔥 ПРИКАЧВАМЕ ФАЙЛОВЕТЕ ОТ STATE
     if (state.currentAttachments.length > 0) {
         requestBody.attachments = state.currentAttachments;
 
-        // Чистим UI
-        state.currentAttachments.length = 0; // Изчистване на масива
+        state.currentAttachments.length = 0;
         renderAttachments();
     }
 
@@ -159,7 +147,6 @@ export async function sendMessage() {
     }
 }
 
-// --- GENERATE TITLE ---
 async function generateSmartTitle(chatId, firstMessage) {
     try {
         const response = await fetch(TITLE_API_URL, {

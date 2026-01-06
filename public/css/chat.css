@@ -94,13 +94,6 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.suggestion-chip:hover {
-    background-color: #f6fbff;
-    transform: scale(1.03) translateY(-1.5px);
-    border-color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
 .suggestion-card {
     background-color: #f1f1f1;
     border: 1px solid #d6d6d6;
