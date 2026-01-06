@@ -267,19 +267,10 @@ body.dark-mode .suggestion-card {
     box-shadow: none;
 }
 
-body.dark-mode .suggestion-icon {
-    background: #3e4047;
-    color: #fff;
-}
-
 body.dark-mode .suggestion-card:hover {
+    border-color: #1a73e8;
     background-color: #343541;
-    border-color: #666;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-body.dark-mode .suggestion-card:hover .suggestion-icon {
-    background: #4e5058;
+    box-shadow: 0 5px 14px rgba(26, 115, 232, 0.2);
 }
 
 body.dark-mode #share-and-theme-divider {
@@ -335,4 +326,18 @@ body.dark-mode .feedback-box h2 {
 
 body.dark-mode .feedback-box p {
     color: #bbb;
+}
+
+body.dark-mode .action-btn:disabled,
+.action-btn:disabled:hover {
+    background-color: transparent !important;
+}
+
+body.dark-mode .action-btn {
+    color: #aaa;
+}
+
+body.dark-mode .action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }

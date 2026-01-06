@@ -15,10 +15,10 @@ export function startNewChat() {
 
     // 2. Добавяме SUGGESTION CHIPS
     const suggestions = [
-        { text: "Обясни ми какво е Closure", icon: "📦" },
-        { text: "Напиши код за Snake игра", icon: "🐍" },
-        { text: "Как работи async/await?", icon: "⏳" },
-        { text: "Дебъгни кода в редактора", icon: "🐞" }
+        { text: "Напиши код за Snake игра!" },
+        { text: "Обясни ми какво е Closure!" },
+        { text: "Дебъгни кода в редактора!" },
+        { text: "Как работи async/await?" }
     ];
 
     const chipsContainer = document.createElement('div');
@@ -31,10 +31,7 @@ export function startNewChat() {
     suggestions.forEach(item => {
         const card = document.createElement('button');
         card.className = 'suggestion-card';
-        card.innerHTML = `
-            <span class="suggestion-icon">${item.icon}</span>
-            <span class="suggestion-text">${item.text}</span>
-        `;
+        card.innerHTML = `<span class="suggestion-text">${item.text}</span>`;
 
         card.onclick = () => {
             userInput.value = `${item.text}`;
