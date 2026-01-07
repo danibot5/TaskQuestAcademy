@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuBtn = document.getElementById('menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar');
     const sidebar = document.getElementById('sidebar');
+    
     if (menuBtn) menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
     if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 

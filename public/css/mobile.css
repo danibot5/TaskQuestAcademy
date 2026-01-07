@@ -25,19 +25,43 @@
         left: 0;
         height: 100%;
         width: 0;
-        z-index: 2000;
+        z-index: 10000 !important;
         box-shadow: none;
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sidebar.open {
-        width: 85%;
-        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+        width: 80%;
+        z-index: 10001 !important;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
     }
 
     .sidebar-content-wrapper {
         width: 100%;
         padding: 15px;
+    }
+
+    #new-chat-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-top: auto;
+        margin-bottom: 20px;
+        padding: 15px;
+        font-size: 1.1rem;
+        z-index: 10001 !important;
+    }
+
+    .search-wrapper.active {
+        width: 185px !important;
+        padding-left: 7.5px;
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    .search-wrapper.active #search-input {
+        width: 100% !important; 
+        min-width: 180px;
     }
 
     #close-sidebar {
