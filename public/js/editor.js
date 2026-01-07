@@ -6,8 +6,10 @@ export const editor = CodeMirror.fromTextArea(document.getElementById("code-edit
     lineNumbers: true,
     autoCloseBrackets: true,
     lineWrapping: true,
+    matchBrackets: true,
     readOnly: false,
-    cursorBlinkRate: 530,
+    lineWrapping: false,
+    cursorBlinkRate: 530
 });
 
 export function initEditor() {

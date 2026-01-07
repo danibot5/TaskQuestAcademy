@@ -20,18 +20,26 @@
 #menu-btn {
     background: none;
     border: none;
-    border-radius: 15px;
+    border-radius: 10px;
     cursor: pointer;
     margin-right: 5px;
     padding: 5px;
-    padding-bottom: 3px;
+    padding-bottom: 2.5px;
     color: #555;
-    transform: scale(0.9);
+    transform: scale(0.8);
     transition: all 0.3s ease;
 }
 
 #menu-btn:hover {
     background: #e1e1e1;
+}
+
+#mobile-editor-toggle {
+    display: none;
+}
+
+#close-mobile-editor {
+    display: none;
 }
 
 .sidebar {

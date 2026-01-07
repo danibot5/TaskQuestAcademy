@@ -5,6 +5,8 @@
     display: flex;
     flex-direction: column;
     border-left: 1px solid #ddd;
+    min-width: 0; 
+    overflow: hidden;
 }
 
 .editor-header {
@@ -82,16 +84,26 @@
     cursor: default;
 }
 
-/* --- CODEMIRROR EDITOR STYLES --- */
+/* CODEMIRROR EDITOR STYLES */
 .CodeMirror {
     flex: 1;
     height: auto !important;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
     font-size: 16px;
     font-family: 'Consolas', 'Monaco', monospace;
     background-color: #ffffff !important;
     color: #333333 !important;
     z-index: 1;
+}
+
+.CodeMirror-scroll {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding-bottom: 20px; 
 }
 
 .CodeMirror pre.CodeMirror-line,

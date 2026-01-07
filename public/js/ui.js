@@ -7,6 +7,9 @@ import { editor } from './editor.js';
 const chatHistory = document.getElementById('chat-history');
 const chatList = document.querySelector('.chat-list');
 const sidebar = document.getElementById('sidebar');
+const mobileEditorBtn = document.getElementById('mobile-editor-toggle');
+const body = document.body;
+const closeEditorBtn = document.getElementById('close-mobile-editor');
 const LANGUAGE_EXTENSIONS = {
     'javascript': 'js', 'js': 'js', 'python': 'py', 'py': 'py',
     'csharp': 'cs', 'cs': 'cs', 'cpp': 'cpp', 'c++': 'cpp',
@@ -497,4 +500,25 @@ export async function shareChat() {
     } catch (err) {
         showToast('Грешка при споделяне.', '❌');
     }
+}
+
+if (mobileEditorBtn) {
+    mobileEditorBtn.addEventListener('click', () => {
+        body.classList.toggle('mobile-editor-active');
+        
+        if (body.classList.contains('mobile-editor-active')) {
+            mobileEditorBtn.style.color = '#1a73e8';
+        } else {
+            mobileEditorBtn.style.color = '';
+        }
+    });
+}
+
+if (closeEditorBtn) {
+    closeEditorBtn.addEventListener('click', () => {
+        document.body.classList.remove('mobile-editor-active');
+        
+        const openBtn = document.getElementById('mobile-editor-toggle');
+        if (openBtn) openBtn.style.color = ''; 
+    });
 }

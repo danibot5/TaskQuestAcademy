@@ -436,7 +436,7 @@
     background-color: #1a73e8;
 }
 
-/* --- MODALS --- */
+/* MODALS */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -511,6 +511,7 @@
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
 .modal-btn {
@@ -523,7 +524,7 @@
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .modal-btn.secondary {
