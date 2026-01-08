@@ -1,10 +1,10 @@
-const { onRequest } = require("firebase-functions/v2/https");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import { onRequest } from "firebase-functions/v2/https";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-pro"
+  model: "gemini-2.5-pro",
 });
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
@@ -32,7 +32,7 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
 - Ако потребителят напише нещо много кратко (напр. "обекти"), не питай "Какво за тях?", а направо дай кратко, ударно обяснение с пример.
 `;
 
-exports.chat = onRequest({ cors: true }, async (req, res) => {
+export const chat = onRequest({ cors: true }, async (req, res) => {
   try {
     const messages = req.body.messages || [];
     const attachments = req.body.attachments || [];
@@ -46,7 +46,7 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     let promptText = lastMessageObj ? lastMessageObj.content : "";
 
     if ((!promptText || promptText.trim() === "") && attachments.length > 0) {
-      promptText = "Моля, анализирай тази снимка и обясни какво виждаш.";
+      promptText = "Анализирай тази снимка/код.";
     }
 
     const currentMessageParts = [{ text: promptText }];
@@ -62,41 +62,45 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
       });
     }
 
-    const chat = model.startChat({
+    const chatSession = model.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "model", parts: [{ text: "Здравей! Аз съм ScriptSensei (Pro версия). Готов съм да помагам! 🚀" }] },
+        { role: "model", parts: [{ text: "Здравей! Готов съм да помагам! 🚀" }] },
         ...historyForGemini
       ],
     });
 
-    const result = await chat.sendMessage(currentMessageParts);
+    const result = await chatSession.sendMessage(currentMessageParts);
     const response = await result.response;
-    const textResponse = response.text();
 
-    res.json({ reply: textResponse });
+    res.json({ reply: response.text() });
 
   } catch (error) {
-    console.error("Gemini Error:", error);
-    res.status(500).json({
-      error: `Error: ${error.message}. (Моля провери API Key-я и квотите в Google Cloud).`
-    });
+    console.error("AI Error:", error);
+    if (error.message.includes("429") || error.message.includes("Too Many Requests")) {
+      res.json({ reply: "😅 Много заявки! Изчакай малко." });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
-exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
+export const generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
     const { message } = req.body;
-    if (!message) return res.json({ reply: "Нов разговор" });
+    if (!message) return res.json({ reply: "Разговор" });
 
-    const prompt = `Summarize this text into a short title (max 4 words) in Bulgarian. No quotes. Text: "${message}"`;
+    const shortMessage = message.substring(0, 300);
+
+    const prompt = `Генерирай супер кратко заглавие (макс 3-4 думи) на български, което описва този въпрос: "${shortMessage}". Не слагай кавички.`;
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const title = response.text().replace(/["']/g, "").trim();
 
     res.json({ reply: title });
   } catch (error) {
-    console.error("Title Error:", error);
+    console.error("Title Generation Error:", error);
     res.json({ reply: "Разговор" });
   }
 });

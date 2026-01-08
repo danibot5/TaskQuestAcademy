@@ -1,6 +1,7 @@
 {
   "name": "functions",
   "description": "Cloud Functions for Firebase",
+  "type": "module",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
@@ -9,18 +10,17 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "24"
+    "node": "20"
   },
   "main": "index.js",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "dotenv": "^17.2.3",
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.2",
-    "openai": "^6.15.0"
+    "@google/generative-ai": "^0.24.0",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.0"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.4.1"
+    "firebase-functions-test": "^3.1.0"
   },
   "private": true
 }
