@@ -64,62 +64,59 @@ export function loadChat(id) {
     }, 50);
 }
 
-export async function sendMessage() {
+export async function sendMessage(retryCount = 0) {
     const userInput = document.getElementById('user-input');
-    const text = userInput.value;
 
-    if (text.trim() === "" && state.currentAttachments.length === 0) return;
+    let text = userInput.value;
+    
+    if (retryCount === 0 && text.trim() === "" && state.currentAttachments.length === 0) return;
 
-    const isNewChat = !state.allChats.find(c => c.id === state.currentChatId) || (typeof state.currentChatId === 'number');
+    if (retryCount === 0) {
+        if (text.trim() !== "") {
+            addMessageToUI(text, 'user');
+            await saveMessage(text, 'user');
+        }
+        if (state.currentAttachments.length > 0) {
+            const fileNames = state.currentAttachments.map(f => f.name).join(', ');
+            addMessageToUI(`📎 <i>Изпратени файлове (${state.currentAttachments.length}): ${fileNames}</i>`, 'user');
+        }
 
-    if (text.trim() !== "") {
-        addMessageToUI(text, 'user');
-        await saveMessage(text, 'user');
-    }
-
-    if (state.currentAttachments.length > 0) {
-        const fileNames = state.currentAttachments.map(f => f.name).join(', ');
-        addMessageToUI(`📎 <i>Изпратени файлове (${state.currentAttachments.length}): ${fileNames}</i>`, 'user');
-    }
-
-    userInput.value = '';
-    userInput.style.height = 'auto';
-
-    if (isNewChat && text.trim() !== "") {
-        setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        
+        const isNewChat = !state.allChats.find(c => c.id === state.currentChatId) || (typeof state.currentChatId === 'number');
+        if (isNewChat && text.trim() !== "") {
+            setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
+        }
     }
 
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
     let messagesPayload = [];
+    
     if (currentChat && currentChat.messages) {
-        messagesPayload = currentChat.messages.slice(-10).map(msg => ({
+        messagesPayload = currentChat.messages.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.text
         }));
     }
-
+    
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
-    let messageToSendToAI = text;
-
-    if (messageToSendToAI.trim() === "" && state.currentAttachments.length > 0) {
-        messageToSendToAI = "Разгледай прикачените файлове.";
+    
+    if (messagesPayload.length > 0) {
+        const lastMsg = messagesPayload[messagesPayload.length - 1];
+        if (lastMsg.role === 'user' && editorCode.trim().length > 0 && !lastMsg.content.includes('[SYSTEM CONTEXT]')) {
+             lastMsg.content += `\n\n--- [SYSTEM CONTEXT] ---\nCODE:\n\`\`\`javascript\n${editorCode}\n\`\`\`\nCONSOLE:\n${consoleOutput}\n------------------------`;
+        }
     }
 
-    if (editorCode.trim().length > 0) {
-        messageToSendToAI += `\n\n--- [SYSTEM CONTEXT] ---\nCODE:\n\`\`\`javascript\n${editorCode}\n\`\`\`\nCONSOLE:\n${consoleOutput}\n------------------------`;
-    }
-
-    messagesPayload.push({ role: 'user', content: messageToSendToAI });
-
-    showLoading();
+    if (retryCount === 0) showLoading();
 
     const requestBody = { messages: messagesPayload };
 
-    if (state.currentAttachments.length > 0) {
+    if (retryCount === 0 && state.currentAttachments.length > 0) {
         requestBody.attachments = state.currentAttachments;
-
-        state.currentAttachments.length = 0;
+        state.currentAttachments.length = 0; // Чистим ги
         renderAttachments();
     }
 
@@ -131,23 +128,42 @@ export async function sendMessage() {
         });
 
         const data = await response.json();
+        
+        if (data.reply && (data.reply.includes("Много заявки") || data.reply.includes("429"))) {
+            if (retryCount < 3) { // Пробваме максимум 3 пъти
+                console.warn(`Server busy. Retrying in 4s... (Attempt ${retryCount + 1})`);
+                
+                const loadingBubble = document.querySelector('#loading-indicator .typing-indicator');
+                if (loadingBubble) loadingBubble.style.opacity = '0.5'; // Визуален сигнал
+
+                setTimeout(() => {
+                    sendMessage(retryCount + 1);
+                }, 4000);
+                return;
+            }
+        }
+
         removeLoading();
 
         if (data.reply) {
             addMessageToUI(data.reply, 'bot');
             await saveMessage(data.reply, 'bot');
         } else if (data.error) {
-            if (data.error.includes('503') || data.error.includes('Overloaded')) {
-                addMessageToUI("😅 Упс! Мозъкът ми прегря (Google сървърите са натоварени). Моля, опитай пак след малко!", 'bot');
-            } else {
-                addMessageToUI("🚨 Възникна грешка: " + data.error, 'bot');
-            }
+             if (data.error.includes('429') || data.error.includes('Too Many Requests')) {
+                 addMessageToUI("😅 Сървърите са много натоварени в момента. Моля, опитай пак след 1 минута.", 'bot');
+             } else {
+                 addMessageToUI("🚨 " + data.error, 'bot');
+             }
         }
 
     } catch (error) {
-        removeLoading();
-        addMessageToUI("Грешка: Сървърът не отговаря.", 'bot');
         console.error(error);
+        if (retryCount < 3) {
+             setTimeout(() => sendMessage(retryCount + 1), 4000);
+        } else {
+            removeLoading();
+            addMessageToUI("Грешка: Сървърът не отговаря.", 'bot');
+        }
     }
 }
 

@@ -50,7 +50,7 @@ export const chat = onRequest({ cors: true }, async (req, res) => {
     }
 
     const currentMessageParts = [{ text: promptText }];
-
+    
     if (attachments.length > 0) {
       attachments.forEach(file => {
         currentMessageParts.push({
