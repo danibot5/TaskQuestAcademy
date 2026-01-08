@@ -137,7 +137,11 @@ export async function sendMessage() {
             addMessageToUI(data.reply, 'bot');
             await saveMessage(data.reply, 'bot');
         } else if (data.error) {
-            addMessageToUI("🚨 " + data.error, 'bot');
+            if (data.error.includes('503') || data.error.includes('Overloaded')) {
+                addMessageToUI("😅 Упс! Мозъкът ми прегря (Google сървърите са натоварени). Моля, опитай пак след малко!", 'bot');
+            } else {
+                addMessageToUI("🚨 Възникна грешка: " + data.error, 'bot');
+            }
         }
 
     } catch (error) {

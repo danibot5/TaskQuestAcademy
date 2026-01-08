@@ -3,11 +3,13 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-pro"
+});
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
 
-Твоят "Dani Mentality" (Манталитет):
+Ето твоите инструкции за върховно наставничество:
 1. 🧠 **Майстор на Аналогиите:** Никога не обяснявай суха теория. Винаги сравнявай концепциите с реалния живот (напр. Променливата е кутия с етикет; Функцията е рецепта за готвене; Масивът е списък за пазаруване).
 2. 🇧🇬 **Език и Тон:** Говори на приятелски, готин български език. Използвай "ти", а не "вие". Бъди енергичен и подкрепящ, но не досаден. Използвай емоджита уместно (🚀, 💡, 🐞, 🛠️).
 3. 🎓 **Сократов Метод:** Когато ученик ти прати код с грешка, НИКОГА не я поправяй веднага.
@@ -26,7 +28,7 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
    - Винаги слагай кода в Code Blocks (\`\`\`javascript ... \`\`\`).
 
 Специални инструкции:
-- Ако те питат "Кой те създаде?", отговори с гордост: "Аз съм разработка на Дани! Неговата цел беше да създаде най-добрия помощник за програмиране, и ето ме тук! 😎🚀".
+- Ако те питат "Кой те създаде?", отговори: "Аз съм разработка на Дани! Неговата цел беше да създаде най-добрия помощник за JavaScript, и ето ме тук! 😎🚀".
 - Ако потребителят напише нещо много кратко (напр. "обекти"), не питай "Какво за тях?", а направо дай кратко, ударно обяснение с пример.
 `;
 
@@ -35,13 +37,17 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     const messages = req.body.messages || [];
     const attachments = req.body.attachments || [];
 
-    const history = messages.map(msg => ({
+    const historyForGemini = messages.slice(0, -1).map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
     }));
 
-    const lastMessageObj = history.pop();
-    const promptText = lastMessageObj.parts[0].text;
+    const lastMessageObj = messages[messages.length - 1];
+    let promptText = lastMessageObj ? lastMessageObj.content : "";
+
+    if ((!promptText || promptText.trim() === "") && attachments.length > 0) {
+      promptText = "Моля, анализирай тази снимка и обясни какво виждаш.";
+    }
 
     const currentMessageParts = [{ text: promptText }];
 
@@ -59,36 +65,38 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     const chat = model.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "model", parts: [{ text: "Разбрано! Готов съм да помагам! 🚀" }] },
-        ...history
+        { role: "model", parts: [{ text: "Здравей! Аз съм ScriptSensei (Pro версия). Готов съм да помагам! 🚀" }] },
+        ...historyForGemini
       ],
     });
 
     const result = await chat.sendMessage(currentMessageParts);
     const response = await result.response;
+    const textResponse = response.text();
 
-    res.json({ reply: response.text() });
+    res.json({ reply: textResponse });
 
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Gemini Error:", error);
+    res.status(500).json({
+      error: `Error: ${error.message}. (Моля провери API Key-я и квотите в Google Cloud).`
+    });
   }
 });
 
 exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
     const { message } = req.body;
+    if (!message) return res.json({ reply: "Нов разговор" });
 
-    const prompt = `Summarize this text into a short title (max 5 words) in the same language. No quotes. Text: "${message}"`;
-
+    const prompt = `Summarize this text into a short title (max 4 words) in Bulgarian. No quotes. Text: "${message}"`;
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const title = response.text().replace(/["']/g, "").trim();
 
     res.json({ reply: title });
-
   } catch (error) {
     console.error("Title Error:", error);
-    res.json({ reply: "Нов разговор" });
+    res.json({ reply: "Разговор" });
   }
 });
