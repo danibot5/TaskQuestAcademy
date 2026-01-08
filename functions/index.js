@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-pro",
+  model: "gemini-2.5-flash",
 });
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
@@ -50,7 +50,7 @@ export const chat = onRequest({ cors: true }, async (req, res) => {
     }
 
     const currentMessageParts = [{ text: promptText }];
-    
+
     if (attachments.length > 0) {
       attachments.forEach(file => {
         currentMessageParts.push({
