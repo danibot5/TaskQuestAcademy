@@ -116,7 +116,7 @@ export async function sendMessage(retryCount = 0) {
 
     if (retryCount === 0 && state.currentAttachments.length > 0) {
         requestBody.attachments = state.currentAttachments;
-        state.currentAttachments.length = 0; // Чистим ги
+        state.currentAttachments.length = 0;
         renderAttachments();
     }
 
@@ -130,7 +130,7 @@ export async function sendMessage(retryCount = 0) {
         const data = await response.json();
         
         if (data.reply && (data.reply.includes("Много заявки") || data.reply.includes("429"))) {
-            if (retryCount < 3) { // Пробваме максимум 3 пъти
+            if (retryCount < 3) {
                 console.warn(`Server busy. Retrying in 4s... (Attempt ${retryCount + 1})`);
                 
                 const loadingBubble = document.querySelector('#loading-indicator .typing-indicator');
