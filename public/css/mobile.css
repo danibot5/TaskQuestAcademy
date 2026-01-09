@@ -1,4 +1,4 @@
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 640px) {
 
     html,
     body {
@@ -54,7 +54,7 @@
         justify-content: center;
         width: 100%;
         margin-top: auto;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
         padding: 15px;
         font-size: 1.1rem;
     }
