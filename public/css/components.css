@@ -1,10 +1,9 @@
-/* --- ЗОНА ЗА ПИСАНЕ (Inputs) --- */
 .input-wrapper {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    background: linear-gradient(to top, #ffffff 80%, rgba(255, 255, 255, 0));
+    background: linear-gradient(to top, #ffffff 70%, rgba(255, 255, 255, 0));
     padding: 20px 30px 30px 30px;
     box-sizing: border-box;
     display: flex;
@@ -16,7 +15,7 @@
     width: 100%;
     max-width: 800px;
     background: rgb(241, 241, 241);
-    border-radius: 15px !important;
+    border-radius: 30px !important;
     display: flex;
     border: 1px solid rgb(214, 214, 214);
     gap: 8px;

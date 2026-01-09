@@ -66,15 +66,19 @@ export function loadChat(id) {
 
 export async function sendMessage(retryCount = 0) {
     const userInput = document.getElementById('user-input');
-
     let text = userInput.value;
-    
+
+    // --- ФИКС: Запомняме дали е нов чат ТУК, преди да сме го запазили ---
+    // (Защото след saveMessage ID-то се сменя и вече не е число)
+    const isNewChat = (typeof state.currentChatId === 'number');
+    // ------------------------------------------------------------------
+
     if (retryCount === 0 && text.trim() === "" && state.currentAttachments.length === 0) return;
 
     if (retryCount === 0) {
         if (text.trim() !== "") {
             addMessageToUI(text, 'user');
-            await saveMessage(text, 'user');
+            await saveMessage(text, 'user'); // Тук ID-то се обновява
         }
         if (state.currentAttachments.length > 0) {
             const fileNames = state.currentAttachments.map(f => f.name).join(', ');
@@ -83,30 +87,31 @@ export async function sendMessage(retryCount = 0) {
 
         userInput.value = '';
         userInput.style.height = 'auto';
-        
-        const isNewChat = !state.allChats.find(c => c.id === state.currentChatId) || (typeof state.currentChatId === 'number');
+
+        // Използваме запомнената променлива от началото
         if (isNewChat && text.trim() !== "") {
+            // Важно: Подаваме state.currentChatId, което вече е обновеното (истинско) ID
             setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
         }
     }
 
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
     let messagesPayload = [];
-    
+
     if (currentChat && currentChat.messages) {
         messagesPayload = currentChat.messages.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.text
         }));
     }
-    
+
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
-    
+
     if (messagesPayload.length > 0) {
         const lastMsg = messagesPayload[messagesPayload.length - 1];
         if (lastMsg.role === 'user' && editorCode.trim().length > 0 && !lastMsg.content.includes('[SYSTEM CONTEXT]')) {
-             lastMsg.content += `\n\n--- [SYSTEM CONTEXT] ---\nCODE:\n\`\`\`javascript\n${editorCode}\n\`\`\`\nCONSOLE:\n${consoleOutput}\n------------------------`;
+            lastMsg.content += `\n\n--- [SYSTEM CONTEXT] ---\nCODE:\n\`\`\`javascript\n${editorCode}\n\`\`\`\nCONSOLE:\n${consoleOutput}\n------------------------`;
         }
     }
 
@@ -128,13 +133,14 @@ export async function sendMessage(retryCount = 0) {
         });
 
         const data = await response.json();
-        
+
+        // Логика за повторен опит при натоварване (Retry Logic)
         if (data.reply && (data.reply.includes("Много заявки") || data.reply.includes("429"))) {
             if (retryCount < 3) {
                 console.warn(`Server busy. Retrying in 4s... (Attempt ${retryCount + 1})`);
-                
+
                 const loadingBubble = document.querySelector('#loading-indicator .typing-indicator');
-                if (loadingBubble) loadingBubble.style.opacity = '0.5'; // Визуален сигнал
+                if (loadingBubble) loadingBubble.style.opacity = '0.5';
 
                 setTimeout(() => {
                     sendMessage(retryCount + 1);
@@ -149,17 +155,17 @@ export async function sendMessage(retryCount = 0) {
             addMessageToUI(data.reply, 'bot');
             await saveMessage(data.reply, 'bot');
         } else if (data.error) {
-             if (data.error.includes('429') || data.error.includes('Too Many Requests')) {
-                 addMessageToUI("😅 Сървърите са много натоварени в момента. Моля, опитай пак след 1 минута.", 'bot');
-             } else {
-                 addMessageToUI("🚨 " + data.error, 'bot');
-             }
+            if (data.error.includes('429') || data.error.includes('Too Many Requests')) {
+                addMessageToUI("😅 Сървърите са много натоварени в момента. Моля, опитай пак след 1 минута.", 'bot');
+            } else {
+                addMessageToUI("🚨 " + data.error, 'bot');
+            }
         }
 
     } catch (error) {
         console.error(error);
         if (retryCount < 3) {
-             setTimeout(() => sendMessage(retryCount + 1), 4000);
+            setTimeout(() => sendMessage(retryCount + 1), 4000);
         } else {
             removeLoading();
             addMessageToUI("Грешка: Сървърът не отговаря.", 'bot');

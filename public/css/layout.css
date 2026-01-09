@@ -58,11 +58,11 @@
 }
 
 .sidebar.open {
-    width: 260px;
+    width: 300px;
 }
 
 .sidebar-content-wrapper {
-    width: 260px;
+    width: 300px;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -150,7 +150,7 @@
 }
 
 .search-wrapper.active #search-input {
-    width: 95px;
+    width: 130px;
     opacity: 1;
 }
 
@@ -231,8 +231,8 @@
 }
 
 .user-section {
-    padding: 10px 5px;
-    margin-bottom: 10px;
+    padding: 10px 30px;
+    padding-top: 5px;
 }
 
 #guest-buttons {
@@ -245,16 +245,18 @@
 .user-info {
     display: flex;
     align-items: center;
+    width: 195px;
     gap: 10px;
     background: #e8f2ff;
     padding: 8px;
-    border-radius: 20px;
+    border-radius: 25px;
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .user-avatar-img {
-    width: 32px;
-    height: 32px;
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
 }
 
@@ -285,7 +287,6 @@
     color: #4caf50;
     font-size: 0.9rem;
     flex-shrink: 0;
-    cursor: help;
 }
 
 .user-email-text {
