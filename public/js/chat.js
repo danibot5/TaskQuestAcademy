@@ -1,16 +1,31 @@
 import { state, setCurrentChatId } from './state.js';
 import { addMessageToUI, renderSidebar, showLoading, removeLoading, renderAttachments } from './ui.js';
-import { saveToFirestore, saveToLocalStorage, saveMessage } from './db.js';
+import { saveToFirestore, saveToLocalStorage, saveMessage, updateChatData } from './db.js';
 import { API_URL, TITLE_API_URL } from './config.js';
 import { editor } from './editor.js';
 
-export function startNewChat() {
+export async function startNewChat() {
+    // 1. 💾 Запазваме текущия код преди да изчистим
+    if (state.currentChatId) {
+        const currentChat = state.allChats.find(c => c.id === state.currentChatId);
+        if (currentChat) {
+            currentChat.editorCode = editor.getValue();
+            if (state.currentUser) updateChatData(currentChat);
+            else saveToLocalStorage();
+        }
+    }
+
+    // 2. Създаваме нов чат
     setCurrentChatId(Date.now());
     const chatHistory = document.getElementById('chat-history');
     chatHistory.innerHTML = '';
 
+    // 3. 🧹 Чистим редактора за новото начало
+    editor.setValue("// Нов чат, ново начало! 🚀");
+
     addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot', null, true);
 
+    // ... (кодът за suggestions си остава същият надолу) ...
     const suggestions = [
         { text: "Напиши код за Snake игра!" },
         { text: "Обясни ми какво е Closure!" },
@@ -23,13 +38,12 @@ export function startNewChat() {
     chipsContainer.style.marginLeft = "50px";
     chipsContainer.style.marginBottom = "20px";
 
+    // ... (останалото си е същото) ...
     const userInput = document.getElementById('user-input');
-
     suggestions.forEach(item => {
         const card = document.createElement('button');
         card.className = 'suggestion-card';
         card.innerHTML = `<span class="suggestion-text">${item.text}</span>`;
-
         card.onclick = () => {
             userInput.value = `${item.text}`;
             chipsContainer.remove();
@@ -44,7 +58,22 @@ export function startNewChat() {
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
 }
 
-export function loadChat(id) {
+export async function loadChat(id) {
+    // 1. 💾 ЗАПАЗВАНЕ НА СТАРИЯ ЧАТ (Преди да сменим)
+    const oldChatId = state.currentChatId;
+    if (oldChatId && oldChatId !== id) {
+        const oldChat = state.allChats.find(c => c.id === oldChatId);
+        if (oldChat) {
+            // Взимаме кода от редактора и го лепим към стария чат обект
+            oldChat.editorCode = editor.getValue();
+
+            // Запазваме в базата (без да чакаме, fire-and-forget)
+            if (state.currentUser) updateChatData(oldChat);
+            else saveToLocalStorage();
+        }
+    }
+
+    // 2. 🔄 ЗАРЕЖДАНЕ НА НОВИЯ ЧАТ
     setCurrentChatId(id);
     const chatHistory = document.getElementById('chat-history');
     chatHistory.innerHTML = '';
@@ -52,15 +81,26 @@ export function loadChat(id) {
 
     const chat = state.allChats.find(c => c.id === id);
     if (chat) {
+        // Зареждане на съобщенията
         addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot', null, true);
-        chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender, msg.feedback));
+        if (chat.messages) {
+            chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender, msg.feedback));
+        }
+
+        // 🔥 МАГИЯТА: Връщаме кода в редактора!
+        if (chat.editorCode) {
+            editor.setValue(chat.editorCode);
+        } else {
+            // Ако няма запазен код, чистим редактора
+            editor.setValue("// Твоят код ще се запази тук автоматично...");
+        }
     }
 
     renderSidebar();
-    if (window.innerWidth < 800) sidebar.classList.remove('open');
+    if (window.innerWidth < 800 && sidebar) sidebar.classList.remove('open');
 
     setTimeout(() => {
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+        if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
     }, 50);
 }
 
@@ -96,6 +136,10 @@ export async function sendMessage(retryCount = 0) {
     }
 
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
+    if (currentChat) {
+        currentChat.editorCode = editor.getValue();
+    }
+    
     let messagesPayload = [];
 
     if (currentChat && currentChat.messages) {

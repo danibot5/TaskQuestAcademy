@@ -3,11 +3,13 @@ import { initEditor, editor } from './editor.js';
 import { sendMessage, startNewChat } from './chat.js';
 import { initFeedbackSystem, toggleTheme, initTheme, renderAttachments, shareChat } from './ui.js';
 import { state, setIsMuted, setIsSpeakingNow } from './state.js';
+import { initProfileModal } from './ui.js';
 import { resumeSpeaking, SVGs } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     initAuth();
     initEditor();
+    initProfileModal();
     initFeedbackSystem();
     initTheme();
 

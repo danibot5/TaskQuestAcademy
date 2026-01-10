@@ -275,26 +275,84 @@
 }
 
 .user-info {
+    position: relative;
     display: flex;
     align-items: center;
-    width: 195px;
-    gap: 10px;
-    background: #e8f2ff;
-    padding: 8px;
-    border-radius: 25px;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.02),
+        0 10px 15px rgba(0, 0, 0, 0.03),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.user-info:hover {
+    transform: translateY(-3px) scale(1.02);
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(26, 115, 232, 0.3);
+    box-shadow: 
+        0 15px 30px rgba(26, 115, 232, 0.15),
+        0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.user-info::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.8), 
+        transparent
+    );
+    transform: skewX(-20deg);
+    transition: none;
+    pointer-events: none;
+}
+
+.user-info:hover::after {
+    left: 150%;
+    transition: left 0.6s ease-in-out;
 }
 
 .user-avatar-img {
-    width: 25px;
-    height: 25px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    object-fit: cover;
+    transition: all 0.4s ease;
+}
+
+body.dark-mode .user-avatar-img {
+    border-color: #cecece;
+}
+
+.user-info:hover .user-avatar-img {
+    transform: rotate(10deg) scale(1.1);
+    border-color: #1a73e8;
 }
 
 .user-details {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    flex: 1;
 }
 
 .name-wrapper {
@@ -305,14 +363,31 @@
 }
 
 #user-name {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: #4f4f4f;
+    font-size: 0.95rem;
+    font-weight: 700;
+    background-image: linear-gradient(
+        90deg, 
+        #333 0%,
+        #333 50%,
+        #1a73e8 75%,
+        #8e44ad 100% 
+    );
+    background-size: 200% auto;
+    background-position: 0% center;
+    color: #333;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 1;
     min-width: 0;
+    transition: background-position 0.5s ease-out;
+}
+
+.user-info:hover #user-name {
+    background-position: 100% center;
 }
 
 .verified-badge {
@@ -323,9 +398,27 @@
 
 .user-email-text {
     font-size: 0.75rem;
-    color: #9d9d9d;
-    margin-bottom: 5px;
-    word-break: break-all;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.logout-link {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 600;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    display: inline-block;
+    width: fit-content;
+}
+
+.logout-link:hover {
+    color: #ff4444; /* Червено за изход */
+    transform: translateX(3px); /* Леко мръдване */
 }
 
 #share-and-theme-divider {
@@ -333,4 +426,260 @@
     width: 1px;
     height: 20px;
     margin: 0 5px;
+}
+
+.profile-box {
+    max-width: 380px; /* По-тесен и елегантен */
+    text-align: center;
+    background: linear-gradient(145deg, #ffffff, #f0f4f8);
+    border: 1px solid #e1e4e8;
+}
+
+/* Тъмен режим за профила */
+body.dark-mode .profile-box {
+    background: linear-gradient(145deg, #1e1e1e, #252526);
+    border-color: #333;
+}
+
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #1a73e8;
+    box-shadow: 0 5px 15px rgba(26, 115, 232, 0.3);
+    object-fit: cover;
+}
+
+/* PRO бадж върху аватара */
+.profile-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(135deg, #f1c40f, #f39c12);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+body.dark-mode .profile-badge {
+    border-color: #1e1e1e;
+}
+
+#profile-name {
+    margin: 5px 0;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+body.dark-mode #profile-name {
+    color: #fff;
+}
+
+#profile-email {
+    margin: 0;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+.profile-level {
+    margin-top: 8px;
+    background: #e8f0fe;
+    color: #1a73e8;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+body.dark-mode .profile-level {
+    background: rgba(26, 115, 232, 0.2);
+    color: #8ab4f8;
+}
+
+/* Статистика (Grid) */
+.profile-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    background: rgba(0,0,0,0.03);
+    padding: 15px;
+    border-radius: 12px;
+}
+
+body.dark-mode .profile-stats {
+    background: rgba(255,255,255,0.05);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+body.dark-mode .stat-value {
+    color: #eee;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.3), transparent);
+    margin: 10px 0;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+body.dark-mode .sidebar-divider {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* --- 💎 SCRIPT SENSEI PRO CARD --- */
+.pro-card {
+    position: relative;
+    margin: 10px 10px 20px 10px;
+    padding: 2px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #FFD700, #FDB931, #8e44ad); /* Златно-лилава рамка */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.pro-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(142, 68, 173, 0.25);
+}
+
+.pro-content {
+    background: #fff;
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+body.dark-mode .pro-content {
+    background: #1e1e1e;
+}
+
+.pro-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.pro-icon {
+    font-size: 1.2rem;
+    animation: pulse-gem 2s infinite;
+}
+
+.pro-title {
+    font-size: 1.1rem;
+    color: #333;
+    font-family: 'Inter', sans-serif;
+}
+
+body.dark-mode .pro-title {
+    color: #fff;
+}
+
+.pro-title strong {
+    background: linear-gradient(90deg, #fdb931, #ffd700);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    font-style: italic;
+}
+
+.pro-desc {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+body.dark-mode .pro-desc {
+    color: #aaa;
+}
+
+.pro-btn {
+    width: 100%;
+    padding: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #1a1a1a, #333);
+    color: #fdb931;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: default;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+}
+
+.pro-card:hover .pro-btn {
+    background: linear-gradient(90deg, #000, #1a1a1a);
+    box-shadow: 0 0 10px rgba(253, 185, 49, 0.3);
+}
+
+.pro-bg-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.5), 
+        transparent
+    );
+    transform: skewX(-25deg);
+    animation: shine 3s infinite;
+    z-index: 3;
+    pointer-events: none;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
+}
+
+@keyframes pulse-gem {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }

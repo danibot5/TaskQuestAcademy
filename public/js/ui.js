@@ -526,3 +526,69 @@ if (closeEditorBtn) {
         if (openBtn) openBtn.style.color = ''; 
     });
 }
+
+export function initProfileModal() {
+    const userInfoBtn = document.getElementById('user-info'); // Това е картата в сайдбара
+    const modal = document.getElementById('profile-modal');
+    const closeBtn = document.getElementById('close-profile');
+    const logoutBtnModal = document.getElementById('logout-btn-modal');
+    const logoutBtnSidebar = document.getElementById('logout-btn'); // Старият бутон
+
+    if (!userInfoBtn || !modal) return;
+
+    // Отваряне на модала
+    userInfoBtn.addEventListener('click', (e) => {
+        // Ако кликнем върху logout в картата, не отваряй модала
+        if (e.target.closest('.logout-link')) return;
+
+        if (!state.currentUser) {
+            // Ако е гост, подкани го да влезе
+            document.getElementById('login-modal').style.display = 'flex';
+            return;
+        }
+
+        populateProfileData();
+        modal.style.display = 'flex';
+    });
+
+    // Затваряне
+    if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+    
+    // Логика за Logout бутона в модала
+    if (logoutBtnModal && logoutBtnSidebar) {
+        logoutBtnModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+            logoutBtnSidebar.click(); // Симулираме клик на истинския logout
+        });
+    }
+}
+
+function populateProfileData() {
+    const user = state.currentUser;
+    if (!user) return;
+
+    // 1. Основни данни
+    document.getElementById('profile-avatar').src = user.photoURL || 'images/bot-avatar.png';
+    document.getElementById('profile-name').innerText = user.displayName || 'Нинджа';
+    document.getElementById('profile-email').innerText = user.email || '';
+
+    // 2. Статистика
+    const chatCount = state.allChats.length;
+    document.getElementById('stat-chats').innerText = chatCount;
+
+    const creationTime = user.metadata?.creationTime;
+    if (creationTime) {
+        const date = new Date(creationTime);
+        const dateStr = date.toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        document.getElementById('stat-date').innerText = dateStr;
+    }
+
+    // 4. Нинджа Ниво (Gamification) 🥷
+    let level = "Новак 🥚";
+    if (chatCount > 5) level = "Чирак 🔨";
+    if (chatCount > 10) level = "Нинджа 🥷";
+    if (chatCount > 25) level = "Сенсей 🧘";
+    if (chatCount > 45) level = "Легенда 🏆";
+
+    document.getElementById('profile-level').innerText = `Ранк: ${level}`;
+}

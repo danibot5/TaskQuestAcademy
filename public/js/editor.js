@@ -1,7 +1,5 @@
 const REAL_CONSOLE_LOG = console.log;
 
-// Импортирай CodeMirror както преди (ако ползваш modules) или го остави глобален
-// Тук приемаме, че editor е глобален или се експортва
 export const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
     mode: "javascript",
     theme: "eclipse",
@@ -36,7 +34,6 @@ export function initEditor() {
         }
     });
 
-    // --- 2. 🔥 NEW: ANALYZE BUTTON LOGIC ---
     const analyzeBtn = document.getElementById('analyze-btn');
     const modal = document.getElementById('analysis-modal');
     const closeBtn = document.getElementById('close-analysis');
@@ -49,16 +46,12 @@ export function initEditor() {
                 return;
             }
 
-            // UI: Показваме, че мисли
-            analyzeBtn.innerHTML = "⏳ Мисля...";
+            analyzeBtn.innerHTML = "Мисля...";
             analyzeBtn.disabled = true;
 
             try {
-                // ... (API URL частта си остава същата) ...
-                // За локален тест: http://127.0.0.1:5001/scriptsensei-4e8fe/us-central1/analyzeCode
-                // За продукция: https://analyzeCode-tvoya-proekt.cloudfunctions.net/analyzeCode
-                const API_URL = 'https://analyzeCode-tvoya-proekt.cloudfunctions.net/analyzeCode'; 
-                
+                const API_URL = 'https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/analyzeCode';
+
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -79,13 +72,12 @@ export function initEditor() {
                 console.error("ANALYSIS FAILED:", error);
                 alert("🚨 Опа! Нещо се обърка с анализа:\n" + error.message);
             } finally {
-                analyzeBtn.innerHTML = "🔍 Анализирай";
+                analyzeBtn.innerHTML = "Анализирай";
                 analyzeBtn.disabled = false;
             }
         });
     }
 
-    // Затваряне на модала
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
     window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
 
@@ -97,25 +89,99 @@ export function initEditor() {
             if (runBtn) runBtn.click();
         }
     });
+
+    const fixBtn = document.getElementById('fix-btn');
+    if (fixBtn) {
+        fixBtn.addEventListener('click', async () => {
+            const userCode = editor.getValue();
+            if (!userCode.trim()) return alert("Няма код за поправяне!");
+
+            const originalHTML = fixBtn.innerHTML;
+            const originalWidth = fixBtn.offsetWidth; // Запазваме ширината, за да не "скача"
+
+            // Слагаме временно съобщение
+            fixBtn.innerHTML = "Поправям...";
+            fixBtn.style.width = `${originalWidth}px`; // Фиксираме ширината
+            fixBtn.disabled = true;
+
+            try {
+                const API_URL = 'https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/fixCode';
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: userCode })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                editor.setValue(data.fixedCode);
+
+                // Успех
+                fixBtn.innerHTML = "✅ Готово!";
+                fixBtn.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)";
+
+                setTimeout(() => {
+                    fixBtn.innerHTML = originalHTML;
+                    fixBtn.style.background = "";
+                    fixBtn.style.width = "";
+                    fixBtn.disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                alert("Грешка: " + error.message);
+                fixBtn.innerHTML = originalHTML;
+                fixBtn.style.width = "";
+                fixBtn.disabled = false;
+            }
+        });
+    }
+
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            const userCode = editor.getValue();
+
+            if (!userCode.trim()) {
+                alert("Няма код за изтегляне! Напиши нещо първо.");
+                return;
+            }
+
+            const date = new Date();
+            const dateString = date.toISOString().split('T')[0]; // 2023-10-25
+            const fileName = `scriptsensei_${dateString}.js`;
+
+            const blob = new Blob([userCode], { type: 'text/javascript' });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        });
+    }
 }
 
-// Помощна функция за попълване на модала
 function showAnalysisResults(data) {
     const modal = document.getElementById('analysis-modal');
-    
-    // 1. Score
+
     const scoreEl = document.getElementById('analysis-score');
     scoreEl.innerText = data.score;
-    scoreEl.className = 'score-circle'; // Reset
+    scoreEl.className = 'score-circle';
     if (data.score >= 80) scoreEl.classList.add('score-high');
     else if (data.score >= 50) scoreEl.classList.add('score-mid');
     else scoreEl.classList.add('score-low');
 
-    // 2. Quality & Summary
     document.getElementById('analysis-quality').innerText = data.quality;
     document.getElementById('analysis-summary').innerText = data.summary;
 
-    // 3. Issues List
     const list = document.getElementById('analysis-issues-list');
     list.innerHTML = '';
     if (data.issues && data.issues.length > 0) {

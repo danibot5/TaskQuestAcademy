@@ -1,13 +1,16 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Инициализация
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+// 1. Помощна функция за модела
+function getAIModel(modelName = "gemini-2.5-flash") {
+  if (!process.env.GOOGLE_API_KEY) {
+    throw new Error("CRITICAL: Липсва GOOGLE_API_KEY!");
+  }
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+  return genAI.getGenerativeModel({ model: modelName });
+}
 
-// ==========================================
-// 🛡️ SMART GUARDIAN CONFIGURATION
-// ==========================================
+// 2. Конфигурации и Филтри
 const BAD_WORDS = [
   "тъпак", "глупак", "idiot",
   "stupid", "fuck", "shit",
@@ -31,39 +34,18 @@ const BAD_WORDS = [
   "кур", "курове", "курът", "куровете",
   "дрогар", "дрога", "дрогата", "дрогите"
 ];
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const MAX_REQUESTS = 20;
-const requestLog = new Map();
 
-function isRateLimited(ip) {
-  const now = Date.now();
-  const record = requestLog.get(ip);
-
-  if (!record) {
-    requestLog.set(ip, { count: 1, expiry: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-
-  if (now > record.expiry) {
-    requestLog.set(ip, { count: 1, expiry: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-
-  if (record.count >= MAX_REQUESTS) {
-    return true;
-  }
-
-  record.count++;
-  return false;
-}
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
+const MAX_REQUESTS = 7;
 
 function containsBadWords(text) {
   if (!text) return false;
-  const lowerText = text.toLowerCase();
-  return BAD_WORDS.some(word => lowerText.includes(word));
+  // Проверяваме дали някоя от лошите думи се съдържа в текста (case-insensitive)
+  return BAD_WORDS.some(word => text.toLowerCase().includes(word));
 }
 
-const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
+// 🔥 SYSTEM PROMPT
+const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Данислав Иванов (деветокласник, който е изключително запалем по JavaScript и много талантлив). Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
 
 Ето твоите инструкции за върховно наставничество:
 1. 🧠 **Майстор на Аналогиите:** Никога не обяснявай суха теория. Винаги сравнявай концепциите с реалния живот (напр. Променливата е кутия с етикет; Функцията е рецепта за готвене; Масивът е списък за пазаруване).
@@ -88,22 +70,29 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
 - Ако потребителят напише нещо много кратко (напр. "обекти"), не питай "Какво за тях?", а направо дай кратко, ударно обяснение с пример.
 `;
 
+
+// ==========================================
+// 1. CHAT FUNCTION (ЗАЩИТЕНА 🛡️)
+// ==========================================
 export const chat = onRequest({ cors: true }, async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
-
-    if (isRateLimited(ip)) {
-      return res.json({ reply: "🛡️ **Smart Guardian:** Охо, по-полека! Пращаш твърде много заявки. Дай си почивка за минутка. ⏱️" });
-    }
-
+    const model = getAIModel("gemini-2.5-flash");
+    
     const messages = req.body.messages || [];
     const attachments = req.body.attachments || [];
-
+    
     const lastMessageObj = messages[messages.length - 1];
     let promptText = lastMessageObj ? lastMessageObj.content : "";
 
+    // 🛑 1. ПРОВЕРКА ЗА ЛОШИ ДУМИ (Преди всичко друго!)
     if (containsBadWords(promptText)) {
-      return res.json({ reply: "🛡️ **Smart Guardian:** Хей, тук сме да учим! Моля, без лоши думи. Бъди готин! 😎" });
+        res.json({ reply: "Хей, нека спазваме добрия тон! Тук сме, за да учим и да ставаме по-добри програмисти. 🧘‍♂️🎓" });
+        return; // Спираме тук, не пращаме към AI
+    }
+
+    // 👁️ 2. VISION FIX (Ако има снимка, но няма текст)
+    if ((!promptText || promptText.trim() === "") && attachments.length > 0) {
+      promptText = "Разгледай тази снимка. Анализирай кода или съдържанието в нея и ми кажи какво виждаш.";
     }
 
     const historyForGemini = messages.slice(0, -1).map(msg => ({
@@ -111,19 +100,16 @@ export const chat = onRequest({ cors: true }, async (req, res) => {
       parts: [{ text: msg.content }]
     }));
 
-    if ((!promptText || promptText.trim() === "") && attachments.length > 0) {
-      promptText = "Анализирай тази снимка/код.";
-    }
-
     const currentMessageParts = [{ text: promptText }];
-
+    
+    // Добавяне на снимките
     if (attachments.length > 0) {
       attachments.forEach(file => {
-        currentMessageParts.push({
-          inlineData: {
-            mimeType: file.mimeType,
-            data: file.base64
-          }
+        currentMessageParts.push({ 
+            inlineData: { 
+                mimeType: file.mimeType, 
+                data: file.base64 
+            } 
         });
       });
     }
@@ -131,92 +117,97 @@ export const chat = onRequest({ cors: true }, async (req, res) => {
     const chatSession = model.startChat({
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "model", parts: [{ text: "Здравей! Готов съм да помагам! 🚀" }] },
+        { role: "model", parts: [{ text: "Здравей! Готов съм да кодираме! 🚀" }] },
         ...historyForGemini
       ],
     });
 
     const result = await chatSession.sendMessage(currentMessageParts);
-    const response = await result.response;
-
-    res.json({ reply: response.text() });
+    res.json({ reply: result.response.text() });
 
   } catch (error) {
-    console.error("AI Error:", error);
-    if (error.message.includes("429") || error.message.includes("Too Many Requests")) {
-      res.json({ reply: "😅 Много хора ме питат едновременно! Изчакай малко." });
-    } else {
-      res.status(500).json({ error: error.message });
-    }
+    console.error("Chat Error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-
+// ==========================================
+// 2. TITLE GENERATION
+// ==========================================
 export const generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
+    const model = getAIModel("gemini-2.5-flash");
     const { message } = req.body;
-    if (!message) return res.json({ reply: "Разговор" });
+    
+    // Ако съобщението съдържа лоши думи, слагаме дефолтно заглавие
+    if (containsBadWords(message)) {
+        res.json({ reply: "Разговор" });
+        return;
+    }
 
-    const shortMessage = message.substring(0, 300);
-    const prompt = `Генерирай кратко заглавие (макс 3-7 думи) на български, което описва този въпрос: "${shortMessage}". Не слагай кавички.`;
-
+    const prompt = `
+      TASK: Generate a very short chat title based on this user message.
+      LANGUAGE: Bulgarian.
+      MAX LENGTH: 8 words.
+      FORMAT: Plain text only. NO quotes. NO explanations.
+      MESSAGE: "${message.substring(0, 300)}"
+    `;
+    
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const title = response.text().replace(/["']/g, "").trim();
-
+    let title = result.response.text().replace(/["']/g, "").replace(/\n/g, "").trim();
+    
     res.json({ reply: title });
   } catch (error) {
-    console.error("Title Generation Error:", error);
-    res.json({ reply: "Разговор" });
+    res.json({ reply: "Нов Разговор" });
   }
 });
 
+// ==========================================
+// 3. ANALYZE CODE
+// ==========================================
 export const analyzeCode = onRequest({ cors: true }, async (req, res) => {
   try {
+    const model = getAIModel("gemini-2.5-flash");
     const { code } = req.body;
-    if (!code) return res.json({ error: "Няма код за анализ." });
+    
+    const prompt = `
+      Analyze JS code. Return ONLY JSON (no markdown).
+      Format: { "score": 0-100, "quality": "...", "summary": "...", "issues": [], "securityRisk": boolean, "securityMessage": "..." }
+      Code: ${code}
+    `;
 
-    // Използваме flash модела
-    const jsonModel = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash", // Ако 2.5 прави проблеми, върни на "gemini-1.5-flash"
-      // generationConfig: { responseMimeType: "application/json" } // Махаме го временно, за да е по-стабилно с text parsing
-    });
+    const result = await model.generateContent(prompt);
+    let text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+    res.json(JSON.parse(text));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// 4. AUTO-FIXER
+// ==========================================
+export const fixCode = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const model = getAIModel("gemini-2.5-flash");
+    const { code } = req.body;
 
     const prompt = `
-      Ти си Senior JavaScript Auditor.
-      Анализирай следния код и върни САМО JSON обект.
-      НЕ използвай Markdown форматиране (без \`\`\`json).
+      Ти си експерт по JavaScript.
+      Поправи следния код, като оправиш грешките и подобриш стила.
+      ВЪРНИ САМО ПОПРАВЕНИЯ КОД (Raw Text).
+      НЕ слагай Markdown (без \`\`\`javascript).
+      НЕ слагай обяснения, само код.
       
-      Структурата трябва да е точно такава:
-      {
-        "score": (число 0-100),
-        "quality": (текст: "Слаб", "Среден", "Добър", "Отличен"),
-        "summary": (кратко обобщение на български),
-        "issues": ["проблем 1", "проблем 2"],
-        "securityRisk": (boolean),
-        "securityMessage": (текст)
-      }
-      
-      КОД ЗА АНАЛИЗ:
+      КОД:
       ${code}
     `;
 
-    const result = await jsonModel.generateContent(prompt);
-    let responseText = result.response.text();
-
-    // 🔥 ПОЧИСТВАНЕ НА ОТГОВОРА (CRITICAL FIX) 🔥
-    // Махаме ```json и ``` ако AI-то ги е сложило
-    responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-
-    // Опитваме да парснем
-    const jsonResponse = JSON.parse(responseText);
-
-    // Връщаме чистия JSON
-    res.json(jsonResponse);
-
+    const result = await model.generateContent(prompt);
+    let fixed = result.response.text().replace(/```javascript/g, "").replace(/```/g, "").trim();
+    
+    res.json({ fixedCode: fixed });
   } catch (error) {
-    console.error("Analysis Error:", error);
-    // Връщаме грешката към Frontend-а, за да знаем какво става
-    res.status(500).json({ error: "Грешка при анализ: " + error.message });
+    res.status(500).json({ error: error.message });
   }
 });

@@ -46,20 +46,160 @@
     border-top: 1px solid #ddd;
     display: flex;
     justify-content: flex-end;
+    gap: 17.5px;
 }
 
 .run-btn {
     background-color: #28a745;
     color: white;
     border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 3px 10px rgba(40, 167, 70, 0.25);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .run-btn:hover {
     background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 15px rgba(40, 167, 69, 0.3);
+}
+
+.run-btn:active {
+    transform: translateY(1px);
+    background-color: #1e7e34;
+    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+}
+
+.analyze-btn {
+    background-color: #8e44ad;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(142, 68, 173, 0.25);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.analyze-btn:hover {
+    background-color: #9b59b6;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 15px rgba(142, 68, 173, 0.3);
+}
+
+.analyze-btn:active {
+    transform: translateY(1px);
+    background-color: #732d91;
+    box-shadow: 0 2px 5px rgba(142, 68, 173, 0.3);
+}
+
+.fix-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(243, 156, 18, 0.25);
+}
+
+/* Ефект при посочване (Hover) */
+.fix-btn:hover {
+    transform: translateY(-2px);
+    background-color: #e67e22;
+    box-shadow: 0 3px 15px rgba(243, 156, 18, 0.3);
+}
+
+.fix-btn:active {
+    transform: translateY(1px);
+    background-color: #d35400;
+    box-shadow: 0 2px 5px rgba(243, 156, 18, 0.2);
+}
+
+.fix-btn:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.8;
+}
+
+.fix-btn:hover svg {
+    animation: wiggle 0.45s ease-in-out;
+}
+
+@keyframes wiggle {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-15deg);
+    }
+
+    50% {
+        transform: rotate(15deg);
+    }
+
+    75% {
+        transform: rotate(-15deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+.download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background-color: #2980b9; 
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 3px 10px rgba(41, 128, 185, 0.25);
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    background-color: #3498db; 
+    box-shadow: 0 3px 15px rgba(52, 152, 219, 0.3);
+}
+
+.download-btn:active {
+    transform: translateY(0);
+    background-color: #2573a7;
+}
+
+.download-btn svg {
+    pointer-events: none;
 }
 
 .console {
@@ -82,27 +222,6 @@
 
 .console-label:hover {
     cursor: default;
-}
-
-.analyze-btn {
-    background-color: #8e44ad;
-    /* Лилаво за "интелект" */
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s;
-    margin-left: 10px;
-}
-
-.analyze-btn:hover {
-    background-color: #732d91;
-    transform: translateY(-1px);
 }
 
 /* МОДАЛ ЗА АНАЛИЗ */
