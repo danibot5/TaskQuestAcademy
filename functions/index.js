@@ -176,21 +176,25 @@ export const analyzeCode = onRequest({ cors: true }, async (req, res) => {
     const { code } = req.body;
     if (!code) return res.json({ error: "Няма код за анализ." });
 
+    // Използваме flash модела
     const jsonModel = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: { responseMimeType: "application/json" }
+      model: "gemini-2.5-flash", // Ако 2.5 прави проблеми, върни на "gemini-1.5-flash"
+      // generationConfig: { responseMimeType: "application/json" } // Махаме го временно, за да е по-стабилно с text parsing
     });
 
     const prompt = `
       Ти си Senior JavaScript Auditor.
-      Анализирай следния код и върни САМО JSON обект (без markdown, без \`\`\`json) със следната структура:
+      Анализирай следния код и върни САМО JSON обект.
+      НЕ използвай Markdown форматиране (без \`\`\`json).
+      
+      Структурата трябва да е точно такава:
       {
-        "score": (число от 0 до 100),
-        "quality": (текст: "Слаб", "Среден", "Добър", "Отличен", "Легендарен"),
-        "summary": (кратко обобщение на български до 15 думи),
-        "issues": ["списък", "с", "проблеми", "на", "български" (макс 3)],
-        "securityRisk": (boolean - true ако има риск, иначе false),
-        "securityMessage": (текст, ако има риск, обясни защо, иначе празен стринг)
+        "score": (число 0-100),
+        "quality": (текст: "Слаб", "Среден", "Добър", "Отличен"),
+        "summary": (кратко обобщение на български),
+        "issues": ["проблем 1", "проблем 2"],
+        "securityRisk": (boolean),
+        "securityMessage": (текст)
       }
       
       КОД ЗА АНАЛИЗ:
@@ -198,12 +202,21 @@ export const analyzeCode = onRequest({ cors: true }, async (req, res) => {
     `;
 
     const result = await jsonModel.generateContent(prompt);
-    const responseText = result.response.text();
+    let responseText = result.response.text();
 
-    res.json(JSON.parse(responseText));
+    // 🔥 ПОЧИСТВАНЕ НА ОТГОВОРА (CRITICAL FIX) 🔥
+    // Махаме ```json и ``` ако AI-то ги е сложило
+    responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    // Опитваме да парснем
+    const jsonResponse = JSON.parse(responseText);
+
+    // Връщаме чистия JSON
+    res.json(jsonResponse);
 
   } catch (error) {
     console.error("Analysis Error:", error);
-    res.status(500).json({ error: error.message });
+    // Връщаме грешката към Frontend-а, за да знаем какво става
+    res.status(500).json({ error: "Грешка при анализ: " + error.message });
   }
 });
