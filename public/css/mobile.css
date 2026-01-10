@@ -25,7 +25,7 @@
     }
 
     .header-actions {
-        gap: 15px !important;
+        gap: 5px !important;
     }
 
     .sidebar {
@@ -105,9 +105,7 @@
         visibility: visible !important;
         font-size: 1rem;
         padding: 10px 14px;
-        background-color: #f1f1f1;
         color: #333;
-        border-radius: 18px 18px 4px 18px;
     }
 
     .bot-text {

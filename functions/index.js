@@ -1,11 +1,67 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Инициализация
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-const model = genAI.getGenerativeModel({
-  model: "gemini-2.5-flash",
-});
+// ==========================================
+// 🛡️ SMART GUARDIAN CONFIGURATION
+// ==========================================
+const BAD_WORDS = [
+  "тъпак", "глупак", "idiot",
+  "stupid", "fuck", "shit",
+  "прост", "кретен", "moron",
+  "dumb", "asshole", "bastard",
+  "кучка", "педерас", "slut",
+  "whore", "fag", "dick",
+  "cunt", "наркоман", "наркоманчета",
+  "наркомани", "наркоманите", "наркоманчето",
+  "пияница", "пиянде", "пиянди",
+  "пияндета", "алкохолик", "алкохолици",
+  "алкохолиците", "алкохоликът", "алкохолиците",
+  "курва", "курви", "проститутка", "проститутки",
+  "шибан", "шибана", "шибано", "шибани",
+  "еба", "ебан", "ебана", "ебано", "ебани",
+  "секс", "сексуален", "сексуална", "сексуално",
+  "сексуални", "мастурбира", "мастурбиране",
+  "задник", "пичка", "пички", "пенис",
+  "вагина", "клитор", "оргазъм", "оргазми",
+  "срање", "срания", "срано", "срани",
+  "кур", "курове", "курът", "куровете",
+  "дрогар", "дрога", "дрогата", "дрогите"
+];
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const MAX_REQUESTS = 20;
+const requestLog = new Map();
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const record = requestLog.get(ip);
+
+  if (!record) {
+    requestLog.set(ip, { count: 1, expiry: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+
+  if (now > record.expiry) {
+    requestLog.set(ip, { count: 1, expiry: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+
+  if (record.count >= MAX_REQUESTS) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
+function containsBadWords(text) {
+  if (!text) return false;
+  const lowerText = text.toLowerCase();
+  return BAD_WORDS.some(word => lowerText.includes(word));
+}
 
 const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а легендарният виртуален ментор по JavaScript, създаден от Дани за олимпиадата по ИТ. Твоята мисия е да превърнеш начинаещите в кодиращи нинджи. 🥷💻
 
@@ -34,16 +90,26 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei – не просто AI, а ле�
 
 export const chat = onRequest({ cors: true }, async (req, res) => {
   try {
+    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+
+    if (isRateLimited(ip)) {
+      return res.json({ reply: "🛡️ **Smart Guardian:** Охо, по-полека! Пращаш твърде много заявки. Дай си почивка за минутка. ⏱️" });
+    }
+
     const messages = req.body.messages || [];
     const attachments = req.body.attachments || [];
+
+    const lastMessageObj = messages[messages.length - 1];
+    let promptText = lastMessageObj ? lastMessageObj.content : "";
+
+    if (containsBadWords(promptText)) {
+      return res.json({ reply: "🛡️ **Smart Guardian:** Хей, тук сме да учим! Моля, без лоши думи. Бъди готин! 😎" });
+    }
 
     const historyForGemini = messages.slice(0, -1).map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
     }));
-
-    const lastMessageObj = messages[messages.length - 1];
-    let promptText = lastMessageObj ? lastMessageObj.content : "";
 
     if ((!promptText || promptText.trim() === "") && attachments.length > 0) {
       promptText = "Анализирай тази снимка/код.";
@@ -78,12 +144,13 @@ export const chat = onRequest({ cors: true }, async (req, res) => {
   } catch (error) {
     console.error("AI Error:", error);
     if (error.message.includes("429") || error.message.includes("Too Many Requests")) {
-      res.json({ reply: "😅 Много заявки! Изчакай малко." });
+      res.json({ reply: "😅 Много хора ме питат едновременно! Изчакай малко." });
     } else {
       res.status(500).json({ error: error.message });
     }
   }
 });
+
 
 export const generateTitle = onRequest({ cors: true }, async (req, res) => {
   try {
@@ -91,8 +158,7 @@ export const generateTitle = onRequest({ cors: true }, async (req, res) => {
     if (!message) return res.json({ reply: "Разговор" });
 
     const shortMessage = message.substring(0, 300);
-
-    const prompt = `Генерирай супер кратко заглавие (макс 3-4 думи) на български, което описва този въпрос: "${shortMessage}". Не слагай кавички.`;
+    const prompt = `Генерирай кратко заглавие (макс 3-7 думи) на български, което описва този въпрос: "${shortMessage}". Не слагай кавички.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -102,5 +168,42 @@ export const generateTitle = onRequest({ cors: true }, async (req, res) => {
   } catch (error) {
     console.error("Title Generation Error:", error);
     res.json({ reply: "Разговор" });
+  }
+});
+
+export const analyzeCode = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.json({ error: "Няма код за анализ." });
+
+    const jsonModel = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+      Ти си Senior JavaScript Auditor.
+      Анализирай следния код и върни САМО JSON обект (без markdown, без \`\`\`json) със следната структура:
+      {
+        "score": (число от 0 до 100),
+        "quality": (текст: "Слаб", "Среден", "Добър", "Отличен", "Легендарен"),
+        "summary": (кратко обобщение на български до 15 думи),
+        "issues": ["списък", "с", "проблеми", "на", "български" (макс 3)],
+        "securityRisk": (boolean - true ако има риск, иначе false),
+        "securityMessage": (текст, ако има риск, обясни защо, иначе празен стринг)
+      }
+      
+      КОД ЗА АНАЛИЗ:
+      ${code}
+    `;
+
+    const result = await jsonModel.generateContent(prompt);
+    const responseText = result.response.text();
+
+    res.json(JSON.parse(responseText));
+
+  } catch (error) {
+    console.error("Analysis Error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
