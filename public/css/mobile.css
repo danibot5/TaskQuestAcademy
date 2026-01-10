@@ -1,13 +1,18 @@
 @media screen and (max-width: 760px) {
 
-    html,
+    html {
+        overscroll-behavior: none;
+    }
+
     body {
-        height: 100% !important;
-        width: 100% !important;
-        overflow-x: hidden;
-        position: fixed;
+        height: 100dvh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
+        top: 0;
+        left: 0;
         touch-action: manipulation;
         -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .code-panel {
@@ -80,7 +85,7 @@
         height: auto !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
+        overscroll-behavior: contain;
         padding: 15px 15px 180px 15px !important;
         display: flex;
         flex-direction: column;
@@ -144,7 +149,8 @@
     .modal-box {
         width: 90%;
         max-height: 85vh;
-        overflow-y: auto;
+        overscroll-behavior: contain;
+        overflow-y: auto !important;
         padding: 20px;
     }
 
@@ -159,6 +165,13 @@
 
     #close-mobile-editor {
         display: flex !important;
+    }
+
+    .CodeMirror-scroll {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     .controls {
@@ -186,6 +199,10 @@
     .download-btn svg {
         width: 16px !important;
         height: 16px !important;
+    }
+
+    .console {
+        height: 77.5px !important;
     }
 
     body.mobile-editor-active .chat-panel {
