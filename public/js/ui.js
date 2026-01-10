@@ -508,6 +508,10 @@ if (mobileEditorBtn) {
         
         if (body.classList.contains('mobile-editor-active')) {
             mobileEditorBtn.style.color = '#1a73e8';
+
+            setTimeout(() => {
+                editor.refresh();
+            }, 10);
         } else {
             mobileEditorBtn.style.color = '';
         }

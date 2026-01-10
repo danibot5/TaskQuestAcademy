@@ -1,4 +1,4 @@
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 760px) {
 
     html,
     body {
@@ -22,6 +22,10 @@
         overflow: hidden;
         position: relative;
         z-index: 1;
+    }
+
+    .header-actions {
+        gap: 15px !important;
     }
 
     .sidebar {
@@ -124,8 +128,7 @@
     }
 
     .input-container {
-        width: 95% !important;
-        margin-right: 12.5px;
+        width: 95% !important;  
     }
     
     #user-input {
@@ -175,11 +178,6 @@
 
     body.dark-mode .sidebar {
         background-color: #1e1e1e;
-    }
-
-    body.dark-mode .input-wrapper {
-        background: rgba(30, 30, 30, 0.95);
-        border-top: 1px solid #333;
     }
 
     body.dark-mode .user-bubble {

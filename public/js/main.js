@@ -5,7 +5,7 @@ import { initFeedbackSystem, toggleTheme, initTheme, renderAttachments, shareCha
 import { state, setIsMuted, setIsSpeakingNow } from './state.js';
 import { resumeSpeaking, SVGs } from './utils.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initAuth();
     initEditor();
     initFeedbackSystem();
@@ -192,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 item.style.display = 'none';
             }
+        });
+    }
+
+    const topNewChatBtn = document.getElementById('top-new-chat-btn');
+    if (topNewChatBtn) {
+        topNewChatBtn.addEventListener('click', () => {
+            import('./chat.js').then(module => {
+                module.startNewChat();
+            });
         });
     }
 });

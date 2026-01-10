@@ -12,19 +12,26 @@
     padding: 5px 25px;
     font-weight: 600;
     font-size: 1rem;
+    border-bottom: 1px solid #e5e5e5;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.062);
     color: #444;
     display: flex;
     align-items: center;
+    z-index: 1;
+    transition: all 0.3s ease;
 }
 
 #menu-btn {
     background: none;
     border: none;
-    border-radius: 10px;
+    border-radius: 50%;
     cursor: pointer;
+    padding: 7px;
+    padding-bottom: 5px;
+    padding-top: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
     margin-right: 5px;
-    padding: 5px;
-    padding-bottom: 2.5px;
     color: #555;
     transform: scale(0.8);
     transition: all 0.3s ease;
@@ -32,6 +39,31 @@
 
 #menu-btn:hover {
     background: #e1e1e1;
+}
+
+.header-actions {
+    gap: 7.75px !important;
+}
+
+.top-new-chat-btn {
+    background: none;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(1.05);
+    border-radius: 0%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.top-new-chat-btn:hover {
+    background: #e1e1e1;
+}
+
+.top-new-chat-btn svg {
+    stroke: #555;
+    transition: all 0.3s ease;
 }
 
 #mobile-editor-toggle {
@@ -302,4 +334,3 @@
     height: 20px;
     margin: 0 5px;
 }
-

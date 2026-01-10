@@ -22,13 +22,14 @@
     flex-direction: column !important;
     align-items: stretch !important;
     padding: 10px !important;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.164);
     transition: all 0.3s ease;
 }
 
 .input-container:focus-within {
     background: #fff;
     border-color: #1a73e8;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 8px #1a73e8b4;
 }
 
 .input-controls-row {

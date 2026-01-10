@@ -1,4 +1,4 @@
-@media screen and (min-width: 641px) and (max-width: 1024px) {
+@media screen and (min-width: 761px) and (max-width: 1024px) {
 
     html,
     body {
@@ -8,6 +8,15 @@
         position: fixed;
         touch-action: manipulation;
         -webkit-text-size-adjust: 100%;
+    }
+
+    .top-new-chat-btn {
+        transform: scale(0.8);
+    }
+
+    .header-actions {
+        gap: 0 !important;
+        margin: 1px;
     }
 
     .sidebar {
@@ -83,7 +92,7 @@
 
     #menu-btn {
         padding: 10px;
-        transform: scale(1.1);
+        transform: scale(0.9);
     }
 
     .icon-btn {
