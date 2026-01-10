@@ -35,6 +35,29 @@
         gap: 5px !important;
     }
 
+    .top-bar {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        gap: 0 !important;
+    }
+
+    #menu-btn {
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 5px !important;
+        transform: scale(0.85);
+    }
+
+    .brand-name {
+        font-size: 1rem !important;
+        margin-right: 0 !important;
+        white-space: nowrap;
+    }
+
+    .top-new-chat-btn {
+        transform: scale(1.05);
+    }
+
     .sidebar {
         position: fixed;
         top: 0;
