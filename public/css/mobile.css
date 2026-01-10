@@ -4,14 +4,16 @@
     body {
         height: 100% !important;
         width: 100% !important;
-        overflow: hidden !important;
+        overflow-x: hidden;
         position: fixed;
-        touch-action: pan-x pan-y;
+        touch-action: manipulation;
         -webkit-text-size-adjust: 100%;
     }
 
     .code-panel {
         display: none !important;
+        max-width: 100vw;
+        width: 100%;
     }
 
     .chat-panel {
@@ -126,9 +128,9 @@
     }
 
     .input-container {
-        width: 95% !important;  
+        width: 95% !important;
     }
-    
+
     #user-input {
         font-size: 16px !important;
     }
@@ -157,6 +159,33 @@
 
     #close-mobile-editor {
         display: flex !important;
+    }
+
+    .controls {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .run-btn,
+    .analyze-btn,
+    .fix-btn,
+    .download-btn {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        height: 40px !important;
+        flex: 1 1 45%;
+        min-width: 120px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .fix-btn svg,
+    .download-btn svg {
+        width: 16px !important;
+        height: 16px !important;
     }
 
     body.mobile-editor-active .chat-panel {

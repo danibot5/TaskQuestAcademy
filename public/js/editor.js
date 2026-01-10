@@ -5,7 +5,7 @@ export const editor = CodeMirror.fromTextArea(document.getElementById("code-edit
     theme: "eclipse",
     lineNumbers: true,
     autoCloseBrackets: true,
-    lineWrapping: true,
+    lineWrapping: false,
     matchBrackets: true,
     readOnly: false,
     cursorBlinkRate: 530
