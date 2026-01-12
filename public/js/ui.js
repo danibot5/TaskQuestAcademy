@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, setSelectedModel } from './state.js';
 import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
 import { editor } from './editor.js';
@@ -566,7 +566,6 @@ export function initProfileModal() {
         });
     }
 
-    // 🔥 FIX: ТУК БЕШЕ ГРЕШКАТА - 'buyBtn' не съществуваше
     if (buyBtnModal) {
         buyBtnModal.onclick = () => {
             startCheckout();
@@ -604,7 +603,7 @@ function populateProfileData() {
         if (modelSelector){
             modelSelector.style.display = 'block';
             modelSelector.onchange = (e) => {
-                state.selectedModel = e.target.value;
+                setSelectedModel(e.target.value);
             };
         }
     } else {
