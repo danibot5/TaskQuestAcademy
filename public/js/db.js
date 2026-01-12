@@ -4,6 +4,7 @@ import { renderSidebar } from './ui.js';
 import { startNewChat } from './chat.js';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- 1. LOCAL STORAGE ---
 export function loadChatsFromLocalStorage() {
     const localData = localStorage.getItem('scriptsensei_chats');
     const chats = localData ? JSON.parse(localData) : [];
@@ -18,6 +19,7 @@ export function saveToLocalStorage() {
     }
 }
 
+// --- 2. FIRESTORE LOAD ---
 export async function loadChatsFromFirestore() {
     const chatListEl = document.querySelector('.chat-list');
     chatListEl.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
@@ -33,6 +35,7 @@ export async function loadChatsFromFirestore() {
         const loadedChats = [];
 
         querySnapshot.forEach((doc) => {
+            // Тук взимаме ВСИЧКИ данни от документа (вкл. editorCode и consoleOutput)
             loadedChats.push({ id: doc.id, ...doc.data() });
         });
 
@@ -48,18 +51,25 @@ export async function loadChatsFromFirestore() {
     }
 }
 
+// --- 3. FIRESTORE SAVE ---
 export async function saveToFirestore(chat) {
     if (state.currentUser) {
         const isNewChat = typeof chat.id === 'number';
 
+        // Подготвяме данните (включително кода и конзолата)
+        const chatData = {
+            userId: state.currentUser.uid,
+            title: chat.title,
+            messages: chat.messages,
+            editorCode: chat.editorCode || "",      // 👈 НОВО
+            consoleOutput: chat.consoleOutput || "" // 👈 НОВО
+        };
+
         if (isNewChat) {
             const tempId = chat.id;
-            const docRef = await addDoc(collection(db, "chats"), {
-                userId: state.currentUser.uid,
-                title: chat.title,
-                messages: chat.messages,
-                createdAt: Date.now()
-            });
+            chatData.createdAt = Date.now(); // Дата само при създаване
+
+            const docRef = await addDoc(collection(db, "chats"), chatData);
 
             chat.id = docRef.id;
 
@@ -68,9 +78,12 @@ export async function saveToFirestore(chat) {
             }
         } else {
             const chatRef = doc(db, "chats", chat.id);
+            // При update обновяваме всичко важно
             await updateDoc(chatRef, {
                 messages: chat.messages,
-                title: chat.title
+                title: chat.title,
+                editorCode: chat.editorCode || "",      // 👈 НОВО
+                consoleOutput: chat.consoleOutput || "" // 👈 НОВО
             });
         }
     }
@@ -90,7 +103,9 @@ export async function saveMessage(text, sender) {
             id: state.currentChatId,
             title: text.substring(0, 30) + "...",
             messages: [],
-            userId: state.currentUser ? state.currentUser.uid : 'guest'
+            userId: state.currentUser ? state.currentUser.uid : 'guest',
+            editorCode: "",     // Инициализираме
+            consoleOutput: ""
         };
         state.allChats.unshift(chat);
     }
@@ -123,13 +138,18 @@ export async function saveFeedbackToHistory(messageText, feedbackType) {
     }
 }
 
+// 🔥 ТУК Е ГЛАВНИЯТ FIX ЗА БУТОНА RUN 🔥
 export async function updateChatData(chat) {
     if (state.currentUser) {
         try {
             const chatRef = doc(db, "chats", chat.id);
+            // Преди обновяваше само title и isPinned. 
+            // Сега обновява и КОДА!
             await updateDoc(chatRef, {
                 title: chat.title,
-                isPinned: chat.isPinned || false
+                isPinned: chat.isPinned || false,
+                editorCode: chat.editorCode || "",      // 👈 ВАЖНО
+                consoleOutput: chat.consoleOutput || "" // 👈 ВАЖНО
             });
         } catch (e) {
             console.error("Error updating chat:", e);
