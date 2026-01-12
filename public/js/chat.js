@@ -5,11 +5,15 @@ import { API_URL, TITLE_API_URL } from './config.js';
 import { editor } from './editor.js';
 
 export async function startNewChat() {
-    // 1. 💾 Запазваме текущия код преди да изчистим
+    // 1. 💾 Запазваме текущия код и КОНЗОЛАТА преди да изчистим
     if (state.currentChatId) {
         const currentChat = state.allChats.find(c => c.id === state.currentChatId);
         if (currentChat) {
             currentChat.editorCode = editor.getValue();
+            // 👇 НОВО: Запазваме конзолата на текущия чат преди да избягаме
+            const consoleEl = document.getElementById('console-output');
+            if (consoleEl) currentChat.consoleOutput = consoleEl.innerHTML;
+
             if (state.currentUser) updateChatData(currentChat);
             else saveToLocalStorage();
         }
@@ -22,6 +26,12 @@ export async function startNewChat() {
 
     // 3. 🧹 Чистим редактора за новото начало
     editor.setValue("// Нов чат, ново начало! 🚀");
+
+    // 👇 НОВО: Чистим и конзолата (да не стои старата)
+    const consoleOutput = document.getElementById('console-output');
+    if (consoleOutput) {
+        consoleOutput.innerHTML = '<div class="console-label">Console Output:</div>';
+    }
 
     addMessageToUI("Здравей! Аз съм твоят ментор. Какво искаш да научим днес?", 'bot', null, true);
 
@@ -38,7 +48,6 @@ export async function startNewChat() {
     chipsContainer.style.marginLeft = "50px";
     chipsContainer.style.marginBottom = "20px";
 
-    // ... (останалото си е същото) ...
     const userInput = document.getElementById('user-input');
     suggestions.forEach(item => {
         const card = document.createElement('button');
@@ -59,15 +68,22 @@ export async function startNewChat() {
 }
 
 export async function loadChat(id) {
+    const consoleOutput = document.getElementById('console-output');
+
     // 1. 💾 ЗАПАЗВАНЕ НА СТАРИЯ ЧАТ (Преди да сменим)
     const oldChatId = state.currentChatId;
     if (oldChatId && oldChatId !== id) {
         const oldChat = state.allChats.find(c => c.id === oldChatId);
         if (oldChat) {
-            // Взимаме кода от редактора и го лепим към стария чат обект
+            // Взимаме кода от редактора
             oldChat.editorCode = editor.getValue();
 
-            // Запазваме в базата (без да чакаме, fire-and-forget)
+            // 👇 НОВО: Запазваме и конзолата на стария чат
+            if (consoleOutput) {
+                oldChat.consoleOutput = consoleOutput.innerHTML;
+            }
+
+            // Запазваме в базата
             if (state.currentUser) updateChatData(oldChat);
             else saveToLocalStorage();
         }
@@ -87,12 +103,21 @@ export async function loadChat(id) {
             chat.messages.forEach(msg => addMessageToUI(msg.text, msg.sender, msg.feedback));
         }
 
-        // 🔥 МАГИЯТА: Връщаме кода в редактора!
+        // 🔥 Връщаме кода в редактора!
         if (chat.editorCode) {
             editor.setValue(chat.editorCode);
         } else {
-            // Ако няма запазен код, чистим редактора
             editor.setValue("// Твоят код ще се запази тук автоматично...");
+        }
+
+        // 👇 НОВО: ВЪЗСТАНОВЯВАМЕ КОНЗОЛАТА 🔥
+        if (consoleOutput) {
+            if (chat.consoleOutput) {
+                consoleOutput.innerHTML = chat.consoleOutput;
+            } else {
+                // Ако няма запазена конзола, я нулираме
+                consoleOutput.innerHTML = '<div class="console-label">Console Output:</div>';
+            }
         }
     }
 
@@ -139,7 +164,7 @@ export async function sendMessage(retryCount = 0) {
     if (currentChat) {
         currentChat.editorCode = editor.getValue();
     }
-    
+
     let messagesPayload = [];
 
     if (currentChat && currentChat.messages) {

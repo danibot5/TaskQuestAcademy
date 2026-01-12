@@ -1,3 +1,6 @@
+import { state } from './state.js';      // 👈 НОВО: Трябва ни state
+import { updateChatData } from './db.js'; // 👈 НОВО: Трябва ни функцията за запис
+
 const REAL_CONSOLE_LOG = console.log;
 
 export const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
@@ -12,28 +15,54 @@ export const editor = CodeMirror.fromTextArea(document.getElementById("code-edit
 });
 
 export function initEditor() {
-    // --- 1. RUN BUTTON LOGIC (Старата) ---
-    document.getElementById('run-btn').addEventListener('click', () => {
-        const userCode = editor.getValue();
-        const outputBox = document.getElementById('console-output');
-        outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
+    // --- 1. RUN BUTTON LOGIC (С АВТОМАТИЧЕН ЗАПИС) ---
+    const runBtn = document.getElementById('run-btn');
+    if (runBtn) {
+        runBtn.addEventListener('click', () => {
+            const userCode = editor.getValue();
+            const outputBox = document.getElementById('console-output');
 
-        try {
-            console.log = (msg) => {
-                if (typeof msg === 'object') {
-                    try { msg = JSON.stringify(msg, null, 2); } catch (e) { msg = '[Circular]'; }
+            // Изчистваме или подготвяме конзолата
+            outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
+
+            try {
+                // Прехващаме console.log
+                console.log = (msg) => {
+                    if (typeof msg === 'object') {
+                        try { msg = JSON.stringify(msg, null, 2); } catch (e) { msg = '[Circular]'; }
+                    }
+                    outputBox.innerHTML += `<div>> ${msg}</div>`;
+                    REAL_CONSOLE_LOG(msg);
+                };
+
+                // Изпълняваме кода
+                new Function(userCode)();
+
+            } catch (e) {
+                outputBox.innerHTML += `<div style="color:#ff4444;">🚨 ${e.message}</div>`;
+            } finally {
+                // Връщаме нормалната конзола
+                console.log = REAL_CONSOLE_LOG;
+
+                // 🔥 ВАЖНО: ЗАПИСВАМЕ РЕЗУЛТАТА В CHAT HISTORY 🔥
+                if (state.currentChatId) {
+                    const currentChat = state.allChats.find(c => c.id === state.currentChatId);
+                    if (currentChat) {
+                        // Запазваме и кода, и резултата от конзолата
+                        currentChat.editorCode = userCode;
+                        currentChat.consoleOutput = outputBox.innerHTML;
+
+                        // Пращаме към базата данни
+                        updateChatData(currentChat).then(() => {
+                            console.log("Console & Code saved!");
+                        }).catch(err => console.error("Save failed:", err));
+                    }
                 }
-                outputBox.innerHTML += `<div>> ${msg}</div>`;
-                REAL_CONSOLE_LOG(msg);
-            };
-            new Function(userCode)();
-        } catch (e) {
-            outputBox.innerHTML += `<div style="color:#ff4444;">🚨 ${e.message}</div>`;
-        } finally {
-            console.log = REAL_CONSOLE_LOG;
-        }
-    });
+            }
+        });
+    }
 
+    // --- 2. ANALYZE BUTTON ---
     const analyzeBtn = document.getElementById('analyze-btn');
     const modal = document.getElementById('analysis-modal');
     const closeBtn = document.getElementById('close-analysis');
@@ -59,13 +88,8 @@ export function initEditor() {
                 });
 
                 const data = await response.json();
+                if (data.error) throw new Error(data.error);
 
-                // 🔥 ПРОВЕРКА ЗА ГРЕШКИ 🔥
-                if (data.error) {
-                    throw new Error(data.error); // Хвърляме грешката, за да отиде в catch блока
-                }
-
-                // Ако всичко е наред, показваме резултата
                 showAnalysisResults(data);
 
             } catch (error) {
@@ -81,15 +105,16 @@ export function initEditor() {
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
     window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
 
-    // Клавишни комбинации
+    // --- 3. SHORTCUTS ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'Enter')) {
             e.preventDefault();
-            const runBtn = document.getElementById('run-btn');
-            if (runBtn) runBtn.click();
+            const rBtn = document.getElementById('run-btn');
+            if (rBtn) rBtn.click();
         }
     });
 
+    // --- 4. AUTO-FIX BUTTON ---
     const fixBtn = document.getElementById('fix-btn');
     if (fixBtn) {
         fixBtn.addEventListener('click', async () => {
@@ -97,11 +122,10 @@ export function initEditor() {
             if (!userCode.trim()) return alert("Няма код за поправяне!");
 
             const originalHTML = fixBtn.innerHTML;
-            const originalWidth = fixBtn.offsetWidth; // Запазваме ширината, за да не "скача"
+            const originalWidth = fixBtn.offsetWidth;
 
-            // Слагаме временно съобщение
             fixBtn.innerHTML = "Поправям...";
-            fixBtn.style.width = `${originalWidth}px`; // Фиксираме ширината
+            fixBtn.style.width = `${originalWidth}px`;
             fixBtn.disabled = true;
 
             try {
@@ -118,7 +142,6 @@ export function initEditor() {
 
                 editor.setValue(data.fixedCode);
 
-                // Успех
                 fixBtn.innerHTML = "✅ Готово!";
                 fixBtn.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)";
 
@@ -138,18 +161,18 @@ export function initEditor() {
         });
     }
 
+    // --- 5. DOWNLOAD BUTTON ---
     const downloadBtn = document.getElementById('download-btn');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', () => {
             const userCode = editor.getValue();
-
             if (!userCode.trim()) {
                 alert("Няма код за изтегляне! Напиши нещо първо.");
                 return;
             }
 
             const date = new Date();
-            const dateString = date.toISOString().split('T')[0]; // 2023-10-25
+            const dateString = date.toISOString().split('T')[0];
             const fileName = `scriptsensei_${dateString}.js`;
 
             const blob = new Blob([userCode], { type: 'text/javascript' });
@@ -194,7 +217,6 @@ function showAnalysisResults(data) {
         list.innerHTML = '<li style="color:green">Няма открити проблеми! 🎉</li>';
     }
 
-    // 4. Security
     const secEl = document.getElementById('analysis-security');
     if (data.securityRisk) {
         secEl.innerHTML = `⚠️ РИСК ОТКРИТ! <br> ${data.securityMessage || ''}`;
@@ -204,6 +226,5 @@ function showAnalysisResults(data) {
         secEl.className = 'security-safe';
     }
 
-    // Показваме
     modal.style.display = 'flex';
 }
