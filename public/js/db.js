@@ -1,6 +1,5 @@
 import { db } from './config.js';
 import { state, setAllChats, setCurrentChatId, setPremiumStatus } from './state.js';
-import { setPremiumStatus } from './state.js';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- 1. LOCAL STORAGE ---
