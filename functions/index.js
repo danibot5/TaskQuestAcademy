@@ -9,7 +9,7 @@ admin.initializeApp();
 // 👇 ИНИЦИАЛИЗАЦИЯ НА STRIPE
 let stripe;
 try {
-  stripe = Stripe('sk_test_51SoiD2FCI9V7RPg196g1z7Pi141V9VeWVZWIgnXqCcviyX8M4vIRRqTWbqDlQVS8tupvrf5fu4j02hzJW7btO5jA000F4X0f1V');
+  stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 } catch (e) {
   console.error("Stripe initialization failed:", e);
 }
