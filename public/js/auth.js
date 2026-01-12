@@ -1,3 +1,4 @@
+import { loadUserProfile } from './db.js';
 import { auth, googleProvider } from './config.js';
 import { setCurrentUser } from './state.js';
 import { loadChatsFromFirestore, loadChatsFromLocalStorage } from './db.js';
@@ -24,6 +25,8 @@ export function initAuth() {
 
         if (user) {
             setCurrentUser(user);
+
+            loadUserProfile(user.uid);
 
             guestButtons.style.display = 'none';
             userInfoDiv.style.display = 'flex';

@@ -1,8 +1,8 @@
 import { state } from './state.js';
 import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
-import { loadChat, startNewChat } from './chat.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
 import { editor } from './editor.js';
+import { startCheckout, checkPaymentStatus } from './payment.js';
 
 const chatHistory = document.getElementById('chat-history');
 const chatList = document.querySelector('.chat-list');
@@ -53,9 +53,11 @@ export function renderSidebar() {
             menuDropdown.classList.add('show');
         });
 
-        div.addEventListener('click', (e) => {
+        // 🔥 FIX: Динамичен импорт за избягване на Circular Dependency
+        div.addEventListener('click', async (e) => {
             if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
-            loadChat(chat.id);
+            const module = await import('./chat.js');
+            module.loadChat(chat.id);
         });
 
         const titleSpan = document.createElement('span');
@@ -101,8 +103,12 @@ export function renderSidebar() {
             if (state.currentUser) await deleteFromFirestore(chat.id);
             else saveToLocalStorage();
 
-            if (chat.id === state.currentChatId) startNewChat();
-            else renderSidebar();
+            if (chat.id === state.currentChatId) {
+                const module = await import('./chat.js');
+                module.startNewChat();
+            } else {
+                renderSidebar();
+            }
         };
 
         menuDropdown.appendChild(renameOpt);
@@ -505,7 +511,7 @@ export async function shareChat() {
 if (mobileEditorBtn) {
     mobileEditorBtn.addEventListener('click', () => {
         body.classList.toggle('mobile-editor-active');
-        
+
         if (body.classList.contains('mobile-editor-active')) {
             mobileEditorBtn.style.color = '#1a73e8';
 
@@ -521,28 +527,28 @@ if (mobileEditorBtn) {
 if (closeEditorBtn) {
     closeEditorBtn.addEventListener('click', () => {
         document.body.classList.remove('mobile-editor-active');
-        
+
         const openBtn = document.getElementById('mobile-editor-toggle');
-        if (openBtn) openBtn.style.color = ''; 
+        if (openBtn) openBtn.style.color = '';
     });
 }
 
 export function initProfileModal() {
-    const userInfoBtn = document.getElementById('user-info'); // Това е картата в сайдбара
+    const userInfoBtn = document.getElementById('user-info');
     const modal = document.getElementById('profile-modal');
     const closeBtn = document.getElementById('close-profile');
     const logoutBtnModal = document.getElementById('logout-btn-modal');
-    const logoutBtnSidebar = document.getElementById('logout-btn'); // Старият бутон
+    const logoutBtnSidebar = document.getElementById('logout-btn');
+    const buyBtnModal = document.getElementById('buy-pro-modal');
+    const buyBtnSidebar = document.getElementById('buy-pro-sidebar');
 
     if (!userInfoBtn || !modal) return;
 
     // Отваряне на модала
     userInfoBtn.addEventListener('click', (e) => {
-        // Ако кликнем върху logout в картата, не отваряй модала
         if (e.target.closest('.logout-link')) return;
 
         if (!state.currentUser) {
-            // Ако е гост, подкани го да влезе
             document.getElementById('login-modal').style.display = 'flex';
             return;
         }
@@ -551,15 +557,26 @@ export function initProfileModal() {
         modal.style.display = 'flex';
     });
 
-    // Затваряне
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
-    
-    // Логика за Logout бутона в модала
+
     if (logoutBtnModal && logoutBtnSidebar) {
         logoutBtnModal.addEventListener('click', () => {
             modal.style.display = 'none';
-            logoutBtnSidebar.click(); // Симулираме клик на истинския logout
+            logoutBtnSidebar.click();
         });
+    }
+
+    // 🔥 FIX: ТУК БЕШЕ ГРЕШКАТА - 'buyBtn' не съществуваше
+    if (buyBtnModal) {
+        buyBtnModal.onclick = () => {
+            startCheckout();
+        };
+    }
+
+    if (buyBtnSidebar) {
+        buyBtnSidebar.onclick = () => {
+            startCheckout();
+        };
     }
 }
 
@@ -567,12 +584,44 @@ function populateProfileData() {
     const user = state.currentUser;
     if (!user) return;
 
-    // 1. Основни данни
     document.getElementById('profile-avatar').src = user.photoURL || 'images/bot-avatar.png';
     document.getElementById('profile-name').innerText = user.displayName || 'Нинджа';
     document.getElementById('profile-email').innerText = user.email || '';
 
-    // 2. Статистика
+    const badge = document.getElementById('pro-badge');
+    const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
+
+    const modelSelector = document.getElementById('model-selector');
+
+    if (state.hasPremiumAccess) {
+        if (badge) badge.style.display = 'inline-block';
+
+        if (planLabel) {
+            planLabel.innerText = "PRO 💎";
+            planLabel.style.color = "gold";
+        }
+
+        if (modelSelector){
+            modelSelector.style.display = 'block';
+            modelSelector.onchange = (e) => {
+                state.selectedModel = e.target.value;
+            };
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+
+        if (planLabel) {
+            planLabel.innerText = "Free";
+            planLabel.style.color = "";
+        }
+
+        if (modelSelector) {
+            modelSelector.style.display = 'none';
+            modelSelector.value = 'flash';
+            setSelectedModel('flash');
+        }
+    }
+
     const chatCount = state.allChats.length;
     document.getElementById('stat-chats').innerText = chatCount;
 
@@ -583,7 +632,6 @@ function populateProfileData() {
         document.getElementById('stat-date').innerText = dateStr;
     }
 
-    // 4. Нинджа Ниво (Gamification) 🥷
     let level = "Новак 🥚";
     if (chatCount > 5) level = "Чирак 🔨";
     if (chatCount > 10) level = "Нинджа 🥷";
@@ -592,3 +640,7 @@ function populateProfileData() {
 
     document.getElementById('profile-level').innerText = `Ранк: ${level}`;
 }
+
+setTimeout(() => {
+    checkPaymentStatus();
+}, 2000);

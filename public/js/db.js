@@ -1,16 +1,19 @@
 import { db } from './config.js';
-import { state, setAllChats, setCurrentChatId } from './state.js';
-import { renderSidebar } from './ui.js';
-import { startNewChat } from './chat.js';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { state, setAllChats, setCurrentChatId, setPremiumStatus } from './state.js';
+import { setPremiumStatus } from './state.js';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- 1. LOCAL STORAGE ---
-export function loadChatsFromLocalStorage() {
+export async function loadChatsFromLocalStorage() {
     const localData = localStorage.getItem('scriptsensei_chats');
     const chats = localData ? JSON.parse(localData) : [];
     setAllChats(chats);
-    renderSidebar();
-    startNewChat();
+
+    // ✅ DYNAMIC IMPORT (Зареждаме ги само когато трябват)
+    const ui = await import('./ui.js');
+    const chat = await import('./chat.js');
+    ui.renderSidebar();
+    chat.startNewChat();
 }
 
 export function saveToLocalStorage() {
@@ -22,7 +25,7 @@ export function saveToLocalStorage() {
 // --- 2. FIRESTORE LOAD ---
 export async function loadChatsFromFirestore() {
     const chatListEl = document.querySelector('.chat-list');
-    chatListEl.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
+    if (chatListEl) chatListEl.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
     setAllChats([]);
 
     try {
@@ -35,19 +38,21 @@ export async function loadChatsFromFirestore() {
         const loadedChats = [];
 
         querySnapshot.forEach((doc) => {
-            // Тук взимаме ВСИЧКИ данни от документа (вкл. editorCode и consoleOutput)
             loadedChats.push({ id: doc.id, ...doc.data() });
         });
 
         loadedChats.sort((a, b) => b.createdAt - a.createdAt);
         setAllChats(loadedChats);
 
-        renderSidebar();
-        startNewChat();
+        // ✅ DYNAMIC IMPORT
+        const ui = await import('./ui.js');
+        const chat = await import('./chat.js');
+        ui.renderSidebar();
+        chat.startNewChat();
 
     } catch (error) {
         console.error("Грешка при зареждане на чатовете:", error);
-        chatListEl.innerHTML = '<div style="padding:10px; color:red;">Грешка. Виж конзолата.</div>';
+        if (chatListEl) chatListEl.innerHTML = '<div style="padding:10px; color:red;">Грешка. Виж конзолата.</div>';
     }
 }
 
@@ -56,21 +61,18 @@ export async function saveToFirestore(chat) {
     if (state.currentUser) {
         const isNewChat = typeof chat.id === 'number';
 
-        // Подготвяме данните (включително кода и конзолата)
         const chatData = {
             userId: state.currentUser.uid,
             title: chat.title,
             messages: chat.messages,
-            editorCode: chat.editorCode || "",      // 👈 НОВО
-            consoleOutput: chat.consoleOutput || "" // 👈 НОВО
+            editorCode: chat.editorCode || "",
+            consoleOutput: chat.consoleOutput || ""
         };
 
         if (isNewChat) {
             const tempId = chat.id;
-            chatData.createdAt = Date.now(); // Дата само при създаване
-
+            chatData.createdAt = Date.now();
             const docRef = await addDoc(collection(db, "chats"), chatData);
-
             chat.id = docRef.id;
 
             if (state.currentChatId === tempId) {
@@ -78,12 +80,11 @@ export async function saveToFirestore(chat) {
             }
         } else {
             const chatRef = doc(db, "chats", chat.id);
-            // При update обновяваме всичко важно
             await updateDoc(chatRef, {
                 messages: chat.messages,
                 title: chat.title,
-                editorCode: chat.editorCode || "",      // 👈 НОВО
-                consoleOutput: chat.consoleOutput || "" // 👈 НОВО
+                editorCode: chat.editorCode || "",
+                consoleOutput: chat.consoleOutput || ""
             });
         }
     }
@@ -104,7 +105,7 @@ export async function saveMessage(text, sender) {
             title: text.substring(0, 30) + "...",
             messages: [],
             userId: state.currentUser ? state.currentUser.uid : 'guest',
-            editorCode: "",     // Инициализираме
+            editorCode: "",
             consoleOutput: ""
         };
         state.allChats.unshift(chat);
@@ -118,7 +119,9 @@ export async function saveMessage(text, sender) {
         saveToLocalStorage();
     }
 
-    renderSidebar();
+    // ✅ DYNAMIC IMPORT
+    const ui = await import('./ui.js');
+    ui.renderSidebar();
 }
 
 export async function saveFeedbackToHistory(messageText, feedbackType) {
@@ -138,18 +141,15 @@ export async function saveFeedbackToHistory(messageText, feedbackType) {
     }
 }
 
-// 🔥 ТУК Е ГЛАВНИЯТ FIX ЗА БУТОНА RUN 🔥
 export async function updateChatData(chat) {
     if (state.currentUser) {
         try {
             const chatRef = doc(db, "chats", chat.id);
-            // Преди обновяваше само title и isPinned. 
-            // Сега обновява и КОДА!
             await updateDoc(chatRef, {
                 title: chat.title,
                 isPinned: chat.isPinned || false,
-                editorCode: chat.editorCode || "",      // 👈 ВАЖНО
-                consoleOutput: chat.consoleOutput || "" // 👈 ВАЖНО
+                editorCode: chat.editorCode || "",
+                consoleOutput: chat.consoleOutput || ""
             });
         } catch (e) {
             console.error("Error updating chat:", e);
@@ -179,5 +179,27 @@ export async function sendFeedbackReport(type, messageContent, reasons = [], det
         console.log(`✅ Feedback (${type}) изпратен успешно!`);
     } catch (error) {
         console.error("Грешка при пращане на feedback:", error);
+    }
+}
+
+export async function loadUserProfile(userId) {
+    try {
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            if (data.hasPremiumAccess) {
+                setPremiumStatus(true);
+                console.log("💎 User has premium access!");
+            } else {
+                setPremiumStatus(false);
+            }
+        } else {
+            // Ако няма запис, значи е нов и не е Pro
+            setPremiumStatus(false);
+        }
+    } catch (e) {
+        console.error("Error loading profile:", e);
     }
 }

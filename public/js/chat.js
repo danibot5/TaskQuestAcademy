@@ -186,7 +186,11 @@ export async function sendMessage(retryCount = 0) {
 
     if (retryCount === 0) showLoading();
 
-    const requestBody = { messages: messagesPayload };
+    const requestBody = {
+        messages: messagesPayload,
+        userId: state.currentUser ? state.currentUser.uid : null,
+        preferredModel: state.selectedModel
+    };
 
     if (retryCount === 0 && state.currentAttachments.length > 0) {
         requestBody.attachments = state.currentAttachments;

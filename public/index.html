@@ -94,8 +94,8 @@
                         <span class="pro-icon">💎</span>
                         <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
                     </div>
-                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO + Voice</p>
-                    <button class="pro-btn">Очаквайте скоро...</button>
+                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
+                    <button id="buy-pro-sidebar" class="pro-btn">💎 Вземи PRO</button>
                 </div>
             </div>
 
@@ -126,6 +126,11 @@
             </button>
 
             <div class="header-actions" style="margin-left: auto; display: flex; gap: 5px; align-items: center;">
+                <select id="model-selector"
+                    style="display: none; background: #2d2d2d; color: white; border: 1px solid #444; border-radius: 6px; padding: 5px; font-size: 12px; margin-right: 5px; cursor: pointer;">
+                    <option value="flash">⚡ Flash (Бърз)</option>
+                    <option value="pro">🧠 Pro (Умен)</option>
+                </select>
 
                 <button id="mobile-editor-toggle" class="icon-btn" style="margin-left: auto;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -365,7 +370,7 @@
             <div class="profile-header">
                 <div class="profile-avatar-wrapper">
                     <img id="profile-avatar" src="" alt="Profile">
-                    <span class="profile-badge">PRO</span>
+                    <span class="profile-badge" id="pro-badge" style="display: none;">PRO</span>
                 </div>
                 <h2 id="profile-name">User Name</h2>
                 <p id="profile-email">user@example.com</p>
@@ -387,12 +392,18 @@
                 </div>
             </div>
 
+            <button id="buy-pro-modal" class="modal-btn"
+                style="background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: #000; font-weight: bold; margin-top: 15px; margin-bottom: 5px; border: none; box-shadow: 0 4px 15px rgba(253, 185, 49, 0.4);">
+                💎 Вземи PRO (10.00 лв/мес)
+            </button>
+
             <button id="logout-btn-modal" class="modal-btn" style="background-color: #ff4444; margin-top: 20px;">
                 Изход от профила
             </button>
         </div>
     </div>
 
+    <script type="module" src="js/payment.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script type="module" src="js/main.js"></script>
