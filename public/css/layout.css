@@ -765,11 +765,6 @@ body.dark-mode .pro-content {
     margin-bottom: 5px;
 }
 
-.pro-icon {
-    font-size: 1.2rem;
-    animation: pulse-gem 2.5s infinite;
-}
-
 .pro-title {
     font-size: 1.1rem;
     color: #333;
@@ -804,7 +799,7 @@ body.dark-mode .pro-desc {
     padding: 8px 0;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(90deg, #1a1a1a, #333);
+    background: transparent;
     color: #fdb931;
     font-size: 0.85rem;
     font-weight: bold;
@@ -812,15 +807,25 @@ body.dark-mode .pro-desc {
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: all 0.4s ease;
+    box-shadow: 0 0 5px rgba(253, 185, 49, 0.35);
+}
+
+body.dark-mode .pro-btn {
+    box-shadow: 0 0 5px rgba(253, 185, 49, 0.2);
 }
 
 .pro-card:hover .pro-btn {
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(253, 185, 49, 0.3);
+    box-shadow: 0 0 10px rgba(253, 185, 49, 0.5);
 }
 
 .pro-btn:hover {
     transform: scale(0.965);
+    background: rgb(236, 236, 236);
+}
+
+body.dark-mode .pro-btn:hover {
+    background: #2c2c2c;
 }
 
 .pro-bg-shine {
