@@ -126,11 +126,18 @@
             </button>
 
             <div class="header-actions" style="margin-left: auto; display: flex; gap: 5px; align-items: center;">
-                <select id="model-selector"
-                    style="display: none; background: #2d2d2d; color: white; border: 1px solid #444; border-radius: 6px; padding: 5px; font-size: 12px; margin-right: 5px; cursor: pointer;">
-                    <option value="flash">⚡ Flash (Бърз)</option>
-                    <option value="pro">🧠 Pro (Умен)</option>
-                </select>
+                <div id="model-selector-container" class="custom-select-wrapper" style="display: none;">
+                    <div class="custom-select">
+                        <div class="custom-select__trigger">
+                            <span id="current-model-text">Flash</span>
+                            <div class="arrow"></div>
+                        </div>
+                        <div class="custom-options">
+                            <span class="custom-option selected" data-value="flash">Flash (Бърз)</span>
+                            <span class="custom-option" data-value="pro">Pro (Умен)</span>
+                        </div>
+                    </div>
+                </div>
 
                 <button id="mobile-editor-toggle" class="icon-btn" style="margin-left: auto;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"

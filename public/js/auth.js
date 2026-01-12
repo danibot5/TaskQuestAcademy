@@ -26,7 +26,10 @@ export function initAuth() {
         if (user) {
             setCurrentUser(user);
 
-            loadUserProfile(user.uid);
+            loadUserProfile(user.uid).then(async () => {
+                const ui = await import('./ui.js');
+                ui.updateHeaderUI();
+            });
 
             guestButtons.style.display = 'none';
             userInfoDiv.style.display = 'flex';

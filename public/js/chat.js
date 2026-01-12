@@ -131,19 +131,46 @@ export async function loadChat(id) {
 
 export async function sendMessage(retryCount = 0) {
     const userInput = document.getElementById('user-input');
+
+    const now = Date.now();
+    state.messageTimestamps = state.messageTimestamps.filter(t => now - t < 60000);
+
+    const LIMIT = state.hasPremiumAccess ? 50 : 3;
+    if (state.messageTimestamps.length >= LIMIT) {
+        if (state.hasPremiumAccess) {
+            showToast("По-леко, Шампионе! 50 съобщения/мин е лимитът! 🚀", "🏎️");
+        } else {
+            showToast("🔒 Free Limit: Само 3 съобщения на минута!", "⏳");
+            setTimeout(() => document.getElementById('profile-modal').style.display = 'flex', 1500);
+        }
+        return;
+    }
+
+    const MAX_FILES = state.hasPremiumAccess ? 10 : 3;
+    if (state.currentAttachments.length > MAX_FILES) {
+        showToast(
+            state.hasPremiumAccess
+                ? "Максимум 10 файла!"
+                : "🔒 Free User: Само 3 файла наведнъж! Вземи PRO за повече.",
+            "📂"
+        );
+        return;
+    }
+
+    if (retryCount === 0) {
+        state.messageTimestamps.push(now);
+    }
+
     let text = userInput.value;
 
-    // --- ФИКС: Запомняме дали е нов чат ТУК, преди да сме го запазили ---
-    // (Защото след saveMessage ID-то се сменя и вече не е число)
     const isNewChat = (typeof state.currentChatId === 'number');
-    // ------------------------------------------------------------------
 
     if (retryCount === 0 && text.trim() === "" && state.currentAttachments.length === 0) return;
 
     if (retryCount === 0) {
         if (text.trim() !== "") {
             addMessageToUI(text, 'user');
-            await saveMessage(text, 'user'); // Тук ID-то се обновява
+            await saveMessage(text, 'user');
         }
         if (state.currentAttachments.length > 0) {
             const fileNames = state.currentAttachments.map(f => f.name).join(', ');

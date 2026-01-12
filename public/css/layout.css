@@ -45,6 +45,172 @@
     gap: 7.75px !important;
 }
 
+
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    width: 110px;
+    margin-right: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+}
+
+.custom-select {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-select__trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    font-weight: 600;
+    background: #f8f8f8;
+    color: #333333;
+    border: 2px solid #ffd700;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Стрелкичка (Base Color) */
+.arrow {
+    position: relative;
+    height: 10px;
+    width: 10px;
+}
+
+.arrow::before,
+.arrow::after {
+    content: "";
+    position: absolute;
+    bottom: 0px;
+    width: 0.15rem;
+    height: 100%;
+    transition: all 0.3s;
+}
+
+.arrow::before {
+    left: -2px;
+    transform: rotate(-45deg);
+    background-color: #333;
+}
+
+/* Тъмна стрелка на светло */
+.arrow::after {
+    left: 2px;
+    transform: rotate(45deg);
+    background-color: #333;
+}
+
+/* Меню с опции (Light Mode) */
+.custom-options {
+    position: absolute;
+    display: block;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    background: #ffffff;
+    border: 1px solid #ddd;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+    transition: all 0.3s;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 100;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.custom-option {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.custom-option:hover {
+    background-color: #fff8e1;
+    /* Светло златисто */
+    color: #000;
+}
+
+.custom-option.selected {
+    background-color: #f0f0f0;
+    color: #b8860b;
+    /* Тъмно златно */
+}
+
+/* Логика за отваряне */
+.custom-select.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transform: translateY(5px);
+}
+
+.custom-select.open .arrow::before {
+    transform: rotate(-135deg);
+}
+
+.custom-select.open .arrow::after {
+    transform: rotate(135deg);
+}
+
+
+/* --- 2. DARK MODE OVERRIDES (🌙) --- */
+
+body.dark-mode .custom-select__trigger {
+    background: #1a1a1a;
+    color: #FFD700;
+    /* Златен текст */
+    border: 1px solid #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+}
+
+body.dark-mode .custom-select__trigger:hover {
+    background: #252525;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* Златна стрелка в тъмен режим */
+body.dark-mode .arrow::before,
+body.dark-mode .arrow::after {
+    background-color: #FFD700;
+}
+
+body.dark-mode .custom-options {
+    background: #2d2d2d;
+    border: 1px solid #444;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .custom-option {
+    color: #e0e0e0;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+body.dark-mode .custom-option:hover {
+    background-color: #FFD700;
+    color: #000;
+}
+
+body.dark-mode .custom-option.selected {
+    background-color: #3a3a3a;
+    color: #FFD700;
+}
+
 .top-new-chat-btn {
     background: none;
     margin-left: 10px;
@@ -287,7 +453,7 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 16px;
-    box-shadow: 
+    box-shadow:
         0 4px 6px rgba(0, 0, 0, 0.02),
         0 10px 15px rgba(0, 0, 0, 0.03),
         inset 0 0 0 1px rgba(255, 255, 255, 0.5);
@@ -300,7 +466,7 @@
     transform: translateY(-3px) scale(1.02);
     background: rgba(255, 255, 255, 0.95);
     border-color: rgba(26, 115, 232, 0.3);
-    box-shadow: 
+    box-shadow:
         0 15px 30px rgba(26, 115, 232, 0.15),
         0 5px 15px rgba(0, 0, 0, 0.05);
 }
@@ -312,12 +478,10 @@
     left: -150%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.8), 
-        transparent
-    );
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.8),
+            transparent);
     transform: skewX(-20deg);
     transition: none;
     pointer-events: none;
@@ -333,7 +497,7 @@
     height: 42px;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     object-fit: cover;
     transition: all 0.4s ease;
 }
@@ -365,13 +529,11 @@ body.dark-mode .user-avatar-img {
 #user-name {
     font-size: 0.95rem;
     font-weight: 700;
-    background-image: linear-gradient(
-        90deg, 
-        #333 0%,
-        #333 50%,
-        #1a73e8 75%,
-        #8e44ad 100% 
-    );
+    background-image: linear-gradient(90deg,
+            #333 0%,
+            #333 50%,
+            #1a73e8 75%,
+            #8e44ad 100%);
     background-size: 200% auto;
     background-position: 0% center;
     color: #333;
@@ -417,8 +579,10 @@ body.dark-mode .user-avatar-img {
 }
 
 .logout-link:hover {
-    color: #ff4444; /* Червено за изход */
-    transform: translateX(3px); /* Леко мръдване */
+    color: #ff4444;
+    /* Червено за изход */
+    transform: translateX(3px);
+    /* Леко мръдване */
 }
 
 #share-and-theme-divider {
@@ -429,7 +593,8 @@ body.dark-mode .user-avatar-img {
 }
 
 .profile-box {
-    max-width: 380px; /* По-тесен и елегантен */
+    max-width: 380px;
+    /* По-тесен и елегантен */
     text-align: center;
     background: linear-gradient(145deg, #ffffff, #f0f4f8);
     border: 1px solid #e1e4e8;
@@ -474,7 +639,7 @@ body.dark-mode .profile-box {
     padding: 3px 8px;
     border-radius: 10px;
     border: 2px solid white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .profile-badge {
@@ -518,13 +683,13 @@ body.dark-mode .profile-level {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
-    background: rgba(0,0,0,0.03);
+    background: rgba(0, 0, 0, 0.03);
     padding: 15px;
     border-radius: 12px;
 }
 
 body.dark-mode .profile-stats {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .stat-item {
@@ -561,22 +726,22 @@ body.dark-mode .sidebar-divider {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
-/* --- 💎 SCRIPT SENSEI PRO CARD --- */
 .pro-card {
     position: relative;
     margin: 10px 10px 20px 10px;
     padding: 2px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #FFD700, #FDB931, #8e44ad); /* Златно-лилава рамка */
+    background: linear-gradient(135deg, #FFD700, #FDB931, #8e44ad);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
 }
 
 .pro-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 30px rgba(142, 68, 173, 0.25);
+    cursor: default;
 }
 
 .pro-content {
@@ -602,7 +767,7 @@ body.dark-mode .pro-content {
 
 .pro-icon {
     font-size: 1.2rem;
-    animation: pulse-gem 2s infinite;
+    animation: pulse-gem 2.5s infinite;
 }
 
 .pro-title {
@@ -646,12 +811,16 @@ body.dark-mode .pro-desc {
     cursor: default;
     text-transform: uppercase;
     letter-spacing: 1px;
-    transition: all 0.3s;
+    transition: all 0.4s ease;
 }
 
 .pro-card:hover .pro-btn {
-    background: linear-gradient(90deg, #000, #1a1a1a);
+    cursor: pointer;
     box-shadow: 0 0 10px rgba(253, 185, 49, 0.3);
+}
+
+.pro-btn:hover {
+    transform: scale(0.965);
 }
 
 .pro-bg-shine {
@@ -660,12 +829,10 @@ body.dark-mode .pro-desc {
     left: -100%;
     width: 50%;
     height: 100%;
-    background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.5), 
-        transparent
-    );
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.5),
+            transparent);
     transform: skewX(-25deg);
     animation: shine 3s infinite;
     z-index: 3;
@@ -673,13 +840,29 @@ body.dark-mode .pro-desc {
 }
 
 @keyframes shine {
-    0% { left: -100%; }
-    20% { left: 200%; }
-    100% { left: 200%; }
+    0% {
+        left: -100%;
+    }
+
+    20% {
+        left: 200%;
+    }
+
+    100% {
+        left: 200%;
+    }
 }
 
 @keyframes pulse-gem {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }

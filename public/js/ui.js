@@ -596,11 +596,11 @@ function populateProfileData() {
         if (badge) badge.style.display = 'inline-block';
 
         if (planLabel) {
-            planLabel.innerText = "PRO 💎";
+            planLabel.innerText = "PRO";
             planLabel.style.color = "gold";
         }
 
-        if (modelSelector){
+        if (modelSelector) {
             modelSelector.style.display = 'block';
             modelSelector.onchange = (e) => {
                 setSelectedModel(e.target.value);
@@ -638,6 +638,88 @@ function populateProfileData() {
     if (chatCount > 45) level = "Легенда 🏆";
 
     document.getElementById('profile-level').innerText = `Ранк: ${level}`;
+}
+
+export function updateHeaderUI() {
+    const container = document.getElementById('model-selector-container');
+    if (!container) return;
+
+    if (state.hasPremiumAccess) {
+        // 1. Показваме менюто
+        container.style.display = 'block';
+
+        const wrapper = container.querySelector('.custom-select');
+        const trigger = container.querySelector('.custom-select__trigger');
+        const options = container.querySelectorAll('.custom-option');
+        const currentText = document.getElementById('current-model-text');
+
+        // 👇 ФИКС: Принудително задаваме PRO модел и текст веднага!
+        // Така няма шанс да остане празно или на Flash.
+        if (state.selectedModel !== 'pro') {
+            setSelectedModel('pro');
+        }
+
+        // 🔨 ТВЪРДО ЗАДАВАНЕ НА ТЕКСТА (Hard Set)
+        if (currentText) {
+            currentText.innerText = "Pro";
+        }
+
+        // Маркираме правилната опция в списъка (визуално)
+        options.forEach(o => {
+            o.classList.remove('selected');
+            if (o.getAttribute('data-value') === 'pro') {
+                o.classList.add('selected');
+            }
+        });
+
+        // 👇 ЗАЩИТА: Ако вече сме закачили кликовете, спираме дотук
+        if (container.dataset.initialized === 'true') return;
+
+        // --- ЛОГИКА ЗА КЛИКОВЕТЕ ---
+        
+        // 1. Отваряне / Затваряне
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrapper.classList.toggle('open');
+        });
+
+        // 2. Избор на опция
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                const value = option.getAttribute('data-value');
+                
+                setSelectedModel(value);
+                
+                if (currentText) {
+                    if (value === 'pro') currentText.innerText = "Pro";
+                    else if (value === 'flash') currentText.innerText = "Flash";
+                }
+                
+                // В) Местим класа .selected
+                options.forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+
+                // Г) Затваряме
+                wrapper.classList.remove('open');
+            });
+        });
+
+        // 3. Затваряне при клик извън
+        window.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+                wrapper.classList.remove('open');
+            }
+        });
+
+        container.dataset.initialized = 'true';
+
+    } else {
+        // Ако не е PRO -> Крием и връщаме Flash
+        container.style.display = 'none';
+        setSelectedModel('flash');
+    }
 }
 
 setTimeout(() => {

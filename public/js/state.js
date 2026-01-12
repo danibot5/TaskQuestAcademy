@@ -8,7 +8,8 @@ export const state = {
     isMuted: localStorage.getItem('scriptsensei_muted') === 'true',
     isSpeakingNow: false,
     speechCharIndex: 0,
-    currentCleanText: ""
+    currentCleanText: "",
+    messageTimestamps: []
 };
 
 export function setCurrentUser(user) { state.currentUser = user; }

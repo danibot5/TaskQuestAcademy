@@ -63,13 +63,15 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     const { messages, attachments, userId, preferredModel } = req.body;
     
     // 👇 Логика за избор на модел
-    let modelName = "gemini-2.5-flash"; // По подразбиране (Flash)
+    let modelName = "gemini-2.5-flash";
+    let maxTokens = 1000;
 
     // Ако потребителят иска PRO, проверяваме дали има право!
     if (userId && preferredModel === 'pro') {
         const userSnap = await admin.firestore().collection('users').doc(userId).get();
         if (userSnap.exists && userSnap.data().hasPremiumAccess) {
-            modelName = "gemini-2.5-pro"; // ✅ Даваме му мощния модел!
+            modelName = "gemini-2.5-pro";
+            maxTokens = 7500;
         } else {
             console.log(`⚠️ User ${userId} tried to use PRO model without subscription.`);
         }
@@ -108,6 +110,7 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     }
 
     const chatSession = model.startChat({
+      generationConfig: { maxOutputTokens: maxTokens },
       history: [
         { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
         { role: "model", parts: [{ text: `Здравей! Използвам модел: ${modelName === "gemini-2.5-pro" ? "PRO 🧠" : "Flash ⚡"}. Готов съм да кодираме! 🚀` }] },
@@ -206,7 +209,6 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
   }
 });
 
-// 🔥 ТУК Е МАГИЯТА: Verify Payment + Update Database
 exports.verifyPayment = onRequest({ cors: true }, async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -215,12 +217,11 @@ exports.verifyPayment = onRequest({ cors: true }, async (req, res) => {
     if (session.payment_status === 'paid') {
       const userId = session.metadata.userId;
 
-      // 👇 АВТОМАТИЧНО ЗАПИСВАМЕ В БАЗАТА, ЧЕ Е PRO!
       await admin.firestore().collection('users').doc(userId).set({
         hasPremiumAccess: true,
         proSince: admin.firestore.FieldValue.serverTimestamp(),
         email: session.customer_email
-      }, { merge: true }); // merge: true пази старите данни, ако има такива
+      }, { merge: true });
 
       res.json({ success: true, userId: userId });
     } else {
