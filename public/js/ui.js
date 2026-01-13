@@ -615,7 +615,6 @@ function populateProfileData() {
                         <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
                     </div>
                     <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
-                    <button id="buy-pro-sidebar" class="pro-btn" style="display:none;">Вземи PRO</button>
                 </div>
             `;
         }
