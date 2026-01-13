@@ -49,9 +49,7 @@
     }
 
     .brand-name {
-        font-size: 1rem !important;
-        margin-right: 0 !important;
-        white-space: nowrap;
+        display: none !important;
     }
 
     .top-new-chat-btn {
@@ -90,6 +88,25 @@
     .search-wrapper.active #search-input {
         width: 250px;
         opacity: 1;
+    }
+
+    .custom-select-wrapper {
+        width: auto !important;
+        min-width: 60px;
+    }
+
+    #current-model-text {
+        max-width: 25px;
+        overflow: hidden;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: bottom;
+    }
+    
+    .custom-options {
+        width: 160px;
+        right: 0;
+        left: auto;
     }
 
     #new-chat-btn {

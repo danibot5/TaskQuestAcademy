@@ -560,10 +560,13 @@ export function initProfileModal() {
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
 
     if (logoutBtnModal && logoutBtnSidebar) {
-        logoutBtnModal.addEventListener('click', () => {
-            modal.style.display = 'none';
-            logoutBtnSidebar.click();
-        });
+        logoutBtnModal.onclick = async () => {
+            if (confirm("Сигурен ли си, че искаш да излезеш?")) {
+                modal.style.display = 'none';
+                await signOut(auth);
+                window.location.reload();
+            }
+        };
     }
 
     if (buyBtnModal) {
@@ -589,24 +592,35 @@ function populateProfileData() {
 
     const badge = document.getElementById('pro-badge');
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
-
     const modelSelector = document.getElementById('model-selector');
 
+    // 👇 ТОВА ЛИПСВАШЕ! Без него кодът гърми и модалът не се отваря.
+    const buyBtnModal = document.getElementById('buy-pro-modal');
+    const sidebarProCard = document.querySelector('.pro-card');
+
     if (state.hasPremiumAccess) {
+        // --- АКО Е PRO ---
         if (badge) badge.style.display = 'inline-block';
 
         if (planLabel) {
-            planLabel.innerText = "PRO";
+            planLabel.innerText = "PRO 💎";
             planLabel.style.color = "gold";
         }
 
+        // Скриваме бутоните за покупка
+        if (buyBtnModal) buyBtnModal.style.display = 'none';
+        if (sidebarProCard) sidebarProCard.style.display = 'none';
+
         if (modelSelector) {
             modelSelector.style.display = 'block';
+            // ВАЖНО: Тук само закачаме listener-а, но не сменяме модела автоматично,
+            // за да не презаписваме избора на потребителя всеки път, когато отвори профила.
             modelSelector.onchange = (e) => {
                 setSelectedModel(e.target.value);
             };
         }
     } else {
+        // --- АКО Е FREE ---
         if (badge) badge.style.display = 'none';
 
         if (planLabel) {
@@ -619,6 +633,10 @@ function populateProfileData() {
             modelSelector.value = 'flash';
             setSelectedModel('flash');
         }
+
+        // Показваме бутоните за покупка
+        if (buyBtnModal) buyBtnModal.style.display = 'block';
+        if (sidebarProCard) sidebarProCard.style.display = 'flex';
     }
 
     const chatCount = state.allChats.length;
@@ -676,7 +694,7 @@ export function updateHeaderUI() {
         if (container.dataset.initialized === 'true') return;
 
         // --- ЛОГИКА ЗА КЛИКОВЕТЕ ---
-        
+
         // 1. Отваряне / Затваряне
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -687,16 +705,16 @@ export function updateHeaderUI() {
         options.forEach(option => {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
+
                 const value = option.getAttribute('data-value');
-                
+
                 setSelectedModel(value);
-                
+
                 if (currentText) {
                     if (value === 'pro') currentText.innerText = "Pro";
                     else if (value === 'flash') currentText.innerText = "Flash";
                 }
-                
+
                 // В) Местим класа .selected
                 options.forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');

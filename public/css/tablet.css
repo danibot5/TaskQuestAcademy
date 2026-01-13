@@ -41,4 +41,19 @@
         width: 320px;
         padding: 20px;
     }
+
+    .custom-select-wrapper {
+        width: 65px !important;
+        margin-right: 5px;
+    }
+
+    .custom-select__trigger {
+        padding: 6px 8px;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    #current-model-text {
+        font-size: 16px;
+    }
 }
