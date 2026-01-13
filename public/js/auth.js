@@ -94,6 +94,7 @@ function setupAuthEventListeners() {
     const loginModal = getEl('login-modal');
     const errorBoxReg = getEl('reg-error');
     const errorBoxLogin = getEl('login-error');
+    const googleRegBtn = document.getElementById('google-register-btn');
 
     getEl('open-register-btn').addEventListener('click', () => { regModal.style.display = 'flex'; });
     getEl('open-login-btn').addEventListener('click', () => { loginModal.style.display = 'flex'; });
@@ -146,4 +147,13 @@ function setupAuthEventListeners() {
             getEl('login-error').innerText = error.message;
         });
     });
+
+    if (googleRegBtn) {
+        googleRegBtn.addEventListener('click', () => {
+            signInWithPopup(auth, googleProvider).catch((error) => {
+                const errorBox = document.getElementById('reg-error');
+                if (errorBox) errorBox.innerText = error.message;
+            });
+        });
+    }
 }

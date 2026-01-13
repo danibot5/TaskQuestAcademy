@@ -733,6 +733,29 @@ export function updateHeaderUI() {
     }
 }
 
+export function updateLastBotMessage(fullText) {
+    const chatHistory = document.getElementById('chat-history');
+    const lastBotRow = chatHistory.querySelector('.bot-row:last-child');
+    
+    if (!lastBotRow) return;
+
+    const textDiv = lastBotRow.querySelector('.bot-text');
+    
+    // Рендираме Markdown наново с целия текст до момента
+    if (typeof marked !== 'undefined') {
+        textDiv.innerHTML = marked.parse(fullText);
+        // Highlight на кода в движение (може да е тежко, но е красиво)
+        if (typeof hljs !== 'undefined') {
+            textDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+        }
+    } else {
+        textDiv.innerText = fullText;
+    }
+    
+    // Скролваме най-долу, за да следим писането
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
 setTimeout(() => {
     checkPaymentStatus();
 }, 2000);

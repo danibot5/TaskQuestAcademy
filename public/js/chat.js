@@ -1,5 +1,6 @@
 import { state, setCurrentChatId } from './state.js';
-import { addMessageToUI, renderSidebar, showLoading, removeLoading, renderAttachments } from './ui.js';
+import { addMessageToUI, renderSidebar, showLoading, removeLoading, renderAttachments, updateLastBotMessage } from './ui.js';
+import { showToast } from './utils.js';
 import { saveToFirestore, saveToLocalStorage, saveMessage, updateChatData } from './db.js';
 import { API_URL, TITLE_API_URL } from './config.js';
 import { editor } from './editor.js';
@@ -134,35 +135,24 @@ export async function sendMessage(retryCount = 0) {
 
     const now = Date.now();
     state.messageTimestamps = state.messageTimestamps.filter(t => now - t < 60000);
-
     const LIMIT = state.hasPremiumAccess ? 50 : 3;
     if (state.messageTimestamps.length >= LIMIT) {
-        if (state.hasPremiumAccess) {
-            showToast("По-леко, Шампионе! 50 съобщения/мин е лимитът! 🚀", "🏎️");
-        } else {
+        if (!state.hasPremiumAccess) {
             showToast("🔒 Free Limit: Само 3 съобщения на минута!", "⏳");
             setTimeout(() => document.getElementById('profile-modal').style.display = 'flex', 1500);
+        } else {
+            showToast("По-леко! 50 съобщения/мин е лимитът!", "🚀");
         }
         return;
     }
-
-    const MAX_FILES = state.hasPremiumAccess ? 10 : 3;
+    const MAX_FILES = state.hasPremiumAccess ? 10 : 1;
     if (state.currentAttachments.length > MAX_FILES) {
-        showToast(
-            state.hasPremiumAccess
-                ? "Максимум 10 файла!"
-                : "🔒 Free User: Само 3 файла наведнъж! Вземи PRO за повече.",
-            "📂"
-        );
+        showToast("Твърде много файлове!", "📂");
         return;
     }
-
-    if (retryCount === 0) {
-        state.messageTimestamps.push(now);
-    }
+    if (retryCount === 0) state.messageTimestamps.push(now);
 
     let text = userInput.value;
-
     const isNewChat = (typeof state.currentChatId === 'number');
 
     if (retryCount === 0 && text.trim() === "" && state.currentAttachments.length === 0) return;
@@ -174,26 +164,15 @@ export async function sendMessage(retryCount = 0) {
         }
         if (state.currentAttachments.length > 0) {
             const fileNames = state.currentAttachments.map(f => f.name).join(', ');
-            addMessageToUI(`📎 <i>Изпратени файлове (${state.currentAttachments.length}): ${fileNames}</i>`, 'user');
+            addMessageToUI(`📎 <i>Изпратени файлове: ${fileNames}</i>`, 'user');
         }
-
         userInput.value = '';
         userInput.style.height = 'auto';
-
-        // Използваме запомнената променлива от началото
-        if (isNewChat && text.trim() !== "") {
-            // Важно: Подаваме state.currentChatId, което вече е обновеното (истинско) ID
-            setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
-        }
+        if (isNewChat && text.trim() !== "") setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
     }
 
     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
-    if (currentChat) {
-        currentChat.editorCode = editor.getValue();
-    }
-
     let messagesPayload = [];
-
     if (currentChat && currentChat.messages) {
         messagesPayload = currentChat.messages.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -203,7 +182,6 @@ export async function sendMessage(retryCount = 0) {
 
     const editorCode = editor.getValue();
     const consoleOutput = document.getElementById('console-output').innerText;
-
     if (messagesPayload.length > 0) {
         const lastMsg = messagesPayload[messagesPayload.length - 1];
         if (lastMsg.role === 'user' && editorCode.trim().length > 0 && !lastMsg.content.includes('[SYSTEM CONTEXT]')) {
@@ -216,11 +194,11 @@ export async function sendMessage(retryCount = 0) {
     const requestBody = {
         messages: messagesPayload,
         userId: state.currentUser ? state.currentUser.uid : null,
-        preferredModel: state.selectedModel
+        preferredModel: state.selectedModel,
+        attachments: (retryCount === 0 && state.currentAttachments.length > 0) ? state.currentAttachments : undefined
     };
 
-    if (retryCount === 0 && state.currentAttachments.length > 0) {
-        requestBody.attachments = state.currentAttachments;
+    if (retryCount === 0) {
         state.currentAttachments.length = 0;
         renderAttachments();
     }
@@ -232,44 +210,52 @@ export async function sendMessage(retryCount = 0) {
             body: JSON.stringify(requestBody)
         });
 
-        const data = await response.json();
-
-        // Логика за повторен опит при натоварване (Retry Logic)
-        if (data.reply && (data.reply.includes("Много заявки") || data.reply.includes("429"))) {
-            if (retryCount < 3) {
-                console.warn(`Server busy. Retrying in 4s... (Attempt ${retryCount + 1})`);
-
-                const loadingBubble = document.querySelector('#loading-indicator .typing-indicator');
-                if (loadingBubble) loadingBubble.style.opacity = '0.5';
-
-                setTimeout(() => {
-                    sendMessage(retryCount + 1);
-                }, 4000);
-                return;
-            }
-        }
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
         removeLoading();
+        addMessageToUI("", 'bot');
 
-        if (data.reply) {
-            addMessageToUI(data.reply, 'bot');
-            await saveMessage(data.reply, 'bot');
-        } else if (data.error) {
-            if (data.error.includes('429') || data.error.includes('Too Many Requests')) {
-                addMessageToUI("😅 Сървърите са много натоварени в момента. Моля, опитай пак след 1 минута.", 'bot');
-            } else {
-                addMessageToUI("🚨 " + data.error, 'bot');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        // 🔥 ПРОМЯНА: TYPEWRITER EFFECT (Плавна опашка)
+        let displayedText = "";
+        const queue = []; // Тук ще трупаме буквите
+        let isStreamDone = false; // Маркер кога сървърът е приключил
+
+        // 1. Таймерът за анимация (върви отделно от тегленето)
+        const typingInterval = setInterval(() => {
+            if (queue.length > 0) {
+                // Взимаме малко парче от опашката (2-3 символа за скорост)
+                // Ако опашката стане много голяма (много текст чака), забързваме малко
+                const speed = queue.length > 50 ? 2 : 1;
+                const chunk = queue.splice(0, speed).join('');
+
+                displayedText += chunk;
+                updateLastBotMessage(displayedText);
+            } else if (isStreamDone) {
+                // Ако няма повече букви И сървърът е спрял -> край
+                clearInterval(typingInterval);
+                saveMessage(displayedText, 'bot'); // Чак сега запазваме в базата
             }
+        }, 30); // 30 милисекунди интервал (много гладко)
+
+        // 2. Теглене от сървъра (пълни опашката)
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                isStreamDone = true;
+                break;
+            }
+            const chunk = decoder.decode(value, { stream: true });
+            // Разбиваме текста на масив от символи и ги добавяме в опашката
+            queue.push(...chunk.split(''));
         }
 
     } catch (error) {
         console.error(error);
-        if (retryCount < 3) {
-            setTimeout(() => sendMessage(retryCount + 1), 4000);
-        } else {
-            removeLoading();
-            addMessageToUI("Грешка: Сървърът не отговаря.", 'bot');
-        }
+        removeLoading();
+        addMessageToUI("🚨 Грешка: Нещо се обърка с връзката.", 'bot');
     }
 }
 

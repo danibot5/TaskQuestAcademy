@@ -1,12 +1,10 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Stripe = require("stripe");
-const admin = require("firebase-admin"); // 👈 НОВО: За достъп до базата
+const admin = require("firebase-admin");
 
-// Инициализираме Admin SDK (за да пишем в Firestore)
 admin.initializeApp();
 
-// 👇 ИНИЦИАЛИЗАЦИЯ НА STRIPE
 let stripe;
 try {
   stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -80,39 +78,33 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei - не просто AI, а лег�
 // 1. CHAT
 // ... (imports и getAIModel са същите)
 
-exports.chat = onRequest({ cors: true }, async (req, res) => {
+exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) => {
+  // ВАЖНО: Увеличаваме timeout-а, защото стриймингът може да е дълъг
   try {
-    // 👇 Четем какво иска потребителят
     const { messages, attachments, userId, preferredModel } = req.body;
-    
-    // 👇 Логика за избор на модел
-    let modelName = "gemini-2.5-flash";
-    let maxTokens = 1000;
 
-    // Ако потребителят иска PRO, проверяваме дали има право!
+    let maxTokens = 2500;
+    let modelName = "gemini-2.5-flash";
+
     if (userId && preferredModel === 'pro') {
-        const userSnap = await admin.firestore().collection('users').doc(userId).get();
-        if (userSnap.exists && userSnap.data().hasPremiumAccess) {
-            modelName = "gemini-2.5-pro";
-            maxTokens = 7500;
-        } else {
-            console.log(`⚠️ User ${userId} tried to use PRO model without subscription.`);
-        }
+      const userSnap = await admin.firestore().collection('users').doc(userId).get();
+      if (userSnap.exists && userSnap.data().hasPremiumAccess) {
+        modelName = "gemini-2.5-pro";
+        maxTokens = 8000;
+      }
     }
 
-    // Инициализираме избрания модел
     const model = getAIModel(modelName);
 
-    // ... (надолу кодът за promptText, bad words и chatSession е абсолютно същият)
-    
     const lastMessageObj = messages[messages.length - 1];
     let promptText = lastMessageObj ? lastMessageObj.content : "";
 
+    // Проверка за лоши думи (Връщаме JSON грешка, ако има)
     if (containsBadWords(promptText)) {
-        res.json({ reply: "Хей, нека спазваме добрия тон! 🧘‍♂️🎓" });
-        return;
+      res.json({ reply: "Хей, нека спазваме добрия тон! 🧘‍♂️🎓" });
+      return;
     }
-    
+
     if ((!promptText || promptText.trim() === "") && attachments && attachments.length > 0) {
       promptText = "Разгледай тази снимка и анализирай кода/съдържанието.";
     }
@@ -123,11 +115,11 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
     }));
 
     const currentMessageParts = [{ text: promptText }];
-    
+
     if (attachments && attachments.length > 0) {
       attachments.forEach(file => {
-        currentMessageParts.push({ 
-            inlineData: { mimeType: file.mimeType, data: file.base64 } 
+        currentMessageParts.push({
+          inlineData: { mimeType: file.mimeType, data: file.base64 }
         });
       });
     }
@@ -141,12 +133,25 @@ exports.chat = onRequest({ cors: true }, async (req, res) => {
       ],
     });
 
-    const result = await chatSession.sendMessage(currentMessageParts);
-    res.json({ reply: result.response.text() });
+    // 👇 ТУК Е ГОЛЯМАТА ПРОМЯНА: STREAMING
+    const result = await chatSession.sendMessageStream(currentMessageParts);
+
+    // Казваме на браузъра: "Приготви се, идва поток от текст!"
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      res.write(chunkText); // Пращаме парченцето веднага!
+    }
+
+    res.end(); // Край на предаването
 
   } catch (error) {
     console.error("Chat Error:", error);
-    res.status(500).json({ error: error.message });
+    // Ако стриймът вече е започнал, не можем да пратим JSON, затова пращаме текст грешка
+    res.write("\n\n[SYSTEM ERROR]: " + error.message);
+    res.end();
   }
 });
 
