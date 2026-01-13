@@ -2,7 +2,7 @@ import { state, setSelectedModel } from './state.js';
 import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
 import { editor } from './editor.js';
-import { startCheckout, checkPaymentStatus } from './payment.js';
+import { startCheckout, checkPaymentStatus, openCustomerPortal } from './payment.js';
 import { auth } from './config.js';
 import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -12,14 +12,6 @@ const sidebar = document.getElementById('sidebar');
 const mobileEditorBtn = document.getElementById('mobile-editor-toggle');
 const body = document.body;
 const closeEditorBtn = document.getElementById('close-mobile-editor');
-const LANGUAGE_EXTENSIONS = {
-    'javascript': 'js', 'js': 'js', 'python': 'py', 'py': 'py',
-    'csharp': 'cs', 'cs': 'cs', 'cpp': 'cpp', 'c++': 'cpp',
-    'html': 'html', 'xml': 'html', 'css': 'css', 'json': 'json',
-    'markdown': 'md', 'md': 'md', 'java': 'java', 'php': 'php',
-    'ruby': 'rb', 'rb': 'rb', 'go': 'go', 'golang': 'go',
-    'typescript': 'ts', 'ts': 'ts', 'txt': 'txt', 'text': 'txt'
-};
 
 export function renderSidebar() {
     chatList.innerHTML = '';
@@ -180,78 +172,7 @@ export function addMessageToUI(text, sender, feedbackStatus = null) {
             textDiv.innerText = text;
         }
 
-        const codeBlocks = textDiv.querySelectorAll('pre');
-
-        codeBlocks.forEach((preBlock) => {
-            const codeElement = preBlock.querySelector('code');
-            if (!codeElement) return;
-
-            const codeText = codeElement.innerText;
-
-            let language = 'txt';
-            codeElement.classList.forEach(cls => {
-                if (cls.startsWith('language-')) {
-                    language = cls.replace('language-', '');
-                }
-            });
-
-            const toolbar = document.createElement('div');
-            toolbar.style.display = 'flex';
-            toolbar.style.gap = '10px';
-            toolbar.style.marginTop = '5px';
-            toolbar.style.marginBottom = '15px';
-            toolbar.style.justifyContent = 'flex-end';
-
-            if (language === 'javascript' || language === 'js') {
-                const runBtn = document.createElement('button');
-                runBtn.className = 'code-btn';
-                runBtn.classList.add('transfer-to-editor-btn');
-                runBtn.innerHTML = `Прехвърли в редактора`;
-                runBtn.title = "Сложи този код в редактора";
-                runBtn.onclick = () => {
-                    editor.setValue(codeText);
-                    runBtn.innerHTML = "✅ Готово!";
-                    setTimeout(() => runBtn.innerHTML = "Прехвърли в редактора", 2500);
-                };
-                toolbar.appendChild(runBtn);
-            }
-
-            const downloadBtn = document.createElement('button');
-            downloadBtn.className = 'code-btn';
-            downloadBtn.classList.add('download-btn-style');
-            downloadBtn.style.color = 'white';
-
-            let ext = language ? language.toLowerCase() : 'txt';
-
-            if (LANGUAGE_EXTENSIONS[ext]) {
-                ext = LANGUAGE_EXTENSIONS[ext];
-            } else if ((ext.length > 5)) {
-                ext = 'txt';
-            }
-
-            downloadBtn.innerHTML = `Изтегли .${ext}`;
-
-            downloadBtn.onclick = () => {
-                const blob = new Blob([codeText], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `solution_${Date.now()}.${ext}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                downloadBtn.innerHTML = "✅ Изтеглен!";
-                setTimeout(() => downloadBtn.innerHTML = `Изтегли .${ext}`, 2500);
-            };
-
-            toolbar.appendChild(downloadBtn);
-
-            preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
-
-        });
+        injectCodeButtons(textDiv);
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
@@ -309,7 +230,7 @@ export function addMessageToUI(text, sender, feedbackStatus = null) {
     }
 
     chatHistory.appendChild(rowDiv);
-    rowDiv.scrollIntoView({ behavior: "smooth", block: "end" });
+    scrollToBottom(true);
 }
 
 function createActionButton(svg, title, handler) {
@@ -606,22 +527,27 @@ function populateProfileData() {
             planLabel.style.color = "gold";
         }
 
-        if (buyBtnModal) buyBtnModal.style.display = 'none';
+        if (buyBtnModal) {
+            buyBtnModal.style.display = 'block';
+            buyBtnModal.innerText = "⚙️ Управление на абонамента";
+
+            buyBtnModal.style.background = "#333";
+            buyBtnModal.style.color = "#fff";
+            buyBtnModal.style.boxShadow = "none";
+            buyBtnModal.style.border = "1px solid #555";
+
+            // Закачаме новата функция
+            buyBtnModal.onclick = () => {
+                openCustomerPortal();
+            };
+        }
+
         if (sidebarProCard) {
-            sidebarProCard.innerHTML = `
-                <div class="pro-bg-shine"></div>
-                <div class="pro-content">
-                    <div class="pro-header">
-                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
-                    </div>
-                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
-                </div>
-            `;
+            sidebarProCard.style.display = 'none';
         }
 
         if (modelSelector) {
             modelSelector.style.display = 'block';
-
             modelSelector.onchange = (e) => {
                 setSelectedModel(e.target.value);
             };
@@ -640,8 +566,16 @@ function populateProfileData() {
             setSelectedModel('flash');
         }
 
-        if (buyBtnModal) buyBtnModal.style.display = 'block';
-        if (sidebarProCard) sidebarProCard.style.display = 'flex';
+        if (buyBtnModal) {
+            buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
+            buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
+            buyBtnModal.style.color = "#000";
+            buyBtnModal.onclick = () => {
+                startCheckout();
+            };
+        }
+
+        if (sidebarProCard) sidebarProCard.style.display = 'block';
     }
 
     const chatCount = state.allChats.length;
@@ -668,79 +602,73 @@ export function updateHeaderUI() {
     const sidebarProCard = document.querySelector('.pro-card');
 
     if (state.hasPremiumAccess) {
-        if (sidebarProCard) sidebarProCard.style.display = 'none';
+        if (badge) badge.style.display = 'inline-block';
 
-        if (container) {
-            container.style.display = 'block';
-
-            if (state.selectedModel !== 'pro') {
-                setSelectedModel('pro');
-            }
-
-            const wrapper = container.querySelector('.custom-select');
-            const trigger = container.querySelector('.custom-select__trigger');
-            const options = container.querySelectorAll('.custom-option');
-            const currentText = document.getElementById('current-model-text');
-
-            if (currentText) currentText.innerText = "Pro";
-
-            options.forEach(o => {
-                o.classList.remove('selected');
-                if (o.getAttribute('data-value') === 'pro') {
-                    o.classList.add('selected');
-                }
-            });
-
-            if (container.dataset.initialized === 'true') return;
-
-            trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                wrapper.classList.toggle('open');
-            });
-
-            options.forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const value = option.getAttribute('data-value');
-                    setSelectedModel(value);
-
-                    if (currentText) {
-                        currentText.innerText = (value === 'pro') ? "Pro" : "Flash";
-                    }
-
-                    options.forEach(o => o.classList.remove('selected'));
-                    option.classList.add('selected');
-                    wrapper.classList.remove('open');
-                });
-            });
-
-            window.addEventListener('click', (e) => {
-                if (!wrapper.contains(e.target)) {
-                    wrapper.classList.remove('open');
-                }
-            });
-
-            container.dataset.initialized = 'true';
+        if (planLabel) {
+            planLabel.innerText = "PRO";
+            planLabel.style.color = "gold";
         }
 
-    } else {
-        if (sidebarProCard) sidebarProCard.style.display = 'flex';
+        if (buyBtnModal) {
+            buyBtnModal.style.display = 'block';
+            buyBtnModal.innerText = "⚙️ Управление на абонамента";
 
-        if (container) {
-            container.style.display = 'none';
+            buyBtnModal.style.background = "#333";
+            buyBtnModal.style.color = "#fff";
+            buyBtnModal.style.boxShadow = "none";
+            buyBtnModal.style.border = "1px solid #555";
+
+            // Закачаме новата функция
+            buyBtnModal.onclick = () => {
+                openCustomerPortal();
+            };
+        }
+
+        if (sidebarProCard) {
+            sidebarProCard.style.display = 'none';
+        }
+
+        if (modelSelector) {
+            modelSelector.style.display = 'block';
+            modelSelector.onchange = (e) => {
+                setSelectedModel(e.target.value);
+            };
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+
+        if (planLabel) {
+            planLabel.innerText = "Free";
+            planLabel.style.color = "";
+        }
+
+        if (modelSelector) {
+            modelSelector.style.display = 'none';
+            modelSelector.value = 'flash';
             setSelectedModel('flash');
         }
+
+        if (buyBtnModal) {
+            buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
+            buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
+            buyBtnModal.style.color = "#000";
+            buyBtnModal.onclick = () => {
+                startCheckout();
+            };
+        }
+
+        if (sidebarProCard) sidebarProCard.style.display = 'block';
     }
 }
 
 export function updateLastBotMessage(fullText) {
     const chatHistory = document.getElementById('chat-history');
     const lastBotRow = chatHistory.querySelector('.bot-row:last-child');
-    
+
     if (!lastBotRow) return;
 
     const textDiv = lastBotRow.querySelector('.bot-text');
-    
+
     // Рендираме Markdown наново с целия текст до момента
     if (typeof marked !== 'undefined') {
         textDiv.innerHTML = marked.parse(fullText);
@@ -751,9 +679,110 @@ export function updateLastBotMessage(fullText) {
     } else {
         textDiv.innerText = fullText;
     }
-    
-    // Скролваме най-долу, за да следим писането
-    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+    injectCodeButtons(textDiv);
+
+    scrollToBottom(false);
+}
+
+export function scrollToBottom(smooth = false) {
+    const chatHistory = document.getElementById('chat-history');
+    if (!chatHistory) return;
+
+    chatHistory.scrollTo({
+        top: chatHistory.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+    });
+}
+
+function injectCodeButtons(container) {
+    const codeBlocks = container.querySelectorAll('pre');
+
+    codeBlocks.forEach((preBlock) => {
+        // Ако вече имаме тулбар, не слагаме втори (макар че innerHTML обикновено ги трие)
+        if (preBlock.nextElementSibling && preBlock.nextElementSibling.classList.contains('message-actions')) return;
+        // Забележка: Тук проверяваме за toolbar, който ние създаваме по-долу
+
+        const codeElement = preBlock.querySelector('code');
+        if (!codeElement) return;
+
+        const codeText = codeElement.innerText;
+
+        // Определяме езика
+        let language = 'txt';
+        codeElement.classList.forEach(cls => {
+            if (cls.startsWith('language-')) {
+                language = cls.replace('language-', '');
+            }
+        });
+
+        // Създаваме контейнер за бутоните (Toolbar)
+        // Проверка дали вече не сме го сложили (за всеки случай)
+        if (preBlock.parentNode.querySelector('.code-toolbar-custom')) return;
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'code-toolbar-custom'; // Уникален клас
+        toolbar.style.display = 'flex';
+        toolbar.style.gap = '10px';
+        toolbar.style.marginTop = '5px';
+        toolbar.style.marginBottom = '15px';
+        toolbar.style.justifyContent = 'flex-end';
+
+        // 1. Бутон "Прехвърли в редактора" (Само за JS)
+        if (language === 'javascript' || language === 'js') {
+            const runBtn = document.createElement('button');
+            runBtn.className = 'code-btn transfer-to-editor-btn';
+            runBtn.innerHTML = `Прехвърли в редактора`;
+            runBtn.title = "Сложи този код в редактора";
+
+            // Трябва ни достъп до editor променливата (тя е импортната горе в ui.js)
+            runBtn.onclick = async () => {
+                // Динамичен импорт или ползваме глобалния editor, ако е импортнат
+                const { editor } = await import('./editor.js');
+                editor.setValue(codeText);
+                runBtn.innerHTML = "✅ Готово!";
+                setTimeout(() => runBtn.innerHTML = "Прехвърли в редактора", 2500);
+            };
+            toolbar.appendChild(runBtn);
+        }
+
+        // 2. Бутон "Изтегли" (За всички)
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'code-btn download-btn-style';
+        downloadBtn.style.color = 'white';
+
+        const exts = {
+            'javascript': 'js', 'js': 'js', 'python': 'py', 'py': 'py',
+            'csharp': 'cs', 'cs': 'cs', 'cpp': 'cpp', 'c++': 'cpp',
+            'html': 'html', 'xml': 'html', 'css': 'css', 'json': 'json',
+            'markdown': 'md', 'md': 'md', 'java': 'java', 'php': 'php',
+            'ruby': 'rb', 'rb': 'rb', 'go': 'go', 'golang': 'go',
+            'typescript': 'ts', 'ts': 'ts', 'txt': 'txt', 'text': 'txt'
+        };
+        let ext = exts[language] || 'txt';
+
+        downloadBtn.innerHTML = `Изтегли .${ext}`;
+
+        downloadBtn.onclick = () => {
+            const blob = new Blob([codeText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `solution_${Date.now()}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            downloadBtn.innerHTML = "✅ Изтеглен!";
+            setTimeout(() => downloadBtn.innerHTML = `Изтегли .${ext}`, 2500);
+        };
+
+        toolbar.appendChild(downloadBtn);
+
+        preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
+    });
 }
 
 setTimeout(() => {

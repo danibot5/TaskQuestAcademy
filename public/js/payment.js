@@ -81,3 +81,44 @@ export async function checkPaymentStatus() {
         }
     }
 }
+    
+export async function openCustomerPortal() {
+    if (!state.currentUser) return;
+
+    const manageBtn = document.getElementById('buy-pro-modal');
+    const originalText = manageBtn ? manageBtn.innerText : "";
+    
+    // UI Feedback, че нещо се случва
+    if (manageBtn) {
+        manageBtn.innerText = "Зареждане...";
+        manageBtn.disabled = true;
+    }
+
+    try {
+        const response = await fetch('https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/createPortalSession', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: state.currentUser.uid
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+            window.location.href = data.url; // Отиваме към Stripe Portal
+        } else {
+            alert("Грешка: " + (data.error || "Неуспешно отваряне на портала."));
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Грешка при връзката със сървъра.");
+    } finally {
+        // Връщаме бутона в начално състояние (ако не сме пренасочили)
+        if (manageBtn) {
+            manageBtn.innerText = originalText;
+            manageBtn.disabled = false;
+        }
+    }
+}

@@ -1,6 +1,19 @@
 import { db } from './config.js';
 import { state, setAllChats, setCurrentChatId, setPremiumStatus } from './state.js';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    updateDoc, 
+    deleteDoc, 
+    query, 
+    where, 
+    orderBy, 
+    limit, 
+    getDoc, 
+    setDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- 1. LOCAL STORAGE ---
 export async function loadChatsFromLocalStorage() {
@@ -30,7 +43,9 @@ export async function loadChatsFromFirestore() {
     try {
         const q = query(
             collection(db, "chats"),
-            where("userId", "==", state.currentUser.uid)
+            where("userId", "==", state.currentUser.uid),
+            orderBy("createdAt", "desc"),
+            limit(20)
         );
 
         const querySnapshot = await getDocs(q);

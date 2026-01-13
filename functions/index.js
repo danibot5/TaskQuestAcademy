@@ -101,7 +101,8 @@ exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) =
 
     // Проверка за лоши думи (Връщаме JSON грешка, ако има)
     if (containsBadWords(promptText)) {
-      res.json({ reply: "Хей, нека спазваме добрия тон! 🧘‍♂️🎓" });
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.send("Хей, нека спазваме добрия тон! 🧘‍♂️🎓");
       return;
     }
 
@@ -245,10 +246,12 @@ exports.verifyPayment = onRequest({ cors: true }, async (req, res) => {
     if (session.payment_status === 'paid') {
       const userId = session.metadata.userId;
 
+      // 🔥 ВАЖНО: Запазваме stripeCustomerId, за да можем после да управляваме абонамента!
       await admin.firestore().collection('users').doc(userId).set({
         hasPremiumAccess: true,
         proSince: admin.firestore.FieldValue.serverTimestamp(),
-        email: session.customer_email
+        email: session.customer_email,
+        stripeCustomerId: session.customer // <--- ТОВА Е НОВОТО
       }, { merge: true });
 
       res.json({ success: true, userId: userId });
@@ -257,6 +260,42 @@ exports.verifyPayment = onRequest({ cors: true }, async (req, res) => {
     }
   } catch (error) {
     console.error("Payment Verify Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+exports.createPortalSession = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    // Взимаме потребителя от базата, за да намерим неговия Stripe ID
+    const userDoc = await admin.firestore().collection('users').doc(userId).get();
+    const userData = userDoc.data();
+
+    if (!userData || !userData.stripeCustomerId) {
+      // Fallback: Ако сме забравили да запишем ID-то, търсим по имейл (за всеки случай)
+      if (userData && userData.email) {
+        const customers = await stripe.customers.list({ email: userData.email, limit: 1 });
+        if (customers.data.length > 0) {
+          const session = await stripe.billingPortal.sessions.create({
+            customer: customers.data[0].id,
+            return_url: 'https://scriptsensei-4e8fe.web.app/'
+          });
+          res.json({ url: session.url });
+          return;
+        }
+      }
+      return res.status(404).json({ error: "Няма активен абонамент в Stripe." });
+    }
+
+    // Създаваме сесия за портала
+    const session = await stripe.billingPortal.sessions.create({
+      customer: userData.stripeCustomerId,
+      return_url: 'https://scriptsensei-4e8fe.web.app/', // Къде да се върне след като приключи
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

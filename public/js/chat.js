@@ -1,5 +1,5 @@
 import { state, setCurrentChatId } from './state.js';
-import { addMessageToUI, renderSidebar, showLoading, removeLoading, renderAttachments, updateLastBotMessage } from './ui.js';
+import { addMessageToUI, renderSidebar, scrollToBottom, showLoading, removeLoading, renderAttachments, updateLastBotMessage } from './ui.js';
 import { showToast } from './utils.js';
 import { saveToFirestore, saveToLocalStorage, saveMessage, updateChatData } from './db.js';
 import { API_URL, TITLE_API_URL } from './config.js';
@@ -71,7 +71,7 @@ export async function startNewChat() {
 export async function loadChat(id) {
     const consoleOutput = document.getElementById('console-output');
 
-    // 1. 💾 ЗАПАЗВАНЕ НА СТАРИЯ ЧАТ (Преди да сменим)
+    // 1. 💾 ЗАПАЗВАНЕ НАф СТАРИЯ ЧАТ (Преди да сменим)
     const oldChatId = state.currentChatId;
     if (oldChatId && oldChatId !== id) {
         const oldChat = state.allChats.find(c => c.id === oldChatId);
@@ -125,9 +125,11 @@ export async function loadChat(id) {
     renderSidebar();
     if (window.innerWidth < 800 && sidebar) sidebar.classList.remove('open');
 
+    scrollToBottom(false);
+
     setTimeout(() => {
-        if (chatHistory) chatHistory.scrollTop = chatHistory.scrollHeight;
-    }, 50);
+        scrollToBottom(false);
+    }, 75);
 }
 
 export async function sendMessage(retryCount = 0) {
@@ -162,12 +164,21 @@ export async function sendMessage(retryCount = 0) {
             addMessageToUI(text, 'user');
             await saveMessage(text, 'user');
         }
+
         if (state.currentAttachments.length > 0) {
             const fileNames = state.currentAttachments.map(f => f.name).join(', ');
             addMessageToUI(`📎 <i>Изпратени файлове: ${fileNames}</i>`, 'user');
         }
+
         userInput.value = '';
         userInput.style.height = 'auto';
+
+        userInput.blur();
+
+        setTimeout(() => {
+            scrollToBottom(true);
+        }, 75);
+
         if (isNewChat && text.trim() !== "") setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
     }
 
@@ -238,7 +249,7 @@ export async function sendMessage(retryCount = 0) {
                 clearInterval(typingInterval);
                 saveMessage(displayedText, 'bot'); // Чак сега запазваме в базата
             }
-        }, 30); // 30 милисекунди интервал (много гладко)
+        }, 15);
 
         // 2. Теглене от сървъра (пълни опашката)
         while (true) {
