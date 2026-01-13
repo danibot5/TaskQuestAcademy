@@ -14,20 +14,20 @@ export async function startCheckout() {
     }
 
     const buyBtn = document.getElementById('buy-pro-btn');
-    if(buyBtn) buyBtn.innerText = "Зареждане...";
+    if (buyBtn) buyBtn.innerText = "Зареждане...";
 
     try {
         const response = await fetch('https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/createCheckoutSession', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 userId: state.currentUser.uid,
-                userEmail: state.currentUser.email 
+                userEmail: state.currentUser.email
             })
         });
 
         const data = await response.json();
-        
+
         if (data.url) {
             window.location.href = data.url; // Пращаме го към Stripe
         } else {
@@ -37,23 +37,23 @@ export async function startCheckout() {
     } catch (error) {
         console.error(error);
         alert("Нещо се обърка. Виж конзолата.");
-        if(buyBtn) buyBtn.innerText = "Купи PRO 💎";
+        if (buyBtn) buyBtn.innerText = "Купи PRO 💎";
     }
 }
 
 // Тази функция се вика автоматично, когато потребителят се върне от Stripe
+// 👇 Тази функция проверява дали потребителят се връща от Stripe
 export async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     const isSuccess = urlParams.get('payment_success');
 
     if (isSuccess && sessionId && state.currentUser) {
-        // Чистим URL-а да не стои грозно
-        window.history.replaceState({}, document.title, "/");
-
-        showToast("Проверяване на плащането...", "💳");
+        // Показваме, че нещо се случва, за да не се шашне потребителят
+        showToast("Обработване на поръчката...", "⏳");
 
         try {
+            // 1. Питаме сървъра: "Вярно ли плати тоя човек?"
             const response = await fetch('https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/verifyPayment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -63,19 +63,21 @@ export async function checkPaymentStatus() {
             const data = await response.json();
 
             if (data.success) {
-                // ✅ УСПЕХ! Активираме PRO в базата
-                const userRef = doc(db, "users", state.currentUser.uid); // Ако имаш users колекция
-                // Засега, понеже нямаме строга user колекция, може просто да покажем съобщение
-                // или да запишем в localStorage, но най-добре е в базата.
-                
-                // Ще активираме флаг в state
-                alert("🎉 ЧЕСТИТО! ТИ СИ ВЕЧЕ PRO! 💎");
-                localStorage.setItem('is_pro_user', 'true'); // Временно решение
-                
-                // TODO: Тук трябва да запишем в Firestore User документ
+                // 2. ✅ УСПЕХ! Сървърът потвърди и записа в базата.
+
+                // Изчистваме грозния URL (?session_id=...)
+                window.history.replaceState({}, document.title, "/");
+
+                alert("🎉 ЧЕСТИТО! Плащането е успешно! Сега си ScriptSensei PRO! 💎");
+
+                // 👇 ТОВА ЛИПСВАШЕ: Презареждаме, за да активираме PRO функциите веднага!
+                window.location.href = "/";
+            } else {
+                showToast("Плащането не беше потвърдено.", "❌");
             }
         } catch (error) {
             console.error("Verification failed", error);
+            showToast("Грешка при проверка на плащането.", "⚠️");
         }
     }
 }
