@@ -3,6 +3,8 @@ import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
 import { editor } from './editor.js';
 import { startCheckout, checkPaymentStatus } from './payment.js';
+import { auth } from './config.js';
+import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const chatHistory = document.getElementById('chat-history');
 const chatList = document.querySelector('.chat-list');
@@ -544,7 +546,6 @@ export function initProfileModal() {
 
     if (!userInfoBtn || !modal) return;
 
-    // Отваряне на модала
     userInfoBtn.addEventListener('click', (e) => {
         if (e.target.closest('.logout-link')) return;
 
@@ -594,33 +595,39 @@ function populateProfileData() {
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
     const modelSelector = document.getElementById('model-selector');
 
-    // 👇 ТОВА ЛИПСВАШЕ! Без него кодът гърми и модалът не се отваря.
     const buyBtnModal = document.getElementById('buy-pro-modal');
     const sidebarProCard = document.querySelector('.pro-card');
 
     if (state.hasPremiumAccess) {
-        // --- АКО Е PRO ---
         if (badge) badge.style.display = 'inline-block';
 
         if (planLabel) {
-            planLabel.innerText = "PRO 💎";
+            planLabel.innerText = "PRO";
             planLabel.style.color = "gold";
         }
 
-        // Скриваме бутоните за покупка
         if (buyBtnModal) buyBtnModal.style.display = 'none';
-        if (sidebarProCard) sidebarProCard.style.display = 'none';
+        if (sidebarProCard) {
+            sidebarProCard.innerHTML = `
+                <div class="pro-bg-shine"></div>
+                <div class="pro-content">
+                    <div class="pro-header">
+                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
+                    </div>
+                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
+                    <button id="buy-pro-sidebar" class="pro-btn" style="display:none;">Вземи PRO</button>
+                </div>
+            `;
+        }
 
         if (modelSelector) {
             modelSelector.style.display = 'block';
-            // ВАЖНО: Тук само закачаме listener-а, но не сменяме модела автоматично,
-            // за да не презаписваме избора на потребителя всеки път, когато отвори профила.
+
             modelSelector.onchange = (e) => {
                 setSelectedModel(e.target.value);
             };
         }
     } else {
-        // --- АКО Е FREE ---
         if (badge) badge.style.display = 'none';
 
         if (planLabel) {
@@ -634,7 +641,6 @@ function populateProfileData() {
             setSelectedModel('flash');
         }
 
-        // Показваме бутоните за покупка
         if (buyBtnModal) buyBtnModal.style.display = 'block';
         if (sidebarProCard) sidebarProCard.style.display = 'flex';
     }
@@ -660,83 +666,71 @@ function populateProfileData() {
 
 export function updateHeaderUI() {
     const container = document.getElementById('model-selector-container');
-    if (!container) return;
+    const sidebarProCard = document.querySelector('.pro-card');
 
     if (state.hasPremiumAccess) {
-        // 1. Показваме менюто
-        container.style.display = 'block';
+        if (sidebarProCard) sidebarProCard.style.display = 'none';
 
-        const wrapper = container.querySelector('.custom-select');
-        const trigger = container.querySelector('.custom-select__trigger');
-        const options = container.querySelectorAll('.custom-option');
-        const currentText = document.getElementById('current-model-text');
+        if (container) {
+            container.style.display = 'block';
 
-        // 👇 ФИКС: Принудително задаваме PRO модел и текст веднага!
-        // Така няма шанс да остане празно или на Flash.
-        if (state.selectedModel !== 'pro') {
-            setSelectedModel('pro');
-        }
-
-        // 🔨 ТВЪРДО ЗАДАВАНЕ НА ТЕКСТА (Hard Set)
-        if (currentText) {
-            currentText.innerText = "Pro";
-        }
-
-        // Маркираме правилната опция в списъка (визуално)
-        options.forEach(o => {
-            o.classList.remove('selected');
-            if (o.getAttribute('data-value') === 'pro') {
-                o.classList.add('selected');
+            if (state.selectedModel !== 'pro') {
+                setSelectedModel('pro');
             }
-        });
 
-        // 👇 ЗАЩИТА: Ако вече сме закачили кликовете, спираме дотук
-        if (container.dataset.initialized === 'true') return;
+            const wrapper = container.querySelector('.custom-select');
+            const trigger = container.querySelector('.custom-select__trigger');
+            const options = container.querySelectorAll('.custom-option');
+            const currentText = document.getElementById('current-model-text');
 
-        // --- ЛОГИКА ЗА КЛИКОВЕТЕ ---
+            if (currentText) currentText.innerText = "Pro";
 
-        // 1. Отваряне / Затваряне
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            wrapper.classList.toggle('open');
-        });
-
-        // 2. Избор на опция
-        options.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                const value = option.getAttribute('data-value');
-
-                setSelectedModel(value);
-
-                if (currentText) {
-                    if (value === 'pro') currentText.innerText = "Pro";
-                    else if (value === 'flash') currentText.innerText = "Flash";
+            options.forEach(o => {
+                o.classList.remove('selected');
+                if (o.getAttribute('data-value') === 'pro') {
+                    o.classList.add('selected');
                 }
-
-                // В) Местим класа .selected
-                options.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-
-                // Г) Затваряме
-                wrapper.classList.remove('open');
             });
-        });
 
-        // 3. Затваряне при клик извън
-        window.addEventListener('click', (e) => {
-            if (!wrapper.contains(e.target)) {
-                wrapper.classList.remove('open');
-            }
-        });
+            if (container.dataset.initialized === 'true') return;
 
-        container.dataset.initialized = 'true';
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrapper.classList.toggle('open');
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = option.getAttribute('data-value');
+                    setSelectedModel(value);
+
+                    if (currentText) {
+                        currentText.innerText = (value === 'pro') ? "Pro" : "Flash";
+                    }
+
+                    options.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    wrapper.classList.remove('open');
+                });
+            });
+
+            window.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+
+            container.dataset.initialized = 'true';
+        }
 
     } else {
-        // Ако не е PRO -> Крием и връщаме Flash
-        container.style.display = 'none';
-        setSelectedModel('flash');
+        if (sidebarProCard) sidebarProCard.style.display = 'flex';
+
+        if (container) {
+            container.style.display = 'none';
+            setSelectedModel('flash');
+        }
     }
 }
 
