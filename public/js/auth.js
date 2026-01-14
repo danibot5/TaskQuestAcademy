@@ -1,7 +1,6 @@
-import { loadUserProfile } from './db.js';
+import { loadUserProfile, loadChatsFromFirestore, loadChatsFromLocalStorage } from './db.js';
 import { auth, googleProvider } from './config.js';
 import { setCurrentUser } from './state.js';
-import { loadChatsFromFirestore, loadChatsFromLocalStorage } from './db.js';
 import {
     signInWithPopup,
     signOut,
@@ -29,6 +28,7 @@ export function initAuth() {
             loadUserProfile(user.uid).then(async () => {
                 const ui = await import('./ui.js');
                 ui.updateHeaderUI();
+                ui.populateProfileData();
             });
 
             guestButtons.style.display = 'none';

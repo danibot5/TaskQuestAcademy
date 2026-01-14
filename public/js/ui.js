@@ -504,7 +504,7 @@ export function initProfileModal() {
     }
 }
 
-function populateProfileData() {
+export function populateProfileData() {
     const user = state.currentUser;
     if (!user) return;
 
