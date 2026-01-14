@@ -456,18 +456,23 @@ if (closeEditorBtn) {
     });
 }
 
+// В js/ui.js
+
 export function initProfileModal() {
     const userInfoBtn = document.getElementById('user-info');
     const modal = document.getElementById('profile-modal');
     const closeBtn = document.getElementById('close-profile');
+
+    // 👇 Взимаме САМО бутона от модала. Сайдбар бутонът се управлява от auth.js!
     const logoutBtnModal = document.getElementById('logout-btn-modal');
-    const logoutBtnSidebar = document.getElementById('logout-btn');
+
     const buyBtnModal = document.getElementById('buy-pro-modal');
     const buyBtnSidebar = document.getElementById('buy-pro-sidebar');
 
     if (!userInfoBtn || !modal) return;
 
     userInfoBtn.addEventListener('click', (e) => {
+        // Ако е кликнал на малкия бутон "Изход" в сайдбара, не отваряме модала
         if (e.target.closest('.logout-link')) return;
 
         if (!state.currentUser) {
@@ -481,7 +486,9 @@ export function initProfileModal() {
 
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
 
-    if (logoutBtnModal && logoutBtnSidebar) {
+    // 🔥 FIX: Махнахме проверката за '&& logoutBtnSidebar'
+    // Сега бутонът в модала работи винаги, независимо от сайдбара!
+    if (logoutBtnModal) {
         logoutBtnModal.onclick = async () => {
             if (confirm("Сигурен ли си, че искаш да излезеш?")) {
                 modal.style.display = 'none';
@@ -493,7 +500,11 @@ export function initProfileModal() {
 
     if (buyBtnModal) {
         buyBtnModal.onclick = () => {
-            startCheckout();
+            if (state.hasPremiumAccess) {
+                openCustomerPortal();
+            } else {
+                startCheckout();
+            }
         };
     }
 
@@ -597,32 +608,32 @@ export function populateProfileData() {
     document.getElementById('profile-level').innerText = `Ранк: ${level}`;
 }
 
+// В js/ui.js
+
 export function updateHeaderUI() {
-    const modelSelector = document.getElementById('model-selector-container');
+    // 👇 ЕТО Я ЛИПСВАЩАТА ЧАСТ! Дефинираме променливата тук:
+    const modelSelectorContainer = document.getElementById('model-selector-container');
+
     const sidebarProCard = document.querySelector('.pro-card');
     const buyBtnModal = document.getElementById('buy-pro-modal');
     const badge = document.getElementById('pro-badge');
-    
-    // Тези са само в модала, но може да гръмнат, ако ги викаме без проверка,
-    // затова ги взимаме безопасно:
+
+    // Взимаме безопасно елемента от модала
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
 
     if (state.hasPremiumAccess) {
         // --- PRO MODE ---
-        
-        // Показваме баджа (ако е видим някъде в хедъра)
+
         if (badge) badge.style.display = 'inline-block';
 
-        // Ако модалът е отворен или кеширан, оправяме и него
         if (planLabel) {
             planLabel.innerText = "PRO";
             planLabel.style.color = "gold";
         }
 
-        // Бутонът става "Settings"
         if (buyBtnModal) {
             buyBtnModal.style.display = 'block';
-            buyBtnModal.innerText = "Управление на абонамента";
+            buyBtnModal.innerText = "⚙️ Управление на абонамента";
             buyBtnModal.style.background = "#333";
             buyBtnModal.style.color = "#fff";
             buyBtnModal.style.boxShadow = "none";
@@ -632,30 +643,28 @@ export function updateHeaderUI() {
             };
         }
 
-        // 🔥 КАРТАТА: Използваме setProperty за !important
         if (sidebarProCard) {
             sidebarProCard.style.setProperty('display', 'none', 'important');
         }
 
-        // 🔥 МОДЕЛ СЕЛЕКТОРА: Показваме го!
+        // Показваме селектора за модели
         if (modelSelectorContainer) {
-            modelSelector.style.display = 'block';
-            
-            // 👇 ТОВА Е КЛЮЧЪТ! ИЗВИКВАМЕ ФУНКЦИЯТА ТУК:
-            initCustomDropdown(); 
-            
-            // Възстановяваме предишния избор (по желание)
+            modelSelectorContainer.style.display = 'block';
+
+            // "Завъртаме ключа" на менюто
+            initCustomDropdown();
+
+            // Възстановяваме избора
             const savedModel = localStorage.getItem('scriptsensei_model');
             if (savedModel) {
-                 // Намираме опцията и я маркираме визуално, без да кликаме пак
-                 const currentText = document.getElementById('current-model-text');
-                 const option = modelSelector.querySelector(`.custom-option[data-value="${savedModel}"]`);
-                 if (option && currentText) {
-                     currentText.innerText = option.innerText.split('(')[0].trim();
-                     const options = modelSelector.querySelectorAll('.custom-option');
-                     options.forEach(opt => opt.classList.remove('selected'));
-                     option.classList.add('selected');
-                 }
+                const currentText = document.getElementById('current-model-text');
+                const option = modelSelectorContainer.querySelector(`.custom-option[data-value="${savedModel}"]`);
+                if (option && currentText) {
+                    currentText.innerText = option.innerText.split('(')[0].trim();
+                    const options = modelSelectorContainer.querySelectorAll('.custom-option');
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                }
             }
         }
 
@@ -669,14 +678,12 @@ export function updateHeaderUI() {
             planLabel.style.color = "";
         }
 
-        // Скриваме селектора
-        if (modelSelector) {
-            modelSelector.style.display = 'none';
-            modelSelector.value = 'flash';
+        // Скриваме селектора (Използваме правилната променлива!)
+        if (modelSelectorContainer) {
+            modelSelectorContainer.style.display = 'none';
             setSelectedModel('flash');
         }
 
-        // Връщаме бутона "Купи"
         if (buyBtnModal) {
             buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
             buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
@@ -751,7 +758,7 @@ function initCustomDropdown() {
     options.forEach(option => {
         option.onclick = (e) => {
             e.stopPropagation();
-            
+
             // Визуална смяна
             options.forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
