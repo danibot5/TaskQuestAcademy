@@ -547,14 +547,19 @@ export function populateProfileData() {
             buyBtnModal.style.boxShadow = "none";
             buyBtnModal.style.border = "1px solid #555";
 
-            // Закачаме новата функция
             buyBtnModal.onclick = () => {
                 openCustomerPortal();
             };
         }
 
         if (sidebarProCard) {
-            sidebarProCard.style.display = 'none';
+            sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
+                <div class="pro-content">
+                    <div class="pro-header">
+                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
+                    </div>
+                    <p class="pro-desc">ScriptSensei Pro е активиран</p>
+                </div>`;
         }
 
         if (modelSelector) {
@@ -586,7 +591,15 @@ export function populateProfileData() {
             };
         }
 
-        if (sidebarProCard) sidebarProCard.style.display = 'block';
+        if (sidebarProCard) { sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
+                <div class="pro-content">
+                    <div class="pro-header">
+                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
+                    </div>
+                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
+                    <button id="buy-pro-sidebar" class="pro-btn">Вземи PRO</button>
+                </div>`;
+        }
     }
 
     const chatCount = state.allChats.length;
@@ -608,10 +621,7 @@ export function populateProfileData() {
     document.getElementById('profile-level').innerText = `Ранк: ${level}`;
 }
 
-// В js/ui.js
-
 export function updateHeaderUI() {
-    // 👇 ЕТО Я ЛИПСВАЩАТА ЧАСТ! Дефинираме променливата тук:
     const modelSelectorContainer = document.getElementById('model-selector-container');
 
     const sidebarProCard = document.querySelector('.pro-card');
@@ -644,7 +654,13 @@ export function updateHeaderUI() {
         }
 
         if (sidebarProCard) {
-            sidebarProCard.style.setProperty('display', 'none', 'important');
+            sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
+                <div class="pro-content">
+                    <div class="pro-header">
+                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
+                    </div>
+                    <p class="pro-desc">ScriptSensei Pro е активиран</p>
+                </div>`;
         }
 
         // Показваме селектора за модели
@@ -693,8 +709,14 @@ export function updateHeaderUI() {
             };
         }
 
-        if (sidebarProCard) {
-            sidebarProCard.style.display = 'block';
+        if (sidebarProCard) { sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
+                <div class="pro-content">
+                    <div class="pro-header">
+                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
+                    </div>
+                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
+                    <button id="buy-pro-sidebar" class="pro-btn">Вземи PRO</button>
+                </div>`;
         }
     }
 }
