@@ -622,7 +622,7 @@ export function updateHeaderUI() {
         // Бутонът става "Settings"
         if (buyBtnModal) {
             buyBtnModal.style.display = 'block';
-            buyBtnModal.innerText = "⚙️ Управление на абонамента";
+            buyBtnModal.innerText = "Управление на абонамента";
             buyBtnModal.style.background = "#333";
             buyBtnModal.style.color = "#fff";
             buyBtnModal.style.boxShadow = "none";
