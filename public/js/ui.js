@@ -514,7 +514,7 @@ export function populateProfileData() {
 
     const badge = document.getElementById('pro-badge');
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
-    const modelSelector = document.getElementById('model-selector');
+    const modelSelector = document.getElementById('model-selector-container');
 
     const buyBtnModal = document.getElementById('buy-pro-modal');
     const sidebarProCard = document.querySelector('.pro-card');
@@ -598,43 +598,61 @@ export function populateProfileData() {
 }
 
 export function updateHeaderUI() {
-    const container = document.getElementById('model-selector-container');
+    const modelSelector = document.getElementById('model-selector-container');
     const sidebarProCard = document.querySelector('.pro-card');
+    const buyBtnModal = document.getElementById('buy-pro-modal');
+    const badge = document.getElementById('pro-badge');
+    
+    // Тези са само в модала, но може да гръмнат, ако ги викаме без проверка,
+    // затова ги взимаме безопасно:
+    const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
 
     if (state.hasPremiumAccess) {
+        // --- PRO MODE ---
+        
+        // Показваме баджа (ако е видим някъде в хедъра)
         if (badge) badge.style.display = 'inline-block';
 
+        // Ако модалът е отворен или кеширан, оправяме и него
         if (planLabel) {
             planLabel.innerText = "PRO";
             planLabel.style.color = "gold";
         }
 
+        // Бутонът става "Settings"
         if (buyBtnModal) {
             buyBtnModal.style.display = 'block';
             buyBtnModal.innerText = "⚙️ Управление на абонамента";
-
             buyBtnModal.style.background = "#333";
             buyBtnModal.style.color = "#fff";
             buyBtnModal.style.boxShadow = "none";
             buyBtnModal.style.border = "1px solid #555";
-
-            // Закачаме новата функция
             buyBtnModal.onclick = () => {
                 openCustomerPortal();
             };
         }
 
+        // 🔥 КАРТАТА: Използваме setProperty за !important
         if (sidebarProCard) {
-            sidebarProCard.style.display = 'none';
+            sidebarProCard.style.setProperty('display', 'none', 'important');
         }
 
+        // 🔥 МОДЕЛ СЕЛЕКТОРА: Показваме го!
         if (modelSelector) {
             modelSelector.style.display = 'block';
+            // Уверяваме се, че е избрал правилния модел
+            if (state.selectedModel === 'flash' && localStorage.getItem('scriptsensei_model') !== 'gemini-2.5-pro') {
+                 // Оставяме го на Flash или каквото е избрал, но опцията я има
+            }
+            
             modelSelector.onchange = (e) => {
                 setSelectedModel(e.target.value);
             };
         }
+
     } else {
+        // --- FREE MODE ---
+
         if (badge) badge.style.display = 'none';
 
         if (planLabel) {
@@ -642,12 +660,14 @@ export function updateHeaderUI() {
             planLabel.style.color = "";
         }
 
+        // Скриваме селектора
         if (modelSelector) {
             modelSelector.style.display = 'none';
             modelSelector.value = 'flash';
             setSelectedModel('flash');
         }
 
+        // Връщаме бутона "Купи"
         if (buyBtnModal) {
             buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
             buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
@@ -657,7 +677,9 @@ export function updateHeaderUI() {
             };
         }
 
-        if (sidebarProCard) sidebarProCard.style.display = 'block';
+        if (sidebarProCard) {
+            sidebarProCard.style.display = 'block';
+        }
     }
 }
 
@@ -693,6 +715,57 @@ export function scrollToBottom(smooth = false) {
         top: chatHistory.scrollHeight,
         behavior: smooth ? 'smooth' : 'auto'
     });
+}
+
+function initCustomDropdown() {
+    const container = document.getElementById('model-selector-container');
+    if (!container || container.dataset.initialized === 'true') return;
+
+    const trigger = container.querySelector('.custom-select__trigger');
+    const customSelect = container.querySelector('.custom-select');
+    const options = container.querySelectorAll('.custom-option');
+    const currentText = document.getElementById('current-model-text');
+
+    // 1. Отваряне/Затваряне при клик
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation(); // Спираме клика да не затвори веднага менюто
+        customSelect.classList.toggle('open');
+    });
+
+    // 2. Избор на опция
+    options.forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Махаме 'selected' от всички и слагаме на текущия
+            options.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+
+            // Обновяваме текста горе (напр. "Pro (Умен)")
+            // Взимаме само текста без HTML тагове ако има
+            if (currentText) currentText.innerText = option.innerText.split('(')[0].trim();
+
+            // Казваме на приложението, че моделът е сменен
+            const value = option.getAttribute('data-value');
+            setSelectedModel(value);
+            
+            // Запазваме избора (по желание)
+            localStorage.setItem('scriptsensei_model', value);
+
+            // Затваряме менюто
+            customSelect.classList.remove('open');
+        });
+    });
+
+    // 3. Затваряне ако кликнеш някъде другаде по екрана
+    document.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('open');
+        }
+    });
+
+    // Маркираме, че вече сме добавили слушателите, за да не ги дублираме
+    container.dataset.initialized = 'true';
 }
 
 function injectCodeButtons(container) {

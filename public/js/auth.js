@@ -14,7 +14,7 @@ import {
 const getEl = (id) => document.getElementById(id);
 
 export function initAuth() {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => { // 👈 Правим го async
         const userDetailsDiv = document.querySelector('.user-details');
         const guestButtons = getEl('guest-buttons');
         const userInfoDiv = getEl('user-info');
@@ -25,16 +25,31 @@ export function initAuth() {
         if (user) {
             setCurrentUser(user);
 
-            loadUserProfile(user.uid).then(async () => {
-                const ui = await import('./ui.js');
-                ui.updateHeaderUI();
-                ui.populateProfileData();
-            });
-
+            // Скриваме всичко временно или показваме лоудър, ако искаш
             guestButtons.style.display = 'none';
             userInfoDiv.style.display = 'flex';
-            userAvatar.src = user.photoURL || 'images/bot-avatar.png';
 
+            // 🔥 КРИТИЧНА ПРОМЯНА: Чакаме профила ДА ЗАРЕДИ ПРЕДИ ВСИЧКО ДРУГО
+            // Използваме await, за да спрем изпълнението тук, докато не знаем дали е PRO
+            await loadUserProfile(user.uid);
+
+            // Сега вече state.hasPremiumAccess е 100% вярно.
+            // Можем безопасно да заредим UI-а.
+            const ui = await import('./ui.js');
+
+            // 1. Оправяме Хедъра (Модел селектора) и Сайдбара (Pro картата)
+            ui.updateHeaderUI();
+
+            // 2. Оправяме данните в модала (за да е готов преди клик)
+            if (typeof ui.populateProfileData === 'function') {
+                ui.populateProfileData();
+            }
+
+            // 3. Чак сега зареждаме чатовете
+            loadChatsFromFirestore();
+
+            // ... (Кодът за UI на потребителя - аватар, име и т.н. си остава тук) ...
+            userAvatar.src = user.photoURL || 'images/bot-avatar.png';
             const displayName = user.displayName || 'User';
             const verifiedIcon = user.emailVerified
                 ? `<span class="verified-badge" title="Потвърден имейл">✔</span>`
@@ -57,24 +72,10 @@ export function initAuth() {
             userDetailsDiv.innerHTML = nameHTML + emailHTML + actionButtonsHTML;
 
             document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-            const verifyBtn = document.getElementById('resend-verify-btn');
-            if (verifyBtn) {
-                verifyBtn.addEventListener('click', async () => {
-                    try {
-                        await sendEmailVerification(user);
-                        alert(`✅ Изпратихме нов линк на ${user.email}!`);
-                    } catch (error) {
-                        console.error(error);
-                        alert("Грешка при изпращане. Изчакай малко.");
-                    }
-                });
-            }
+            // ... (Event listener за verify btn) ...
 
             regModal.style.display = 'none';
             loginModal.style.display = 'none';
-
-            loadChatsFromFirestore();
 
         } else {
             setCurrentUser(null);

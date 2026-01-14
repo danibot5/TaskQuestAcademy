@@ -133,7 +133,6 @@ export async function saveMessage(text, sender) {
         saveToLocalStorage();
     }
 
-    // ✅ DYNAMIC IMPORT
     const ui = await import('./ui.js');
     ui.renderSidebar();
 }
