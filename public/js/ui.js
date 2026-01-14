@@ -638,16 +638,25 @@ export function updateHeaderUI() {
         }
 
         // 🔥 МОДЕЛ СЕЛЕКТОРА: Показваме го!
-        if (modelSelector) {
+        if (modelSelectorContainer) {
             modelSelector.style.display = 'block';
-            // Уверяваме се, че е избрал правилния модел
-            if (state.selectedModel === 'flash' && localStorage.getItem('scriptsensei_model') !== 'gemini-2.5-pro') {
-                 // Оставяме го на Flash или каквото е избрал, но опцията я има
-            }
             
-            modelSelector.onchange = (e) => {
-                setSelectedModel(e.target.value);
-            };
+            // 👇 ТОВА Е КЛЮЧЪТ! ИЗВИКВАМЕ ФУНКЦИЯТА ТУК:
+            initCustomDropdown(); 
+            
+            // Възстановяваме предишния избор (по желание)
+            const savedModel = localStorage.getItem('scriptsensei_model');
+            if (savedModel) {
+                 // Намираме опцията и я маркираме визуално, без да кликаме пак
+                 const currentText = document.getElementById('current-model-text');
+                 const option = modelSelector.querySelector(`.custom-option[data-value="${savedModel}"]`);
+                 if (option && currentText) {
+                     currentText.innerText = option.innerText.split('(')[0].trim();
+                     const options = modelSelector.querySelectorAll('.custom-option');
+                     options.forEach(opt => opt.classList.remove('selected'));
+                     option.classList.add('selected');
+                 }
+            }
         }
 
     } else {
@@ -719,53 +728,55 @@ export function scrollToBottom(smooth = false) {
 
 function initCustomDropdown() {
     const container = document.getElementById('model-selector-container');
-    if (!container || container.dataset.initialized === 'true') return;
+    if (!container) return;
+
+    // Махаме проверката за initialized, за да сме сигурни, че винаги обновяваме логиката
+    // container.dataset.initialized ... (махнато)
 
     const trigger = container.querySelector('.custom-select__trigger');
     const customSelect = container.querySelector('.custom-select');
     const options = container.querySelectorAll('.custom-option');
     const currentText = document.getElementById('current-model-text');
 
-    // 1. Отваряне/Затваряне при клик
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation(); // Спираме клика да не затвори веднага менюто
-        customSelect.classList.toggle('open');
-    });
+    if (!trigger || !customSelect) return;
 
-    // 2. Избор на опция
+    // 1. Използваме .onclick (по-сигурно от addEventListener в този случай)
+    trigger.onclick = (e) => {
+        e.stopPropagation(); // Спираме клика да не отиде към document
+        customSelect.classList.toggle('open');
+        console.log("Dropdown clicked! Open class:", customSelect.classList.contains('open'));
+    };
+
+    // 2. Логика за опциите
     options.forEach(option => {
-        option.addEventListener('click', (e) => {
+        option.onclick = (e) => {
             e.stopPropagation();
             
-            // Махаме 'selected' от всички и слагаме на текущия
+            // Визуална смяна
             options.forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
 
-            // Обновяваме текста горе (напр. "Pro (Умен)")
-            // Взимаме само текста без HTML тагове ако има
+            // Текст
             if (currentText) currentText.innerText = option.innerText.split('(')[0].trim();
 
-            // Казваме на приложението, че моделът е сменен
+            // Логика
             const value = option.getAttribute('data-value');
             setSelectedModel(value);
-            
-            // Запазваме избора (по желание)
             localStorage.setItem('scriptsensei_model', value);
 
-            // Затваряме менюто
+            // Затваряне
             customSelect.classList.remove('open');
-        });
+            console.log("Model changed to:", value);
+        };
     });
 
-    // 3. Затваряне ако кликнеш някъде другаде по екрана
-    document.addEventListener('click', (e) => {
+    // 3. Затваряне при клик навсякъде другаде
+    // Използваме window, за да сме сигурни, че хващаме всичко
+    window.addEventListener('click', (e) => {
         if (!customSelect.contains(e.target)) {
             customSelect.classList.remove('open');
         }
     });
-
-    // Маркираме, че вече сме добавили слушателите, за да не ги дублираме
-    container.dataset.initialized = 'true';
 }
 
 function injectCodeButtons(container) {
