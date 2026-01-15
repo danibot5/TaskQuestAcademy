@@ -685,8 +685,6 @@ export function updateHeaderUI() {
         }
 
     } else {
-        // --- FREE MODE ---
-
         if (badge) badge.style.display = 'none';
 
         if (planLabel) {

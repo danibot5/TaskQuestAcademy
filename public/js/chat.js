@@ -229,29 +229,23 @@ export async function sendMessage(retryCount = 0) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
 
-        // 🔥 ПРОМЯНА: TYPEWRITER EFFECT (Плавна опашка)
         let displayedText = "";
-        const queue = []; // Тук ще трупаме буквите
-        let isStreamDone = false; // Маркер кога сървърът е приключил
+        const queue = [];
+        let isStreamDone = false;
 
-        // 1. Таймерът за анимация (върви отделно от тегленето)
         const typingInterval = setInterval(() => {
             if (queue.length > 0) {
-                // Взимаме малко парче от опашката (2-3 символа за скорост)
-                // Ако опашката стане много голяма (много текст чака), забързваме малко
                 const speed = queue.length > 50 ? 2 : 1;
                 const chunk = queue.splice(0, speed).join('');
 
                 displayedText += chunk;
                 updateLastBotMessage(displayedText);
             } else if (isStreamDone) {
-                // Ако няма повече букви И сървърът е спрял -> край
                 clearInterval(typingInterval);
-                saveMessage(displayedText, 'bot'); // Чак сега запазваме в базата
+                saveMessage(displayedText, 'bot');
             }
         }, 15);
 
-        // 2. Теглене от сървъра (пълни опашката)
         while (true) {
             const { done, value } = await reader.read();
             if (done) {
@@ -259,7 +253,6 @@ export async function sendMessage(retryCount = 0) {
                 break;
             }
             const chunk = decoder.decode(value, { stream: true });
-            // Разбиваме текста на масив от символи и ги добавяме в опашката
             queue.push(...chunk.split(''));
         }
 

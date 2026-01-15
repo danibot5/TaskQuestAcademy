@@ -68,12 +68,17 @@
     justify-content: space-between;
     padding: 6px 12px;
     font-weight: 600;
-    background: #f8f8f8;
-    color: #333333;
-    border: 2px solid #ffd700;
+    background: #fefefe;
+    color: #ffd700;
+    border: 1px solid #ffd700;
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.custom-select__trigger:hover {
+    background: #f1f1f1;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
 .arrow {
@@ -157,14 +162,10 @@
     transform: rotate(135deg);
 }
 
-
-/* --- 2. DARK MODE OVERRIDES (🌙) --- */
-
 body.dark-mode .custom-select__trigger {
     background: #1a1a1a;
-    color: #FFD700;
-    /* Златен текст */
-    border: 1px solid #FFD700;
+    color: #ffd700;
+    border: 1px solid #ffd700;
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
 }
 
@@ -173,10 +174,9 @@ body.dark-mode .custom-select__trigger:hover {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-/* Златна стрелка в тъмен режим */
 body.dark-mode .arrow::before,
 body.dark-mode .arrow::after {
-    background-color: #FFD700;
+    background-color: #ffd700;
 }
 
 body.dark-mode .custom-options {
@@ -191,13 +191,13 @@ body.dark-mode .custom-option {
 }
 
 body.dark-mode .custom-option:hover {
-    background-color: #FFD700;
+    background-color: #ffd700;
     color: #000;
 }
 
 body.dark-mode .custom-option.selected {
     background-color: #3a3a3a;
-    color: #FFD700;
+    color: #ffd700;
 }
 
 .top-new-chat-btn {
@@ -306,7 +306,7 @@ body.dark-mode .custom-option.selected {
     font-weight: bold;
     color: #333;
     margin-bottom: 5px;
-    font-size: 1.05rem;
+    font-size: 1.15rem;
 }
 
 .search-wrapper {
@@ -330,7 +330,7 @@ body.dark-mode .custom-option.selected {
     border: none;
     background: transparent;
     outline: none;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     color: inherit;
 }
@@ -464,11 +464,11 @@ body.dark-mode .custom-option.selected {
     position: absolute;
     top: 0;
     left: -150%;
-    width: 100%;
+    width: 75%;
     height: 100%;
     background: linear-gradient(90deg,
             transparent,
-            rgba(255, 255, 255, 0.8),
+            rgba(255, 255, 255, 0.95),
             transparent);
     transform: skewX(-20deg);
     transition: none;
@@ -719,7 +719,7 @@ body.dark-mode .sidebar-divider {
     margin: 10px 10px 20px 10px;
     padding: 2px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #FFD700, #FDB931, #8e44ad);
+    background: linear-gradient(135deg, #ffd700, #fdb931, #8e44ad);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
     overflow: hidden;
@@ -754,13 +754,23 @@ body.dark-mode .pro-content {
 }
 
 .pro-title {
-    font-size: 1.1rem;
-    color: #333;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: transparent;
     font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #ffd900af, #b631ef);
+    background-clip: text;
+    display: inline-block;
 }
 
 body.dark-mode .pro-title {
-    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: transparent;
+    font-family: 'Inter', sans-serif;
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd900, #a700d5);
+    background-clip: text;
 }
 
 .pro-title strong {
@@ -824,10 +834,10 @@ body.dark-mode .pro-btn:hover {
     height: 100%;
     background: linear-gradient(90deg,
             transparent,
-            rgba(255, 255, 255, 0.5),
+            rgba(255, 255, 255, 0.61),
             transparent);
     transform: skewX(-25deg);
-    animation: shine 3s infinite;
+    animation: shine 4s infinite;
     z-index: 3;
     pointer-events: none;
 }
