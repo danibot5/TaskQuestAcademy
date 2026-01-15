@@ -20,7 +20,6 @@ function getAIModel(modelName = "gemini-2.5-flash") {
   return genAI.getGenerativeModel({ model: modelName });
 }
 
-// Конфигурация за лоши думи (съкратена за прегледност, но ти си я имаш цялата)
 const BAD_WORDS = [
   "тъпак", "глупак", "idiot",
   "stupid", "fuck", "shit",
@@ -75,11 +74,7 @@ const SYSTEM_PROMPT = `Ти си ScriptSensei - не просто AI, а лег�
 - Ако потребителят напише нещо много кратко (напр. "обекти"), не питай "Какво за тях?", а направо дай кратко, ударно обяснение с пример.
 `;
 
-// 1. CHAT
-// ... (imports и getAIModel са същите)
-
 exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) => {
-  // ВАЖНО: Увеличаваме timeout-а, защото стриймингът може да е дълъг
   try {
     const { messages, attachments, userId, preferredModel } = req.body;
 
@@ -99,7 +94,6 @@ exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) =
     const lastMessageObj = messages[messages.length - 1];
     let promptText = lastMessageObj ? lastMessageObj.content : "";
 
-    // Проверка за лоши думи (Връщаме JSON грешка, ако има)
     if (containsBadWords(promptText)) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.send("Хей, нека спазваме добрия тон! 🧘‍♂️🎓");
@@ -119,9 +113,28 @@ exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) =
 
     if (attachments && attachments.length > 0) {
       attachments.forEach(file => {
-        currentMessageParts.push({
-          inlineData: { mimeType: file.mimeType, data: file.base64 }
-        });
+        const isTextFile =
+          file.mimeType.startsWith('text/') ||
+          file.mimeType.includes('javascript') ||
+          file.mimeType.includes('json') ||
+          file.mimeType.includes('xml') ||
+          file.mimeType.includes('html') ||
+          file.mimeType.includes('css');
+
+        if (isTextFile) {
+          try {
+            const decodedText = Buffer.from(file.base64, 'base64').toString('utf-8');
+            currentMessageParts.push({
+              text: `\n\n--- СЪДЪРЖАНИЕ НА ПРИКАЧЕН ФАЙЛ: ${file.name || 'Code'} ---\n${decodedText}\n--- КРАЙ НА ФАЙЛА ---\n`
+            });
+          } catch (e) {
+            console.error("Error decoding text file:", e);
+          }
+        } else {
+          currentMessageParts.push({
+            inlineData: { mimeType: file.mimeType, data: file.base64 }
+          });
+        }
       });
     }
 
@@ -134,31 +147,26 @@ exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) =
       ],
     });
 
-    // 👇 ТУК Е ГОЛЯМАТА ПРОМЯНА: STREAMING
     const result = await chatSession.sendMessageStream(currentMessageParts);
 
-    // Казваме на браузъра: "Приготви се, идва поток от текст!"
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Transfer-Encoding', 'chunked');
 
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();
-      res.write(chunkText); // Пращаме парченцето веднага!
+      res.write(chunkText);
     }
 
-    res.end(); // Край на предаването
+    res.end();
 
   } catch (error) {
     console.error("Chat Error:", error);
-    // Ако стриймът вече е започнал, не можем да пратим JSON, затова пращаме текст грешка
     res.write("\n\n[SYSTEM ERROR]: " + error.message);
     res.end();
   }
 });
 
-// 2. TITLE
 exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
-  // ... (същият код като преди)
   try {
     const model = getAIModel("gemini-2.5-flash");
     const { message } = req.body;
@@ -172,7 +180,6 @@ exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
   } catch (e) { res.json({ reply: "Разговор" }); }
 });
 
-// 3. ANALYZE & FIX (същите)
 exports.analyzeCode = onRequest({ cors: true }, async (req, res) => {
   try {
     const model = getAIModel("gemini-2.5-flash");
@@ -213,7 +220,6 @@ exports.fixCode = onRequest({ cors: true }, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 4. PAYMENTS - PRO MODE 🔥
 exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
   try {
     const { userId, userEmail } = req.body;
@@ -222,7 +228,7 @@ exports.createCheckoutSession = onRequest({ cors: true }, async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
-        price: 'price_1SoiPvFCI9V7RPg10QywPDuo', // Твоето Price ID
+        price: 'price_1SoiPvFCI9V7RPg10QywPDuo',
         quantity: 1,
       }],
       mode: 'subscription',
@@ -246,12 +252,11 @@ exports.verifyPayment = onRequest({ cors: true }, async (req, res) => {
     if (session.payment_status === 'paid') {
       const userId = session.metadata.userId;
 
-      // 🔥 ВАЖНО: Запазваме stripeCustomerId, за да можем после да управляваме абонамента!
       await admin.firestore().collection('users').doc(userId).set({
         hasPremiumAccess: true,
         proSince: admin.firestore.FieldValue.serverTimestamp(),
         email: session.customer_email,
-        stripeCustomerId: session.customer // <--- ТОВА Е НОВОТО
+        stripeCustomerId: session.customer
       }, { merge: true });
 
       res.json({ success: true, userId: userId });
@@ -268,12 +273,10 @@ exports.createPortalSession = onRequest({ cors: true }, async (req, res) => {
   try {
     const { userId } = req.body;
 
-    // Взимаме потребителя от базата, за да намерим неговия Stripe ID
     const userDoc = await admin.firestore().collection('users').doc(userId).get();
     const userData = userDoc.data();
 
     if (!userData || !userData.stripeCustomerId) {
-      // Fallback: Ако сме забравили да запишем ID-то, търсим по имейл (за всеки случай)
       if (userData && userData.email) {
         const customers = await stripe.customers.list({ email: userData.email, limit: 1 });
         if (customers.data.length > 0) {
@@ -288,10 +291,9 @@ exports.createPortalSession = onRequest({ cors: true }, async (req, res) => {
       return res.status(404).json({ error: "Няма активен абонамент в Stripe." });
     }
 
-    // Създаваме сесия за портала
     const session = await stripe.billingPortal.sessions.create({
       customer: userData.stripeCustomerId,
-      return_url: 'https://scriptsensei-4e8fe.web.app/', // Къде да се върне след като приключи
+      return_url: 'https://scriptsensei-4e8fe.web.app/',
     });
 
     res.json({ url: session.url });

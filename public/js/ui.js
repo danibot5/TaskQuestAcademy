@@ -681,6 +681,13 @@ export function updateHeaderUI() {
                     options.forEach(opt => opt.classList.remove('selected'));
                     option.classList.add('selected');
                 }
+            } else {
+                if (currentText) {
+                    currentText.innerText = "Flash";
+                }
+                
+                const defaultOption = modelSelectorContainer.querySelector('.custom-option[data-value="flash"]');
+                if (defaultOption) defaultOption.classList.add('selected');
             }
         }
 
