@@ -632,8 +632,6 @@ export function updateHeaderUI() {
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
 
     if (state.hasPremiumAccess) {
-        // --- PRO MODE ---
-
         if (badge) badge.style.display = 'inline-block';
 
         if (planLabel) {
@@ -663,14 +661,16 @@ export function updateHeaderUI() {
                 </div>`;
         }
 
-        // Показваме селектора за модели
         if (modelSelectorContainer) {
             modelSelectorContainer.style.display = 'block';
 
-            // "Завъртаме ключа" на менюто
             initCustomDropdown();
 
-            // Възстановяваме избора
+            const currentText = document.getElementById('current-model-text');
+            if (currentText && (!currentText.innerText || currentText.innerText.trim() === "Flash")) {
+                currentText.innerText = "Flash";
+            }
+
             const savedModel = localStorage.getItem('scriptsensei_model');
             if (savedModel) {
                 const currentText = document.getElementById('current-model-text');

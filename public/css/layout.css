@@ -718,7 +718,7 @@ body.dark-mode .sidebar-divider {
     position: relative;
     margin: 10px 10px 20px 10px;
     padding: 2px;
-    border-radius: 16px;
+    border-radius: 17.5px;
     background: linear-gradient(135deg, #ffd700, #fdb931, #8e44ad);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
@@ -867,5 +867,25 @@ body.dark-mode .pro-btn:hover {
 
     100% {
         transform: scale(1);
+    }
+}
+
+@media (hover: none) {
+    .chat-item:hover,
+    .action-btn:hover,
+    .icon-btn:hover,
+    button:hover,
+    .send-btn-primary:hover {
+        background-color: initial !important; 
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .chat-item:active {
+        background-color: #ececf1 !important;
+    }
+    
+    .send-btn-primary:active {
+        transform: scale(0.95) !important;
     }
 }
