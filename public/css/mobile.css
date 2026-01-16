@@ -50,7 +50,7 @@
         margin-right: 0 !important;
         padding-left: 0 !important;
         padding-right: 5px !important;
-        transform: scale(0.85);
+        sscale(0.85);
     }
 
     .brand-name {
@@ -99,12 +99,8 @@
     }
 
     .search-wrapper.active #search-input {
-        width: 200px;
+        width: 180px;
         opacity: 1;
-    }
-
-    .pro-card {
-        transform: scale(0.8);
     }
 
     .chat-list {
@@ -115,7 +111,7 @@
     }
 
     .custom-select-wrapper {
-        width: 80x;
+        width: 80px;
     }
 
     #current-model-text {
@@ -289,5 +285,13 @@
     body.dark-mode .user-bubble {
         background-color: #3e4451;
         color: white;
+    }
+}
+
+@media (max-width: 480px) {
+    .code-toolbar-custom button {
+        font-size: 12px !important;
+        padding: 10px !important;
+        width: auto;
     }
 }

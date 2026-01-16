@@ -71,6 +71,24 @@
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
     margin-bottom: 20px;
+    width: 100%;
+}
+
+.code-toolbar-custom {
+    flex-wrap: wrap;
+    gap: 6px !important;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+}
+
+.code-toolbar-custom button {
+    font-size: 13px !important;   
+    padding: 8px 12px !important; 
+    flex: 1 0 auto;
+    text-align: center;
+    justify-content: center;
+    min-width: 120px;
+    max-width: 100%;
 }
 
 .suggestions-container {

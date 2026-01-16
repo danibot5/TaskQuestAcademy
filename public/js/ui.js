@@ -672,6 +672,7 @@ export function updateHeaderUI() {
             }
 
             const savedModel = localStorage.getItem('scriptsensei_model');
+            
             if (savedModel) {
                 const currentText = document.getElementById('current-model-text');
                 const option = modelSelectorContainer.querySelector(`.custom-option[data-value="${savedModel}"]`);
