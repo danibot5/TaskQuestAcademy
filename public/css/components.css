@@ -173,6 +173,20 @@
     background: #1557b0;
 }
 
+#send-btn:disabled {
+    background-color: #3681e27e !important;
+    cursor: default !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+#send-btn:focus,
+.input-container:focus-within #send-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 .disclaimer {
     font-size: 0.75rem;
     color: #888;

@@ -1,5 +1,5 @@
-import { state, setSelectedModel } from './state.js';
-import { SVGs, showToast, copyMessageText, speakText } from './utils.js';
+import { state, setSelectedModel, setIsMuted } from './state.js';
+import { SVGs, showToast, copyMessageText, speakText, resumeSpeaking } from './utils.js';
 import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackReport, saveFeedbackToHistory } from './db.js';
 import { editor } from './editor.js';
 import { startCheckout, checkPaymentStatus, openCustomerPortal } from './payment.js';
@@ -49,9 +49,21 @@ export function renderSidebar() {
 
         // 🔥 FIX: Динамичен импорт за избягване на Circular Dependency
         div.addEventListener('click', async (e) => {
+            // Ако цъкаме по менюто с опции, не зареждаме чата
             if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
+
+            // 👇 ИЗТРИХМЕ КОДА ЗА ЗАТВАРЯНЕ НА ТЪРСАЧКАТА ОТ ТУК!
+            // Търсачката остава отворена и текстът си стои.
+
+            // Зареждаме чата
             const module = await import('./chat.js');
             module.loadChat(chat.id);
+
+            // Затваряме САМО мобилния сайдбар (защото заема целия екран)
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+            }
         });
 
         const titleSpan = document.createElement('span');
@@ -525,10 +537,8 @@ export function populateProfileData() {
 
     const badge = document.getElementById('pro-badge');
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
-    const modelSelector = document.getElementById('model-selector-container');
-
     const buyBtnModal = document.getElementById('buy-pro-modal');
-    const sidebarProCard = document.querySelector('.pro-card');
+
 
     if (state.hasPremiumAccess) {
         if (badge) badge.style.display = 'inline-block';
@@ -539,33 +549,13 @@ export function populateProfileData() {
         }
 
         if (buyBtnModal) {
-            buyBtnModal.style.display = 'block';
             buyBtnModal.innerText = "⚙️ Управление на абонамента";
-
             buyBtnModal.style.background = "#333";
             buyBtnModal.style.color = "#fff";
             buyBtnModal.style.boxShadow = "none";
             buyBtnModal.style.border = "1px solid #555";
-
             buyBtnModal.onclick = () => {
                 openCustomerPortal();
-            };
-        }
-
-        if (sidebarProCard) {
-            sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
-                <div class="pro-content">
-                    <div class="pro-header">
-                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
-                    </div>
-                    <p class="pro-desc">ScriptSensei Pro е активиран</p>
-                </div>`;
-        }
-
-        if (modelSelector) {
-            modelSelector.style.display = 'block';
-            modelSelector.onchange = (e) => {
-                setSelectedModel(e.target.value);
             };
         }
     } else {
@@ -576,12 +566,6 @@ export function populateProfileData() {
             planLabel.style.color = "";
         }
 
-        if (modelSelector) {
-            modelSelector.style.display = 'none';
-            modelSelector.value = 'flash';
-            setSelectedModel('flash');
-        }
-
         if (buyBtnModal) {
             buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
             buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
@@ -589,16 +573,6 @@ export function populateProfileData() {
             buyBtnModal.onclick = () => {
                 startCheckout();
             };
-        }
-
-        if (sidebarProCard) { sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
-                <div class="pro-content">
-                    <div class="pro-header">
-                        <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
-                    </div>
-                    <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
-                    <button id="buy-pro-sidebar" class="pro-btn">Вземи PRO</button>
-                </div>`;
         }
     }
 
@@ -623,32 +597,21 @@ export function populateProfileData() {
 
 export function updateHeaderUI() {
     const modelSelectorContainer = document.getElementById('model-selector-container');
-
     const sidebarProCard = document.querySelector('.pro-card');
     const buyBtnModal = document.getElementById('buy-pro-modal');
     const badge = document.getElementById('pro-badge');
-
-    // Взимаме безопасно елемента от модала
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
+
+    const currentText = document.getElementById('current-model-text');
 
     if (state.hasPremiumAccess) {
         if (badge) badge.style.display = 'inline-block';
-
-        if (planLabel) {
-            planLabel.innerText = "PRO";
-            planLabel.style.color = "gold";
-        }
+        if (planLabel) { planLabel.innerText = "PRO"; planLabel.style.color = "gold"; }
 
         if (buyBtnModal) {
             buyBtnModal.style.display = 'block';
             buyBtnModal.innerText = "⚙️ Управление на абонамента";
-            buyBtnModal.style.background = "#333";
-            buyBtnModal.style.color = "#fff";
-            buyBtnModal.style.boxShadow = "none";
-            buyBtnModal.style.border = "1px solid #555";
-            buyBtnModal.onclick = () => {
-                openCustomerPortal();
-            };
+            buyBtnModal.onclick = () => openCustomerPortal();
         }
 
         if (sidebarProCard) {
@@ -663,59 +626,43 @@ export function updateHeaderUI() {
 
         if (modelSelectorContainer) {
             modelSelectorContainer.style.display = 'block';
-
             initCustomDropdown();
 
-            const currentText = document.getElementById('current-model-text');
-            if (currentText && (!currentText.innerText || currentText.innerText.trim() === "Flash")) {
-                currentText.innerText = "Flash";
+            const savedModel = localStorage.getItem('scriptsensei_model');
+            let targetModel = savedModel || 'flash';
+
+            let optionToSelect = modelSelectorContainer.querySelector(`.custom-option[data-value="${targetModel}"]`);
+
+            if (!optionToSelect) {
+                targetModel = 'flash';
+                optionToSelect = modelSelectorContainer.querySelector(`.custom-option[data-value="flash"]`);
             }
 
-            const savedModel = localStorage.getItem('scriptsensei_model');
-            
-            if (savedModel) {
-                const currentText = document.getElementById('current-model-text');
-                const option = modelSelectorContainer.querySelector(`.custom-option[data-value="${savedModel}"]`);
-                if (option && currentText) {
-                    currentText.innerText = option.innerText.split('(')[0].trim();
-                    const options = modelSelectorContainer.querySelectorAll('.custom-option');
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                }
-            } else {
-                if (currentText) {
-                    currentText.innerText = "Flash";
-                }
-                
-                const defaultOption = modelSelectorContainer.querySelector('.custom-option[data-value="flash"]');
-                if (defaultOption) defaultOption.classList.add('selected');
+            if (optionToSelect && currentText) {
+                currentText.innerText = optionToSelect.innerText.split('(')[0].trim();
+
+                const options = modelSelectorContainer.querySelectorAll('.custom-option');
+                options.forEach(opt => opt.classList.remove('selected'));
+                optionToSelect.classList.add('selected');
+
+                setSelectedModel(targetModel);
+                localStorage.setItem('scriptsensei_model', targetModel);
+            } else if (currentText && !currentText.innerText.trim()) {
+                currentText.innerText = "Flash";
             }
         }
 
     } else {
         if (badge) badge.style.display = 'none';
+        if (planLabel) { planLabel.innerText = "Free"; planLabel.style.color = ""; }
 
-        if (planLabel) {
-            planLabel.innerText = "Free";
-            planLabel.style.color = "";
-        }
-
-        // Скриваме селектора (Използваме правилната променлива!)
         if (modelSelectorContainer) {
             modelSelectorContainer.style.display = 'none';
             setSelectedModel('flash');
         }
 
-        if (buyBtnModal) {
-            buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
-            buyBtnModal.style.background = "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)";
-            buyBtnModal.style.color = "#000";
-            buyBtnModal.onclick = () => {
-                startCheckout();
-            };
-        }
-
-        if (sidebarProCard) { sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
+        if (sidebarProCard) {
+            sidebarProCard.innerHTML = `<div class="pro-bg-shine"></div>
                 <div class="pro-content">
                     <div class="pro-header">
                         <span class="pro-title">ScriptSensei <strong>PRO</strong></span>
@@ -723,6 +670,11 @@ export function updateHeaderUI() {
                     <p class="pro-desc">Отключи пълната мощ <br>GEMINI 2.5 PRO И ОЩЕ МНОГО</p>
                     <button id="buy-pro-sidebar" class="pro-btn">Вземи PRO</button>
                 </div>`;
+        }
+
+        if (buyBtnModal) {
+            buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
+            buyBtnModal.onclick = () => startCheckout();
         }
     }
 }
@@ -901,6 +853,47 @@ function injectCodeButtons(container) {
         toolbar.appendChild(downloadBtn);
 
         preBlock.parentNode.insertBefore(toolbar, preBlock.nextSibling);
+    });
+}
+
+export function initMuteButton() {
+    const muteBtn = document.getElementById('mute-btn');
+    if (!muteBtn) return;
+
+    // Функция за обновяване на вида на бутона
+    const updateUI = () => {
+        if (state.isMuted) {
+            muteBtn.innerHTML = SVGs.volumeOff;
+            muteBtn.style.color = '#ff4444'; // Червено, за да се вижда, че е спрян
+            muteBtn.title = "Пусни звука";
+        } else {
+            muteBtn.innerHTML = SVGs.volumeOn;
+            muteBtn.style.color = ''; // Връщаме оригиналния цвят
+            muteBtn.title = "Спри звука";
+        }
+    };
+
+    // 1. Първоначална инициализация (Това липсваше/не сработваше преди!)
+    updateUI();
+
+    // 2. Event Listener
+    muteBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // Спираме всякакви странични ефекти
+
+        // Обръщаме стойността
+        const newState = !state.isMuted;
+        setIsMuted(newState);
+        localStorage.setItem('scriptsensei_muted', newState);
+
+        // Ако пускаме звука и в момента AI говори -> продължи говоренето
+        if (!newState && state.isSpeakingNow) {
+            resumeSpeaking(state.speechCharIndex);
+        } else if (newState) {
+            // Ако спираме звука -> млъкни веднага
+            window.speechSynthesis.cancel();
+        }
+
+        updateUI();
     });
 }
 

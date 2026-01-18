@@ -1,6 +1,6 @@
 import { loadUserProfile, loadChatsFromFirestore, loadChatsFromLocalStorage } from './db.js';
 import { auth, googleProvider } from './config.js';
-import { setCurrentUser } from './state.js';
+import { setCurrentUser, state } from './state.js'; // Импортираме и state
 import {
     signInWithPopup,
     signOut,
@@ -14,7 +14,7 @@ import {
 const getEl = (id) => document.getElementById(id);
 
 export function initAuth() {
-    onAuthStateChanged(auth, async (user) => { // 👈 Правим го async
+    onAuthStateChanged(auth, async (user) => {
         const userDetailsDiv = document.querySelector('.user-details');
         const guestButtons = getEl('guest-buttons');
         const userInfoDiv = getEl('user-info');
@@ -25,30 +25,54 @@ export function initAuth() {
         if (user) {
             setCurrentUser(user);
 
-            // Скриваме всичко временно или показваме лоудър, ако искаш
             guestButtons.style.display = 'none';
             userInfoDiv.style.display = 'flex';
 
-            // 🔥 КРИТИЧНА ПРОМЯНА: Чакаме профила ДА ЗАРЕДИ ПРЕДИ ВСИЧКО ДРУГО
-            // Използваме await, за да спрем изпълнението тук, докато не знаем дали е PRO
+            // 1. Чакаме профила да зареди (това проверява дали е PRO)
             await loadUserProfile(user.uid);
 
-            // Сега вече state.hasPremiumAccess е 100% вярно.
-            // Можем безопасно да заредим UI-а.
+            // 2. Зареждаме UI модула
             const ui = await import('./ui.js');
 
-            // 1. Оправяме Хедъра (Модел селектора) и Сайдбара (Pro картата)
+            // 3. Първо обновяваме UI стандартно
             ui.updateHeaderUI();
 
-            // 2. Оправяме данните в модала (за да е готов преди клик)
+            // 🔥 FIX: FORCED UI UPDATE (The "Enforcer")
+            // Това гарантира, че PRO текстът се показва, дори ако ui.js се забави
+            setTimeout(() => {
+                const currentText = document.getElementById('current-model-text');
+                const modelSelector = document.getElementById('model-selector-container');
+
+                // Проверка: Ако сме PRO (според state или localStorage), но горе е празно или пише Flash
+                // Забележка: Проверяваме state.hasPremiumAccess, който се сетва в loadUserProfile
+                if (state.hasPremiumAccess) {
+                    // Ако няма избран модел или е Flash, а ние искаме да е Pro по подразбиране:
+                    const savedModel = localStorage.getItem('scriptsensei_model');
+
+                    if (!savedModel || savedModel === 'pro') {
+                        if (currentText) currentText.innerText = "Pro";
+                        if (modelSelector) {
+                            modelSelector.style.display = 'block';
+                            // Визуално маркираме Pro опцията
+                            const proOpt = modelSelector.querySelector('.custom-option[data-value="pro"]');
+                            const flashOpt = modelSelector.querySelector('.custom-option[data-value="flash"]');
+                            if (proOpt) proOpt.classList.add('selected');
+                            if (flashOpt) flashOpt.classList.remove('selected');
+                        }
+                        // Записваме го, за да се помни занапред
+                        localStorage.setItem('scriptsensei_model', 'pro');
+                    }
+                }
+            }, 100); // 100ms закъснение е достатъчно да "хванем" DOM-а след рендиране
+
+            // 4. Оправяме данните в модала
             if (typeof ui.populateProfileData === 'function') {
                 ui.populateProfileData();
             }
 
-            // 3. Чак сега зареждаме чатовете
             loadChatsFromFirestore();
 
-            // ... (Кодът за UI на потребителя - аватар, име и т.н. си остава тук) ...
+            // UI настройки за потребителя
             userAvatar.src = user.photoURL || 'images/bot-avatar.png';
             const displayName = user.displayName || 'User';
             const verifiedIcon = user.emailVerified
@@ -72,7 +96,6 @@ export function initAuth() {
             userDetailsDiv.innerHTML = nameHTML + emailHTML + actionButtonsHTML;
 
             document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-            // ... (Event listener за verify btn) ...
 
             regModal.style.display = 'none';
             loginModal.style.display = 'none';

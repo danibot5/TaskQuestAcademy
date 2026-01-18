@@ -244,7 +244,7 @@ export async function sendMessage(retryCount = 0) {
                 clearInterval(typingInterval);
                 saveMessage(displayedText, 'bot');
             }
-        }, 15);
+        }, 12);
 
         while (true) {
             const { done, value } = await reader.read();

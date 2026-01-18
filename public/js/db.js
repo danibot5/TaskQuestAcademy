@@ -1,18 +1,18 @@
 import { db } from './config.js';
 import { state, setAllChats, setCurrentChatId, setPremiumStatus } from './state.js';
-import { 
-    collection, 
-    addDoc, 
-    getDocs, 
-    doc, 
-    updateDoc, 
-    deleteDoc, 
-    query, 
-    where, 
-    orderBy, 
-    limit, 
-    getDoc, 
-    setDoc 
+import {
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDoc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- 1. LOCAL STORAGE ---
@@ -139,9 +139,11 @@ export async function saveMessage(text, sender) {
 
 export async function saveFeedbackToHistory(messageText, feedbackType) {
     const chat = state.allChats.find(c => c.id === state.currentChatId);
-    if (!chat) return;
+    if (!chat || !chat.messages) return;
 
-    const msgIndex = chat.messages.findIndex(m => m.text === messageText && m.sender === 'bot');
+    const msgIndex = chat.messages.findIndex(m =>
+        m.sender === 'bot' && m.text.trim() === messageText.trim()
+    );
 
     if (msgIndex !== -1) {
         chat.messages[msgIndex].feedback = feedbackType;
@@ -151,6 +153,9 @@ export async function saveFeedbackToHistory(messageText, feedbackType) {
         } else {
             saveToLocalStorage();
         }
+        console.log(`Feedback saved locally to chat history: ${feedbackType}`);
+    } else {
+        console.warn("Message for feedback not found in history!");
     }
 }
 
@@ -205,11 +210,13 @@ export async function loadUserProfile(userId) {
             if (data.hasPremiumAccess) {
                 setPremiumStatus(true);
                 console.log("💎 User has premium access!");
+
+                const ui = await import('./ui.js');
+                ui.updateHeaderUI();
             } else {
                 setPremiumStatus(false);
             }
         } else {
-            // Ако няма запис, значи е нов и не е Pro
             setPremiumStatus(false);
         }
     } catch (e) {
