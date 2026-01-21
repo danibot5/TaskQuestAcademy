@@ -3,9 +3,9 @@ import { initEditor } from './editor.js';
 import { sendMessage, startNewChat } from './chat.js';
 import { initFeedbackSystem, initMuteButton, toggleTheme, initTheme, renderAttachments, shareChat, initProfileModal } from './ui.js';
 import { state } from './state.js';
+import { SVGs, showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Инициализация на системите
     initAuth();
     initEditor();
     initProfileModal();
@@ -13,68 +13,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     initMuteButton();
 
-    // 2. Глобална функция за махане на файлове (за UI-а)
     window.removeAttachment = (index) => {
         if (state.currentAttachments && state.currentAttachments.length > index) {
             state.currentAttachments.splice(index, 1);
             renderAttachments();
-            // Ще се опресни автоматично от MutationObserver-а по-долу
         }
     };
 
-    // --- ЛОГИКА ЗА SEND БУТОНА (FIXED & WORKING) ---
     const oldSendBtn = document.getElementById('send-btn');
     const userInput = document.getElementById('user-input');
     const attachmentList = document.getElementById('attachment-preview-list');
 
+    let checkSendButtonState = () => { };
+
     if (oldSendBtn && userInput) {
-        // 1. Клонираме бутона, за да изчистим стари слушатели
         const newSendBtn = oldSendBtn.cloneNode(true);
         oldSendBtn.parentNode.replaceChild(newSendBtn, oldSendBtn);
 
-        // 2. Функция за проверка на състоянието (Ползва НОВИЯ бутон)
-        const checkSendButtonState = () => {
+        checkSendButtonState = () => {
             const text = userInput.value.trim();
             const hasFiles = state.currentAttachments && state.currentAttachments.length > 0;
-
-            // Ако има текст ИЛИ има файлове -> Активен
             const shouldBeEnabled = text.length > 0 || hasFiles;
-
             newSendBtn.disabled = !shouldBeEnabled;
         };
 
-        // 3. Първоначална проверка (за да стане сив веднага)
         checkSendButtonState();
 
-        // 4. Слушател за клик
         newSendBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (newSendBtn.disabled) return;
 
-            if (newSendBtn.disabled) return; // Защита
-
-            // МИГНОВЕН BLUR
             userInput.blur();
             newSendBtn.blur();
-
             sendMessage();
-
-            // Деактивираме веднага след пращане
             setTimeout(checkSendButtonState, 10);
         });
 
-        // 5. Слушател при писане
         userInput.addEventListener('input', () => {
-            // Auto-resize
             userInput.style.height = 'auto';
             userInput.style.height = (userInput.scrollHeight) + 'px';
             if (userInput.value === '') userInput.style.height = 'auto';
-
-            // Проверка
             checkSendButtonState();
         });
 
-        // 6. Слушател за Enter
         userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -87,70 +69,170 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // 7. OBSERVER: Следим за промени във файловете
         if (attachmentList) {
-            const observer = new MutationObserver(() => {
-                checkSendButtonState();
-            });
+            const observer = new MutationObserver(() => checkSendButtonState());
             observer.observe(attachmentList, { childList: true, subtree: true });
         }
     }
 
-    // --- ОСТАНАЛИТЕ БУТОНИ ---
+    const attachBtn = document.getElementById('attach-btn');
+    const fileInput = document.getElementById('file-input');
 
-    // Бутон за нов чат
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            for (const file of files) {
+                // 1. ПРОВЕРКА ЗА ДУБЛИКАТИ 🛑
+                const isDuplicate = state.currentAttachments.some(existing => existing.name === file.name);
+
+                if (isDuplicate) {
+                    showToast(`Файлът "${file.name}" вече е добавен!`, '⚠️');
+                    continue; // Пропускаме този файл и минаваме на следващия
+                }
+
+                // 2. Проверка за размер (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`"${file.name}" е твърде голям (max 5MB).`, '❌');
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64String = event.target.result.split(',')[1];
+
+                    state.currentAttachments.push({
+                        name: file.name,
+                        mimeType: file.type,
+                        base64: base64String
+                    });
+
+                    renderAttachments();
+                    checkSendButtonState();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            fileInput.value = ''; // Чистим, за да хване change event ако изберем същото пак (след като сме го изтрили)
+        });
+    }
+
+    // ==========================================
+    // 10. 🎤 ГЛАСОВО ВЪВЕЖДАНЕ (ВЪРНАТО!)
+    // ==========================================
+    const micBtn = document.getElementById('mic-btn');
+    let recognition = null;
+
+    if (micBtn && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'bg-BG'; // Български език
+        recognition.interimResults = true;
+
+        let isListening = false;
+
+        micBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+
+        recognition.onstart = () => {
+            isListening = true;
+            micBtn.classList.add('listening'); // Трябва да имаш CSS за пулсиране
+            micBtn.style.color = '#ff4444'; // Червен цвят докато слуша
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            micBtn.classList.remove('listening');
+            micBtn.style.color = ''; // Връщаме цвета
+            checkSendButtonState(); // Проверяваме дали да активираме Send бутона
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+
+            if (userInput) {
+                userInput.value = transcript;
+                // Тригерираме auto-resize
+                userInput.dispatchEvent(new Event('input'));
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Speech error", event.error);
+            isListening = false;
+            micBtn.classList.remove('listening');
+            micBtn.style.color = '';
+        };
+    } else if (micBtn) {
+        // Ако браузърът не поддържа speech API
+        micBtn.style.display = 'none';
+    }
+
+
+    // --- ОСТАНАЛИТЕ БУТОНИ (Нов чат, Тема, Меню, Търсачка) ---
+    // (Този код си остава същият като преди, просто го слагам за пълнота)
+
     const newChatBtn = document.getElementById('new-chat-btn');
     const topNewChatBtn = document.getElementById('top-new-chat-btn');
-
     const handleNewChat = () => {
         startNewChat();
         const sidebar = document.getElementById('sidebar');
         if (sidebar) sidebar.classList.remove('open');
-        // Ресет на бутона при нов чат
-        if (userInput) {
-            userInput.value = '';
-            // Трябва да извикаме събитие input, за да може логиката горе да хване промяната
-            userInput.dispatchEvent(new Event('input'));
-        }
+        if (userInput) { userInput.value = ''; checkSendButtonState(); }
     };
-
     if (newChatBtn) newChatBtn.addEventListener('click', handleNewChat);
     if (topNewChatBtn) topNewChatBtn.addEventListener('click', handleNewChat);
 
-    // Тема и споделяне
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
     const shareBtn = document.getElementById('share-btn');
     if (shareBtn) shareBtn.addEventListener('click', shareChat);
 
-    // Мобилно меню
     const menuBtn = document.getElementById('menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar');
-    const sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('sidebar'); // Define sidebar here locally for this scope if needed or verify scope
 
-    if (menuBtn && sidebar) {
+    if (menuBtn && document.getElementById('sidebar')) {
         menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            sidebar.classList.toggle('open');
+            document.getElementById('sidebar').classList.toggle('open');
         });
     }
-
-    if (closeSidebarBtn && sidebar) {
+    if (closeSidebarBtn && document.getElementById('sidebar')) {
         closeSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
+            document.getElementById('sidebar').classList.remove('open');
         });
     }
 
+    // Mobile close sidebar outside click
     document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('open')) {
-            if (!sidebar.contains(e.target) && e.target !== menuBtn) {
-                sidebar.classList.remove('open');
+        const sb = document.getElementById('sidebar');
+        if (window.innerWidth <= 768 && sb && sb.classList.contains('open')) {
+            if (!sb.contains(e.target) && e.target !== menuBtn) {
+                sb.classList.remove('open');
             }
         }
     });
 
-    // Търсачка (Search)
+    // Search
     const searchBtn = document.querySelector('.search-btn') || document.getElementById('search-toggle-btn');
     const searchWrapper = document.querySelector('.search-wrapper');
     const searchInput = document.getElementById('search-input');
@@ -176,16 +258,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const chatItems = document.querySelectorAll('.chat-item');
-
             chatItems.forEach(item => {
                 const titleSpan = item.querySelector('.chat-title');
                 const titleText = titleSpan ? titleSpan.innerText.toLowerCase() : "";
-
-                if (titleText.includes(term) || term === "") {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
+                if (titleText.includes(term) || term === "") item.style.display = 'flex';
+                else item.style.display = 'none';
             });
         });
 
@@ -198,9 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && searchWrapper.classList.contains('active')) {
-                closeSearch();
-            }
+            if (e.key === 'Escape' && searchWrapper.classList.contains('active')) closeSearch();
         });
     }
 });

@@ -766,16 +766,22 @@ function initCustomDropdown() {
     });
 }
 
+// В js/ui.js - Замени функцията injectCodeButtons с тази:
+
 function injectCodeButtons(container) {
     const codeBlocks = container.querySelectorAll('pre');
 
     codeBlocks.forEach((preBlock) => {
-        // Ако вече имаме тулбар, не слагаме втори (макар че innerHTML обикновено ги трие)
-        if (preBlock.nextElementSibling && preBlock.nextElementSibling.classList.contains('message-actions')) return;
-        // Забележка: Тук проверяваме за toolbar, който ние създаваме по-долу
-
+        // 1. Проверка дали има code елемент вътре
         const codeElement = preBlock.querySelector('code');
         if (!codeElement) return;
+
+        // 🔥 FIX: Проверяваме дали КОНКРЕТНО ТОЗИ блок вече има тулбар отдолу.
+        // Предишната грешка беше, че търсихме в целия контейнер (parentNode) 
+        // и спирахме още след първия намерен тулбар.
+        if (preBlock.nextElementSibling && preBlock.nextElementSibling.classList.contains('code-toolbar-custom')) {
+            return;
+        }
 
         const codeText = codeElement.innerText;
 
@@ -788,9 +794,6 @@ function injectCodeButtons(container) {
         });
 
         // Създаваме контейнер за бутоните (Toolbar)
-        // Проверка дали вече не сме го сложили (за всеки случай)
-        if (preBlock.parentNode.querySelector('.code-toolbar-custom')) return;
-
         const toolbar = document.createElement('div');
         toolbar.className = 'code-toolbar-custom'; // Уникален клас
         toolbar.style.display = 'flex';
@@ -806,9 +809,7 @@ function injectCodeButtons(container) {
             runBtn.innerHTML = `Прехвърли в редактора`;
             runBtn.title = "Сложи този код в редактора";
 
-            // Трябва ни достъп до editor променливата (тя е импортната горе в ui.js)
             runBtn.onclick = async () => {
-                // Динамичен импорт или ползваме глобалния editor, ако е импортнат
                 const { editor } = await import('./editor.js');
                 editor.setValue(codeText);
                 runBtn.innerHTML = "✅ Готово!";
