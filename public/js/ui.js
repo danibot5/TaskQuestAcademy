@@ -599,6 +599,7 @@ export function updateHeaderUI() {
     const modelSelectorContainer = document.getElementById('model-selector-container');
     const sidebarProCard = document.querySelector('.pro-card');
     const buyBtnModal = document.getElementById('buy-pro-modal');
+    const buyBtnSidebar = document.getElementById('buy-pro-sidebar');
     const badge = document.getElementById('pro-badge');
     const planLabel = document.querySelector('.stat-item:nth-child(3) .stat-value');
 
@@ -672,9 +673,16 @@ export function updateHeaderUI() {
                 </div>`;
         }
 
-        if (buyBtnModal) {
-            buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
-            buyBtnModal.onclick = () => startCheckout();
+        if (buyBtnModal || buyBtnSidebar) {
+            if (buyBtnModal) {
+                buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
+                buyBtnModal.onclick = () => startCheckout();
+            }
+            
+            if (buyBtnSidebar) {
+                buyBtnSidebar.innerText = "Вземи PRO (10.00 лв/мес)";
+                buyBtnSidebar.onclick = () => startCheckout();
+            }
         }
     }
 }
