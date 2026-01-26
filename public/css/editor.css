@@ -121,7 +121,6 @@
     box-shadow: 0 3px 10px rgba(243, 156, 18, 0.25);
 }
 
-/* Ефект при посочване (Hover) */
 .fix-btn:hover {
     transform: translateY(-2px);
     background-color: #e67e22;
@@ -223,7 +222,6 @@
     cursor: default;
 }
 
-/* МОДАЛ ЗА АНАЛИЗ */
 .analysis-box {
     max-width: 500px;
     text-align: left;
@@ -389,3 +387,4 @@ body.dark-mode .analysis-section h3 {
 .cm-s-dracula span.cm-variable {
     color: #d19a66 !important;
 }
+

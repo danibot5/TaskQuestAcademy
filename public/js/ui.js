@@ -309,25 +309,41 @@ export function renderAttachments() {
 }
 
 export function toggleTheme() {
-    const body = document.body;
-    const btn = document.getElementById('theme-toggle');
-    const isDark = body.classList.toggle('dark-mode');
-
-    btn.innerText = isDark ? '☀️' : '🌙';
+    const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('scriptsensei_theme', isDark ? 'dark' : 'light');
+    
+    if (editor) {
+        editor.setOption("theme", isDark ? "dracula" : "eclipse");
+    }
 
-    editor.setOption("theme", isDark ? "dracula" : "eclipse");
+    const themeCheckbox = document.getElementById('theme-checkbox');
+    if (themeCheckbox) {
+        themeCheckbox.checked = isDark;
+    }
 }
 
 export function initTheme() {
-    const saved = localStorage.getItem('scriptsensei_theme');
-    const isDark = saved === 'dark';
-    if (isDark) {
+    const savedTheme = localStorage.getItem('scriptsensei_theme');
+    const themeCheckbox = document.getElementById('theme-checkbox');
+
+    if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('theme-toggle').innerText = '☀️';
-        editor.setOption("theme", "dracula");
+        if (editor) editor.setOption("theme", "dracula"); 
+        if (themeCheckbox) themeCheckbox.checked = true;
     } else {
-        editor.setOption("theme", "eclipse");
+        if (editor) editor.setOption("theme", "eclipse");
+    }
+
+    if (themeCheckbox) {
+        themeCheckbox.addEventListener('change', toggleTheme);
+    }
+
+    const mobileThemeToggle = document.getElementById('theme-toggle-mobile');
+    if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', (e) => {
+             e.preventDefault();
+             toggleTheme();
+        });
     }
 }
 
@@ -678,7 +694,7 @@ export function updateHeaderUI() {
                 buyBtnModal.innerText = "Вземи PRO (10.00 лв/мес)";
                 buyBtnModal.onclick = () => startCheckout();
             }
-            
+
             if (buyBtnSidebar) {
                 buyBtnSidebar.innerText = "Вземи PRO (10.00 лв/мес)";
                 buyBtnSidebar.onclick = () => startCheckout();

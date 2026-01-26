@@ -212,7 +212,7 @@
 
 /* Code Action Buttons */
 .code-btn {
-   display: inline-flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
@@ -739,4 +739,97 @@ button:disabled,
 
 .action-btn:disabled:hover {
     background-color: transparent !important;
+}
+
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 30px;
+    position: relative;
+    width: 56px;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: #e0e0e0;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider:before {
+    background-color: #fff;
+    bottom: 3px;
+    content: "";
+    height: 24px;
+    left: 3px;
+    position: absolute;
+    transition: .4s;
+    width: 24px;
+    border-radius: 50%;
+    z-index: 2;
+    /* Да е над иконките */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Стилизация на иконките */
+.sun-icon,
+.moon-icon {
+    z-index: 1;
+    transition: .4s;
+}
+
+.sun-icon {
+    color: #f39c12;
+    /* Златисто слънце */
+    opacity: 1;
+}
+
+.moon-icon {
+    color: #f1c40f;
+    /* Жълтеникава луна */
+    opacity: 0;
+    /* Скрита в началото */
+}
+
+/* --- АКТИВНО СЪСТОЯНИЕ (DARK MODE) --- */
+
+/* Промяна на фона на плъзгача */
+input:checked+.slider {
+    background-color: #34495e;
+    /* Тъмен фон */
+}
+
+/* Преместване на копчето надясно */
+input:checked+.slider:before {
+    transform: translateX(26px);
+}
+
+/* Смяна на видимостта на иконките */
+input:checked+.slider .sun-icon {
+    opacity: 0;
+}
+
+input:checked+.slider .moon-icon {
+    opacity: 1;
 }
