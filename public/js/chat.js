@@ -173,7 +173,7 @@ export async function sendMessage(retryCount = 0) {
 
         setTimeout(() => {
             scrollToBottom(true);
-        }, 75);
+        }, 60);
 
         if (isNewChat && text.trim() !== "") setTimeout(() => generateSmartTitle(state.currentChatId, text), 500);
     }
@@ -240,7 +240,7 @@ export async function sendMessage(retryCount = 0) {
                 clearInterval(typingInterval);
                 saveMessage(displayedText, 'bot');
             }
-        }, 12);
+        }, 10);
 
         while (true) {
             const { done, value } = await reader.read();

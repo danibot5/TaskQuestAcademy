@@ -4,6 +4,7 @@ import { sendMessage, startNewChat } from './chat.js';
 import { initFeedbackSystem, initMuteButton, toggleTheme, initTheme, renderAttachments, shareChat, initProfileModal } from './ui.js';
 import { state } from './state.js';
 import { SVGs, showToast } from './utils.js';
+import { startCheckout } from './payment.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     initAuth();
@@ -41,13 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         newSendBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            if (newSendBtn.disabled) return;
+            
+            newSendBtn.setAttribute('disabled', 'true');
+            newSendBtn.classList.remove('active');
+            userInput.style.height = 'auto';
 
-            userInput.blur();
-            newSendBtn.blur();
-            sendMessage();
-            setTimeout(checkSendButtonState, 10);
+            import('./chat.js').then(m => m.sendMessage());
         });
 
         userInput.addEventListener('input', () => {
@@ -60,11 +60,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (!newSendBtn.disabled) {
-                    userInput.blur();
-                    newSendBtn.blur();
-                    sendMessage();
-                    setTimeout(checkSendButtonState, 10);
+                const text = userInput.value.trim();
+                const hasFiles = state.currentAttachments && state.currentAttachments.length > 0;
+                
+                if (text.length > 0 || hasFiles) {
+                    newSendBtn.setAttribute('disabled', 'true');
+                    newSendBtn.classList.remove('active');
+                    userInput.style.height = 'auto';
+
+                    import('./chat.js').then(m => m.sendMessage());
                 }
             }
         });
@@ -277,5 +281,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && searchWrapper.classList.contains('active')) closeSearch();
         });
+
+        document.addEventListener('click', (e) => {
+        const targetBtn = e.target.closest('.pro-btn');
+
+        if (targetBtn) {
+            e.preventDefault();
+            startCheckout();
+        }
+    });
     }
 });

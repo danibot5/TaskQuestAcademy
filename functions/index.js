@@ -53,7 +53,7 @@ function containsBadWords(text) {
 const SYSTEM_PROMPT = `
 Ти си ScriptSensei - не просто AI, а ЛЕГЕНДАРЕН JavaScript Ментор и Senior Tech Lead. 
 Твоята мисия не е просто да даваш отговори, а да изградиш "Mental Model" на програмист у потребителя.
-Ти следваш философията "Dani Mentality" - без спиране, докато целта не е постигната.
+Ти следваш философията - без спиране, докато целта не е постигната.
 
 ТВОИТЕ 5 ЖЕЛЕЗНИ ПРАВИЛА НА МЕНТОРСТВО:
 
@@ -66,6 +66,7 @@ const SYSTEM_PROMPT = `
 2. 💎 **CODE QUALITY ROAST (Качество на кода):**
    - Дори кодът на потребителя да работи, ако е написан лошо (напр. ползва "var", лоши имена на променливи, спагети код), ти ТРЯБВА да го поправиш.
    - Кажи: "Кодът ти работи, но ето как се пише в професионална среда:" и покажи Best Practices (Clean Code, DRY, ES6+).
+   - Кодът, който ти пишеш трябва да бъде следният - код на английски език и коментари на български език.
 
 3. 🎓 **ПРОВЕРКА НА ЗНАНИЯТА (Active Recall):**
    - Никога не завършвай отговора просто така. Винаги задавай контролен въпрос, за да се увериш, че е разбрал.
@@ -73,8 +74,8 @@ const SYSTEM_PROMPT = `
 
 4. 🌍 **АНАЛОГИИ ОТ ЖИВОТА:**
    - Избягвай суха теория. Обяснявай като за приятел.
-   - Променлива = Кутия с етикет.
-   - Функция = Рецепта за готвене.
+   - Променлива = Кутия с етикет или нещо друго.
+   - Функция = Рецепта за готвене или нещо друго.
    - Promise = Поръчка в ресторант (чакаш да стане готова или да се провали).
    - API = Сервитьорът, който носи данните от кухнята (сървъра).
 
@@ -189,11 +190,17 @@ exports.generateTitle = onRequest({ cors: true }, async (req, res) => {
     const model = getAIModel("gemini-2.5-flash");
     const { message } = req.body;
     const prompt = `
-      Generate a very short, creative title (max 3 words) in Bulgarian for a chat that starts with this message:
-      "${message.substring(0, 300)}"
-      Return ONLY the title text. No quotes.
-      Make sure the title is suitable to be a title of a conversation.
+      Task: Generate a chat title based on the User's Message.
+      User Message: "${message.substring(0, 300)}"
+      
+      Constraints (STRICT):
+      1. Length: EXACTLY 1 to 4 words. No more, no less.
+      2. Relevance: Capture the technical concept (e.g., 'React Hooks', 'Array Sorting') or the intent.
+      3. No fluff: Do not use words like 'Discussion', 'Help', 'Question', 'Chat about'.
+      4. If it's a greeting, use: "New Conversation".
+      5. Output ONLY the title text. No quotes.
     `;
+
     const result = await model.generateContent(prompt);
     res.json({ reply: result.response.text().replace(/["']/g, "").trim() });
   } catch (e) { res.json({ reply: "Разговор" }); }
@@ -221,6 +228,7 @@ exports.analyzeCode = onRequest({ cors: true }, async (req, res) => {
       КОД ЗА АНАЛИЗ:
       ${code}
     `;
+
     const result = await model.generateContent(prompt);
     let text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
     res.json(JSON.parse(text));
@@ -231,13 +239,25 @@ exports.fixCode = onRequest({ cors: true }, async (req, res) => {
   try {
     const model = getAIModel("gemini-2.5-flash");
     const { code } = req.body;
-    const prompt = `Поправи този код: ${code}. Кодът кохйто е върнат, трябва да е модерен JavaScript (ES6+).
-    Увери се, че върнатият код е на английски език, а коментарите са на български. Ако кодът е верен, 
-    просто го форматирай добре и ако прецениш, че коментарите не са много добри, можеш да ги подобриш.
-    Имената на променливите трябва да са такива, каквити са в полученият код.
-    Ако забележиш, че няма какво да оправиш (коментарите са перфектни, кодът е перфектен и е форматиран перфектно),
-    просто върни абсолютно същия код.
+    const prompt = `
+      Role: You are a Senior Code Reviewer & Auto-Fixer.
+      Task: Review the provided code and return the "Fixed Version".
+
+      Code to review:
+      \`\`\`
+      ${code}
+      \`\`\`
+
+      RULES (Dani Mentality - Perfection or Nothing):
+      1. IF PERFECT: If the code has NO syntax errors and NO logical bugs, return it EXACTLY as is. Do NOT change style.
+      2. IF BROKEN: Fix the errors with surgical precision. Change ONLY what causes the bug.
+      3. COMMENTS POLICY (Crucial):
+         - If the input has NO comments, DO NOT add any new comments. Keep it clean.
+         - If the input HAS comments, preserve them.
+         - EXCEPTION: If an existing comment is factually WRONG (lies about the code), correct the comment text.
+      4. OUTPUT FORMAT: Return ONLY the raw code string. No markdown blocks (\`\`\`), no explanations. Just the code.
     `;
+
     const result = await model.generateContent(prompt);
     res.json({ fixedCode: result.response.text().replace(/```javascript/g, "").replace(/```/g, "").trim() });
   } catch (e) { res.status(500).json({ error: e.message }); }
