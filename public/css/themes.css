@@ -166,6 +166,7 @@ body.dark-mode .icon-btn {
 
 body.dark-mode .icon-btn:hover {
     background-color: #444;
+    color: #fff;
 }
 
 body.dark-mode #menu-btn {

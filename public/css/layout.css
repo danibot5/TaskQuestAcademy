@@ -396,26 +396,6 @@ body.dark-mode .custom-option.selected {
     margin-right: 5px;
 }
 
-.chat-menu-dropdown {
-    position: absolute;
-    right: 10px;
-    top: 35px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    padding: 5px;
-    z-index: 9999;
-    min-width: 150px;
-    display: none;
-    flex-direction: column;
-    border: 1px solid #eee;
-    animation: fadeIn 0.3s ease;
-}
-
-.chat-menu-dropdown.show {
-    display: flex;
-}
-
 .user-section {
     padding: 10px 30px;
     padding-top: 5px;

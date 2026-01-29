@@ -145,7 +145,7 @@
 
 .icon-btn {
     background: transparent;
-    color: #555;
+    color: #9c9c9c;
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -153,6 +153,7 @@
 
 .icon-btn:hover {
     background: #e2e2e2;
+    color: #666;
 }
 
 .icon-btn.recording {
@@ -175,10 +176,15 @@
 
 #send-btn:disabled {
     background-color: #3681e27e !important;
+    color: #ffffffaf !important;
     cursor: default !important;
     pointer-events: none !important;
     box-shadow: none !important;
     transform: none !important;
+}
+
+body.dark-mode #send-btn:disabled {
+    color: #a0a0a0c7 !important;
 }
 
 #send-btn:focus,
@@ -282,7 +288,7 @@
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     padding: 5px;
-    z-index: 100;
+    z-index: 1000;
     min-width: 140px;
     display: none;
     flex-direction: column;

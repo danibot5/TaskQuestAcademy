@@ -13,6 +13,20 @@ const mobileEditorBtn = document.getElementById('mobile-editor-toggle');
 const body = document.body;
 const closeEditorBtn = document.getElementById('close-mobile-editor');
 
+let isUserScrolledUp = false;
+
+if (chatHistory) {
+    chatHistory.addEventListener('scroll', () => {
+        const distanceToBottom = chatHistory.scrollHeight - chatHistory.scrollTop - chatHistory.clientHeight;
+        
+        if (distanceToBottom > 100) {
+            isUserScrolledUp = true;
+        } else {
+            isUserScrolledUp = false;
+        }
+    });
+}
+
 export function renderSidebar() {
     chatList.innerHTML = '';
 
@@ -47,19 +61,12 @@ export function renderSidebar() {
             menuDropdown.classList.add('show');
         });
 
-        // 🔥 FIX: Динамичен импорт за избягване на Circular Dependency
         div.addEventListener('click', async (e) => {
-            // Ако цъкаме по менюто с опции, не зареждаме чата
             if (e.target.closest('.chat-options-btn') || e.target.closest('.chat-menu-dropdown')) return;
 
-            // 👇 ИЗТРИХМЕ КОДА ЗА ЗАТВАРЯНЕ НА ТЪРСАЧКАТА ОТ ТУК!
-            // Търсачката остава отворена и текстът си стои.
-
-            // Зареждаме чата
             const module = await import('./chat.js');
             module.loadChat(chat.id);
 
-            // Затваряме САМО мобилния сайдбар (защото заема целия екран)
             if (window.innerWidth <= 768) {
                 const sidebar = document.getElementById('sidebar');
                 if (sidebar) sidebar.classList.remove('open');
@@ -485,8 +492,6 @@ if (closeEditorBtn) {
     });
 }
 
-// В js/ui.js
-
 export function initProfileModal() {
     const userInfoBtn = document.getElementById('user-info');
     const modal = document.getElementById('profile-modal');
@@ -728,14 +733,24 @@ export function updateLastBotMessage(fullText) {
     scrollToBottom(false);
 }
 
-export function scrollToBottom(smooth = false) {
+export function scrollToBottom(forceInstant = false) {
     const chatHistory = document.getElementById('chat-history');
     if (!chatHistory) return;
 
+    if (isUserScrolledUp && !forceInstant) {
+        return;
+    }
+
+    const behaviorType = forceInstant ? 'auto' : 'smooth';
+
     chatHistory.scrollTo({
         top: chatHistory.scrollHeight,
-        behavior: smooth ? 'smooth' : 'auto'
+        behavior: behaviorType
     });
+    
+    if (forceInstant) {
+        isUserScrolledUp = false;
+    }
 }
 
 function initCustomDropdown() {

@@ -125,11 +125,7 @@ export async function loadChat(id) {
     renderSidebar();
     if (window.innerWidth < 800 && sidebar) sidebar.classList.remove('open');
 
-    scrollToBottom(false);
-
-    setTimeout(() => {
-        scrollToBottom(false);
-    }, 75);
+    scrollToBottom(true);
 }
 
 export async function sendMessage(retryCount = 0) {

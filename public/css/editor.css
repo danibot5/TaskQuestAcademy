@@ -172,7 +172,7 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background-color: #2980b9; 
+    background-color: #2980b9;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -187,7 +187,7 @@
 
 .download-btn:hover {
     transform: translateY(-2px);
-    background-color: #3498db; 
+    background-color: #3498db;
     box-shadow: 0 3px 15px rgba(52, 152, 219, 0.3);
 }
 
@@ -386,4 +386,45 @@ body.dark-mode .analysis-section h3 {
 
 .cm-s-dracula span.cm-variable {
     color: #d19a66 !important;
+}
+
+.cm-s-eclipse .cm-def {
+    color: #005cc5 !important;
+}
+
+.cm-s-eclipse .cm-variable {
+    color: #24292e !important;
+}
+
+.cm-s-eclipse .cm-operator {
+    color: #d73a49 !important;
+}
+
+.cm-s-eclipse .cm-number {
+    color: #b08800 !important;
+}
+
+.cm-s-eclipse .cm-string {
+    color: #22863a !important;
+}
+
+.cm-s-eclipse .cm-comment {
+    color: #6a737d !important;
+    font-style: italic;
+}
+
+.cm-s-eclipse .cm-property {
+    color: #005cc5 !important;
+}
+
+.cm-s-eclipse .cm-atom {
+    color: #005cc5 !important;
+}
+
+.cm-s-eclipse .CodeMirror-cursor {
+    border-left: 2px solid #000 !important;
+}
+
+.cm-s-eclipse .CodeMirror-activeline-background {
+    background: #f6f8fa !important;
 }
