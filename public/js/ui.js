@@ -314,8 +314,7 @@ export function toggleTheme() {
     
     if (editor) {
         editor.setOption("theme", isDark ? "dracula" : "eclipse");
-        
-        setTimeout(() => editor.refresh(), 50); 
+        setTimeout(() => editor.refresh(), 50);
     }
 
     const themeCheckbox = document.getElementById('theme-checkbox');
