@@ -4,7 +4,7 @@ import { deleteFromFirestore, saveToLocalStorage, updateChatData, sendFeedbackRe
 import { editor } from './editor.js';
 import { startCheckout, checkPaymentStatus, openCustomerPortal } from './payment.js';
 import { auth } from './config.js';
-import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const chatHistory = document.getElementById('chat-history');
 const chatList = document.querySelector('.chat-list');
