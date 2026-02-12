@@ -1,14 +1,13 @@
 import { loadUserProfile, loadChatsFromFirestore, loadChatsFromLocalStorage } from './db.js';
 import { auth, googleProvider } from './config.js';
-import { setCurrentUser, state } from './state.js'; // Импортираме и state
+import { setCurrentUser, state } from './state.js';
 import {
     signInWithPopup,
     signOut,
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    updateProfile,
-    sendEmailVerification
+    updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const getEl = (id) => document.getElementById(id);
@@ -145,7 +144,6 @@ function setupAuthEventListeners() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCredential.user, { displayName: name });
-            await sendEmailVerification(userCredential.user);
             alert(`Успешна регистрация! Провери си пощата.`);
             window.location.reload();
         } catch (error) {

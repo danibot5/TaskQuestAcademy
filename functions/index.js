@@ -1,5 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { Resend } = require('resend');
 const Stripe = require("stripe");
 const admin = require("firebase-admin");
 
@@ -341,6 +342,57 @@ exports.createPortalSession = onRequest({ cors: true }, async (req, res) => {
 
     res.json({ url: session.url });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const resend = new Resend('re_2jH4QrVq_EMP775UTs5JQsjXSjYyi8KSe'); 
+exports.sendCustomVerificationEmail = onRequest({ cors: true }, async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    const link = await admin.auth().generateEmailVerificationLink(email);
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <body style="background-color: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; text-align: center;">
+      
+      <div style="max-width: 600px; margin: 0 auto; background-color: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        
+        <h2 style="color: #ffffff; margin-top: 0;">ScriptSensei 🦅</h2>
+        
+        <h1 style="color: #58a6ff; font-size: 24px; margin: 30px 0;">Добре дошъл в отбора, ${name}!</h1>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #8b949e; margin-bottom: 30px;">
+          Ти направи първата крачка към това да станеш JS машина. 
+          За да отключиш пълния си потенциал (и да разкараш онова оранжево съобщение), просто потвърди, че този имейл е твой.
+        </p>
+        
+        <a href="${link}" style="display: inline-block; background: linear-gradient(135deg, #238636 0%, #2ea043 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);">
+          🚀 Потвърди Акаунта
+        </a>
+
+        <p style="margin-top: 40px; font-size: 12px; color: #484f58; border-top: 1px solid #30363d; padding-top: 20px;">
+          Ако не си ти, просто игнорирай това. ScriptSensei пази гърба ти.
+        </p>
+      </div>
+      
+    </body>
+    </html>
+    `;
+
+    await resend.emails.send({
+      from: 'ScriptSensei <onboarding@resend.dev>',
+      to: email, 
+      subject: 'Потвърди своя достъп до ScriptSensei',
+      html: htmlContent
+    });
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error("Email Error:", error);
     res.status(500).json({ error: error.message });
   }
 });
