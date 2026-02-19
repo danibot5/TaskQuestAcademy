@@ -36,7 +36,7 @@ export function initAuth() {
             // 3. Първо обновяваме UI стандартно
             ui.updateHeaderUI();
 
-            // 🔥 FIX: FORCED UI UPDATE (The "Enforcer")
+            // ПРАВИМЕ МУ FORCED UI UPDATE, ЗА ДА СЕ ПОКАЖЕ PRO ВЕДНАГА
             // Това гарантира, че PRO текстът се показва, дори ако ui.js се забави
             setTimeout(() => {
                 const currentText = document.getElementById('current-model-text');
@@ -71,7 +71,7 @@ export function initAuth() {
 
             loadChatsFromFirestore();
 
-            // UI настройки за потребителя
+            // UI настройките за потребителя
             userAvatar.src = user.photoURL || 'images/bot-avatar.png';
             const displayName = user.displayName || 'User';
             const verifiedIcon = user.emailVerified

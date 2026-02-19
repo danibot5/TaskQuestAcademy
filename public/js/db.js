@@ -15,13 +15,11 @@ import {
     setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- 1. LOCAL STORAGE ---
 export async function loadChatsFromLocalStorage() {
     const localData = localStorage.getItem('scriptsensei_chats');
     const chats = localData ? JSON.parse(localData) : [];
     setAllChats(chats);
 
-    // ✅ DYNAMIC IMPORT (Зареждаме ги само когато трябват)
     const ui = await import('./ui.js');
     const chat = await import('./chat.js');
     ui.renderSidebar();
@@ -34,7 +32,6 @@ export function saveToLocalStorage() {
     }
 }
 
-// --- 2. FIRESTORE LOAD ---
 export async function loadChatsFromFirestore() {
     const chatListEl = document.querySelector('.chat-list');
     if (chatListEl) chatListEl.innerHTML = '<div style="padding:10px; color:#888;">Зареждане...</div>';
@@ -70,7 +67,6 @@ export async function loadChatsFromFirestore() {
     }
 }
 
-// --- 3. FIRESTORE SAVE ---
 export async function saveToFirestore(chat) {
     if (state.currentUser) {
         const isNewChat = typeof chat.id === 'number';

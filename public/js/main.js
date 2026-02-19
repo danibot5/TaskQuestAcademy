@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (files.length === 0) return;
 
             for (const file of files) {
-                // 1. ПРОВЕРКА ЗА ДУБЛИКАТИ 🛑
+                // ПРОВЕРКА ЗА ДУБЛИКАТИ!!! 
                 const isDuplicate = state.currentAttachments.some(existing => existing.name === file.name);
 
                 if (isDuplicate) {
@@ -127,9 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ==========================================
-    // 10. 🎤 ГЛАСОВО ВЪВЕЖДАНЕ (ВЪРНАТО!)
-    // ==========================================
     const micBtn = document.getElementById('mic-btn');
     let recognition = null;
 
@@ -154,14 +151,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         recognition.onstart = () => {
             isListening = true;
-            micBtn.classList.add('listening'); // Трябва да имаш CSS за пулсиране
+            micBtn.classList.add('listening');
             micBtn.style.color = '#ff4444'; // Червен цвят докато слуша
         };
 
         recognition.onend = () => {
             isListening = false;
             micBtn.classList.remove('listening');
-            micBtn.style.color = ''; // Връщаме цвета
+            micBtn.style.color = ''; // Връщаме нормалния цвета
             checkSendButtonState(); // Проверяваме дали да активираме Send бутона
         };
 
@@ -173,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (userInput) {
                 userInput.value = transcript;
-                // Тригерираме auto-resize
+                // Тригер-ваме auto-resize
                 userInput.dispatchEvent(new Event('input'));
             }
         };
@@ -188,10 +185,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Ако браузърът не поддържа speech API
         micBtn.style.display = 'none';
     }
-
-
-    // --- ОСТАНАЛИТЕ БУТОНИ (Нов чат, Тема, Меню, Търсачка) ---
-    // (Този код си остава същият като преди, просто го слагам за пълнота)
 
     const newChatBtn = document.getElementById('new-chat-btn');
     const topNewChatBtn = document.getElementById('top-new-chat-btn');
@@ -212,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const menuBtn = document.getElementById('menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar');
-    const sidebar = document.getElementById('sidebar'); // Define sidebar here locally for this scope if needed or verify scope
+    const sidebar = document.getElementById('sidebar');
 
     if (menuBtn && document.getElementById('sidebar')) {
         menuBtn.addEventListener('click', (e) => {
@@ -226,7 +219,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Mobile close sidebar outside click
     document.addEventListener('click', (e) => {
         const sb = document.getElementById('sidebar');
         if (window.innerWidth <= 768 && sb && sb.classList.contains('open')) {
@@ -236,7 +228,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Search
     const searchBtn = document.querySelector('.search-btn') || document.getElementById('search-toggle-btn');
     const searchWrapper = document.querySelector('.search-wrapper');
     const searchInput = document.getElementById('search-input');

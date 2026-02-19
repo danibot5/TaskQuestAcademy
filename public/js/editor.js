@@ -1,5 +1,5 @@
-import { state } from './state.js';      // 👈 НОВО: Трябва ни state
-import { updateChatData } from './db.js'; // 👈 НОВО: Трябва ни функцията за запис
+import { state } from './state.js';
+import { updateChatData } from './db.js';
 
 const REAL_CONSOLE_LOG = console.log;
 
@@ -15,14 +15,12 @@ export const editor = CodeMirror.fromTextArea(document.getElementById("code-edit
 });
 
 export function initEditor() {
-    // --- 1. RUN BUTTON LOGIC (С АВТОМАТИЧЕН ЗАПИС) ---
     const runBtn = document.getElementById('run-btn');
     if (runBtn) {
         runBtn.addEventListener('click', () => {
             const userCode = editor.getValue();
             const outputBox = document.getElementById('console-output');
 
-            // Изчистваме или подготвяме конзолата
             outputBox.innerHTML = '<div class="console-label">Console Output:</div>';
 
             try {
@@ -44,7 +42,7 @@ export function initEditor() {
                 // Връщаме нормалната конзола
                 console.log = REAL_CONSOLE_LOG;
 
-                // 🔥 ВАЖНО: ЗАПИСВАМЕ РЕЗУЛТАТА В CHAT HISTORY 🔥
+                // Записваме резултата в chat history-то
                 if (state.currentChatId) {
                     const currentChat = state.allChats.find(c => c.id === state.currentChatId);
                     if (currentChat) {
@@ -62,7 +60,6 @@ export function initEditor() {
         });
     }
 
-    // --- 2. ANALYZE BUTTON ---
     const analyzeBtn = document.getElementById('analyze-btn');
     const modal = document.getElementById('analysis-modal');
     const closeBtn = document.getElementById('close-analysis');
@@ -105,7 +102,6 @@ export function initEditor() {
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
     window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
 
-    // --- 3. SHORTCUTS ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'Enter')) {
             e.preventDefault();
@@ -114,7 +110,6 @@ export function initEditor() {
         }
     });
 
-    // --- 4. AUTO-FIX BUTTON ---
     const fixBtn = document.getElementById('fix-btn');
     if (fixBtn) {
         fixBtn.addEventListener('click', async () => {
@@ -161,7 +156,6 @@ export function initEditor() {
         });
     }
 
-    // --- 5. DOWNLOAD BUTTON ---
     const downloadBtn = document.getElementById('download-btn');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', () => {

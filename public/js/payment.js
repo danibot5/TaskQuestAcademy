@@ -42,18 +42,17 @@ export async function startCheckout() {
 }
 
 // Тази функция се вика автоматично, когато потребителят се върне от Stripe
-// 👇 Тази функция проверява дали потребителят се връща от Stripe
 export async function checkPaymentStatus() {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     const isSuccess = urlParams.get('payment_success');
 
     if (isSuccess && sessionId && state.currentUser) {
-        // Показваме, че нещо се случва, за да не се шашне потребителят
+        // Показваме, че нещо се случва, за да не се оплажи потребителят
         showToast("Обработване на поръчката...", "⏳");
 
         try {
-            // 1. Питаме сървъра: "Вярно ли плати тоя човек?"
+            // Питаме сървъра: "Вярно ли плати този потребител?"
             const response = await fetch('https://us-central1-scriptsensei-4e8fe.cloudfunctions.net/verifyPayment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -63,14 +62,11 @@ export async function checkPaymentStatus() {
             const data = await response.json();
 
             if (data.success) {
-                // 2. ✅ УСПЕХ! Сървърът потвърди и записа в базата.
-
                 // Изчистваме грозния URL (?session_id=...)
                 window.history.replaceState({}, document.title, "/");
 
                 alert("🎉 ЧЕСТИТО! Плащането е успешно! Сега си ScriptSensei PRO! 💎");
 
-                // 👇 ТОВА ЛИПСВАШЕ: Презареждаме, за да активираме PRO функциите веднага!
                 window.location.href = "/";
             } else {
                 showToast("Плащането не беше потвърдено.", "❌");
@@ -106,7 +102,7 @@ export async function openCustomerPortal() {
         const data = await response.json();
 
         if (data.url) {
-            window.location.href = data.url; // Отиваме към Stripe Portal
+            window.location.href = data.url; // Отиваме към Stripe Portal-а
         } else {
             alert("Грешка: " + (data.error || "Неуспешно отваряне на портала."));
         }

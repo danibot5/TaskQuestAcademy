@@ -610,7 +610,26 @@ body.dark-mode #send-btn:disabled {
     min-height: 20px;
 }
 
-/* --- TOAST & FEEDBACK --- */
+/*  Анимация за слушане на микрофона */
+.listening {
+    color: #ff4444 !important;
+    animation: record-pulse 1.5s infinite;
+    border-radius: 50%;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+@keyframes record-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(255, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+    }
+}
+
 .toast {
     position: fixed;
     bottom: 30px;
@@ -725,7 +744,6 @@ body.dark-mode #send-btn:disabled {
     font-family: inherit;
 }
 
-/* DISABLED STATES */
 textarea:disabled {
     background-color: #f0f0f0;
     cursor: not-allowed;
@@ -794,11 +812,9 @@ button:disabled,
     width: 24px;
     border-radius: 50%;
     z-index: 2;
-    /* Да е над иконките */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Стилизация на иконките */
 .sun-icon,
 .moon-icon {
     z-index: 1;
@@ -807,23 +823,16 @@ button:disabled,
 
 .sun-icon {
     color: #f39c12;
-    /* Златисто слънце */
     opacity: 1;
 }
 
 .moon-icon {
     color: #f1c40f;
-    /* Жълтеникава луна */
     opacity: 0;
-    /* Скрита в началото */
 }
 
-/* --- АКТИВНО СЪСТОЯНИЕ (DARK MODE) --- */
-
-/* Промяна на фона на плъзгача */
 input:checked+.slider {
     background-color: #34495e;
-    /* Тъмен фон */
 }
 
 /* Преместване на копчето надясно */
@@ -831,7 +840,6 @@ input:checked+.slider:before {
     transform: translateX(26px);
 }
 
-/* Смяна на видимостта на иконките */
 input:checked+.slider .sun-icon {
     opacity: 0;
 }

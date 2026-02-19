@@ -497,7 +497,7 @@ export function initProfileModal() {
     const modal = document.getElementById('profile-modal');
     const closeBtn = document.getElementById('close-profile');
 
-    // 👇 Взимаме САМО бутона от модала. Сайдбар бутонът се управлява от auth.js!
+    // Взимаме Само бутона от модала. Сайдбар бутонът се управлява от auth.js!!!!!!!!!!
     const logoutBtnModal = document.getElementById('logout-btn-modal');
 
     const buyBtnModal = document.getElementById('buy-pro-modal');
@@ -520,8 +520,6 @@ export function initProfileModal() {
 
     if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
 
-    // 🔥 FIX: Махнахме проверката за '&& logoutBtnSidebar'
-    // Сега бутонът в модала работи винаги, независимо от сайдбара!
     if (logoutBtnModal) {
         logoutBtnModal.onclick = async () => {
             if (confirm("Сигурен ли си, че искаш да излезеш?")) {
@@ -717,10 +715,8 @@ export function updateLastBotMessage(fullText) {
 
     const textDiv = lastBotRow.querySelector('.bot-text');
 
-    // Рендираме Markdown наново с целия текст до момента
     if (typeof marked !== 'undefined') {
         textDiv.innerHTML = marked.parse(fullText);
-        // Highlight на кода в движение (може да е тежко, но е красиво)
         if (typeof hljs !== 'undefined') {
             textDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
         }
@@ -757,9 +753,6 @@ function initCustomDropdown() {
     const container = document.getElementById('model-selector-container');
     if (!container) return;
 
-    // Махаме проверката за initialized, за да сме сигурни, че винаги обновяваме логиката
-    // container.dataset.initialized ... (махнато)
-
     const trigger = container.querySelector('.custom-select__trigger');
     const customSelect = container.querySelector('.custom-select');
     const options = container.querySelectorAll('.custom-option');
@@ -767,38 +760,31 @@ function initCustomDropdown() {
 
     if (!trigger || !customSelect) return;
 
-    // 1. Използваме .onclick (по-сигурно от addEventListener в този случай)
+    // Ползваме onclick за повече сигурност
     trigger.onclick = (e) => {
-        e.stopPropagation(); // Спираме клика да не отиде към document
+        e.stopPropagation();
         customSelect.classList.toggle('open');
         console.log("Dropdown clicked! Open class:", customSelect.classList.contains('open'));
     };
 
-    // 2. Логика за опциите
     options.forEach(option => {
         option.onclick = (e) => {
             e.stopPropagation();
 
-            // Визуална смяна
             options.forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
 
-            // Текст
             if (currentText) currentText.innerText = option.innerText.split('(')[0].trim();
 
-            // Логика
             const value = option.getAttribute('data-value');
             setSelectedModel(value);
             localStorage.setItem('scriptsensei_model', value);
 
-            // Затваряне
             customSelect.classList.remove('open');
             console.log("Model changed to:", value);
         };
     });
 
-    // 3. Затваряне при клик навсякъде другаде
-    // Използваме window, за да сме сигурни, че хващаме всичко
     window.addEventListener('click', (e) => {
         if (!customSelect.contains(e.target)) {
             customSelect.classList.remove('open');
@@ -806,19 +792,13 @@ function initCustomDropdown() {
     });
 }
 
-// В js/ui.js - Замени функцията injectCodeButtons с тази:
-
 function injectCodeButtons(container) {
     const codeBlocks = container.querySelectorAll('pre');
 
     codeBlocks.forEach((preBlock) => {
-        // 1. Проверка дали има code елемент вътре
         const codeElement = preBlock.querySelector('code');
         if (!codeElement) return;
 
-        // 🔥 FIX: Проверяваме дали КОНКРЕТНО ТОЗИ блок вече има тулбар отдолу.
-        // Предишната грешка беше, че търсихме в целия контейнер (parentNode) 
-        // и спирахме още след първия намерен тулбар.
         if (preBlock.nextElementSibling && preBlock.nextElementSibling.classList.contains('code-toolbar-custom')) {
             return;
         }
@@ -835,7 +815,7 @@ function injectCodeButtons(container) {
 
         // Създаваме контейнер за бутоните (Toolbar)
         const toolbar = document.createElement('div');
-        toolbar.className = 'code-toolbar-custom'; // Уникален клас
+        toolbar.className = 'code-toolbar-custom';
         toolbar.style.display = 'flex';
         toolbar.style.gap = '10px';
         toolbar.style.marginTop = '5px';
@@ -871,6 +851,7 @@ function injectCodeButtons(container) {
             'ruby': 'rb', 'rb': 'rb', 'go': 'go', 'golang': 'go',
             'typescript': 'ts', 'ts': 'ts', 'txt': 'txt', 'text': 'txt'
         };
+
         let ext = exts[language] || 'txt';
 
         downloadBtn.innerHTML = `Изтегли .${ext}`;
@@ -905,7 +886,7 @@ export function initMuteButton() {
     const updateUI = () => {
         if (state.isMuted) {
             muteBtn.innerHTML = SVGs.volumeOff;
-            muteBtn.style.color = '#ff4444'; // Червено, за да се вижда, че е спрян
+            muteBtn.style.color = '#ff4444'; // Слагаме червен цвят за по-голяма яснота, че бутона е активиран (или технически деактивиран, защото е "заглушаване")
             muteBtn.title = "Пусни звука";
         } else {
             muteBtn.innerHTML = SVGs.volumeOn;
@@ -914,14 +895,11 @@ export function initMuteButton() {
         }
     };
 
-    // 1. Първоначална инициализация (Това липсваше/не сработваше преди!)
     updateUI();
 
-    // 2. Event Listener
     muteBtn.addEventListener('click', (e) => {
         e.preventDefault(); // Спираме всякакви странични ефекти
 
-        // Обръщаме стойността
         const newState = !state.isMuted;
         setIsMuted(newState);
         localStorage.setItem('scriptsensei_muted', newState);
@@ -930,7 +908,7 @@ export function initMuteButton() {
         if (!newState && state.isSpeakingNow) {
             resumeSpeaking(state.speechCharIndex);
         } else if (newState) {
-            // Ако спираме звука -> млъкни веднага
+            // Ако спираме звука му казваме да спре да говори веднага
             window.speechSynthesis.cancel();
         }
 

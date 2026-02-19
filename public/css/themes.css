@@ -207,6 +207,9 @@ body.dark-mode .action-btn:disabled,
     background-color: transparent !important;
 }
 
+body.dark-mode .listening {
+    background-color: rgba(255, 68, 68, 0.2);
+}
 
 /* ----------------------- */
 /* ----- SUGGESTIONS ----- */
