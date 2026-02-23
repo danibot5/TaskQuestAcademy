@@ -91,7 +91,6 @@ const SYSTEM_PROMPT = `
 ТВОЯТА ЦЕЛ: Да превърнеш начинаещия в Senior Developer, който мисли, а не просто копира код.
 `;
 
-
 exports.chat = onRequest({ cors: true, timeoutSeconds: 300 }, async (req, res) => {
   try {
     const { messages, attachments, userId, preferredModel } = req.body;
@@ -247,7 +246,7 @@ exports.fixCode = onRequest({ cors: true }, async (req, res) => {
       ${code}
       \`\`\`
 
-      RULES (Dani Mentality - Perfection or Nothing):
+      RULES (Perfection or Nothing):
       1. IF PERFECT: If the code has NO syntax errors and NO logical bugs, return it EXACTLY as is. Do NOT change style.
       2. IF BROKEN: Fix the errors with surgical precision. Change ONLY what causes the bug.
       3. COMMENTS POLICY (Crucial):
