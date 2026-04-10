@@ -251,7 +251,7 @@ exports.fixCode = onRequest({ cors: true }, async (req, res) => {
       2. IF BROKEN: Fix the errors with surgical precision. Change ONLY what causes the bug.
       3. COMMENTS POLICY (Crucial):
          - If the input has NO comments, DO NOT add any new comments. Keep it clean.
-         - If the input HAS comments, preserve them.
+         - If the input HAS comments, simply don't touch them, exept for if  they're wrong.
          - EXCEPTION: If an existing comment is factually WRONG (lies about the code), correct the comment text.
       4. OUTPUT FORMAT: Return ONLY the raw code string. No markdown blocks (\`\`\`), no explanations. Just the code.
     `;
